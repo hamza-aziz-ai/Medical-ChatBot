@@ -25,9 +25,13 @@ def monotonic():
     return time.monotonic()
 
 
-def load_entities(path=ENTITIES_PATH):
+def read_dictionary(path=ENTITIES_PATH):
     with open(path, encoding="utf-8") as file:
-        data = json.load(file)
+        return json.load(file)
+
+
+def load_entities(path=ENTITIES_PATH, document=None):
+    data = document if document is not None else read_dictionary(path)
     entities = {key: [term.strip() for term in data[key] if is_valid_term(term)] for key in ("diseases", "departments", "symptoms")}
     logger.info("Loaded %s from %s", ", ".join(f"{len(v)} {k}" for k, v in entities.items()), Path(path).name)
     return entities
@@ -60,8 +64,8 @@ def is_word_char(char):
 
 
 class QuestionClassifier:
-    def __init__(self):
-        entities = load_entities()
+    def __init__(self, document=None):
+        entities = load_entities(document=document)
         self.disease_words = entities["diseases"]
         self.department_words = entities["departments"]
         self.symptom_words = entities["symptoms"]
