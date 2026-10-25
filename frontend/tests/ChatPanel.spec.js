@@ -4,30 +4,22 @@ import { describe, expect, it } from "vitest";
 import ChatPanel from "@/components/ChatPanel.vue";
 
 function panel(props = {}) {
-  return mount(ChatPanel, { props: { messages: [], token: "t", ...props } });
+  return mount(ChatPanel, { props: { messages: [], ...props } });
 }
 
 describe("ChatPanel", () => {
-  it("disables the question box until a token is entered", async () => {
-    const wrapper = panel({ token: "" });
-    expect(wrapper.find("textarea").element.disabled).toBe(true);
-    expect(wrapper.text()).toContain("Enter the API token to start.");
-    await wrapper.setProps({ token: "t" });
+  it("is ready to use without any credentials", () => {
+    const wrapper = panel();
     expect(wrapper.find("textarea").element.disabled).toBe(false);
+    expect(wrapper.find('input[type="password"]').exists()).toBe(false);
   });
 
   it("labels every control", () => {
     const wrapper = panel();
-    for (const id of ["api-token", "question"]) {
+    for (const id of ["question"]) {
       expect(wrapper.find(`label[for="${id}"]`).exists()).toBe(true);
     }
     expect(wrapper.find('[role="log"]').attributes("aria-live")).toBe("polite");
-  });
-
-  it("emits the token as it is typed", async () => {
-    const wrapper = panel({ token: "" });
-    await wrapper.find("#api-token").setValue("secret");
-    expect(wrapper.emitted("update:token").at(-1)).toEqual(["secret"]);
   });
 
   it("sends with Enter and with the button, trimmed", async () => {

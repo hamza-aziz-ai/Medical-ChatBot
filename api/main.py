@@ -1,5 +1,4 @@
 import atexit
-import hmac
 import logging
 import os
 import re
@@ -29,17 +28,13 @@ def allowed_origins():
     return [re.compile("^" + re.escape(origin) + "$") for origin in origins]
 
 
-def create_app(chatbot=None, api_token=None):
+def create_app(chatbot=None):
     if chatbot is None:
         import app_logging
         import database
         loaded = database.load_env_file()
         app_logging.setup_logging()
         database.log_env_loaded(loaded)
-
-    token = api_token or os.environ.get("CHATBOT_API_TOKEN")
-    if not token:
-        raise RuntimeError("CHATBOT_API_TOKEN must be set")
 
     origins = allowed_origins()
 
@@ -49,17 +44,13 @@ def create_app(chatbot=None, api_token=None):
         atexit.register(chatbot.searcher.close)
 
     app = Flask(__name__)
-    CORS(app, origins=origins, allow_headers=["Authorization", "Content-Type"])
-    expected_header = f"Bearer {token}".encode()
+    CORS(app, origins=origins, allow_headers=["Content-Type"])
     logger.info("API started; %d allowed CORS origin(s)", len(origins))
 
     @app.route("/", methods=["GET"])
     def home():
-        # Never log the question itself: only its length and the outcome.
-        if not hmac.compare_digest(request.headers.get("Authorization", "").encode(), expected_header):
-            logger.warning("Rejected request: missing or invalid API token")
-            return jsonify(error="Missing or invalid API token."), 401
-
+        # No authentication: the API is read-only over public data and listens on loopback only
+        # (D-013); flood protection is nginx rate limiting. Never log the question itself.
         search_term = request.args.get("search", "").strip()
         if not search_term:
             logger.info("Rejected request: empty question")

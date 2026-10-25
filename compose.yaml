@@ -38,7 +38,6 @@ services:
     <<: *api
     environment:
       <<: *api-env
-      CHATBOT_API_TOKEN: ${CHATBOT_API_TOKEN:?set CHATBOT_API_TOKEN in .env}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
       - api-logs:/app/logs

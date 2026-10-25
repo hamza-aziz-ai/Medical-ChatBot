@@ -7,24 +7,6 @@
       Ask a question
     </h2>
 
-    <div class="field">
-      <label for="api-token">API token</label>
-      <input
-        id="api-token"
-        type="password"
-        autocomplete="off"
-        :value="token"
-        aria-describedby="token-help"
-        @input="$emit('update:token', $event.target.value)"
-      >
-      <p
-        id="token-help"
-        class="hint"
-      >
-        The value of CHATBOT_API_TOKEN. This page keeps it in memory only and never saves it.
-      </p>
-    </div>
-
     <ol
       ref="transcript"
       class="transcript"
@@ -64,8 +46,7 @@
           v-model="draft"
           rows="2"
           :maxlength="maxLength"
-          :disabled="!token"
-          :aria-describedby="token ? 'question-help' : 'token-needed'"
+          aria-describedby="question-help"
           placeholder="For example: what are the symptoms of asthma?"
           @keydown.enter="onEnter"
         />
@@ -77,14 +58,6 @@
         </button>
       </div>
       <p
-        v-if="!token"
-        id="token-needed"
-        class="hint"
-      >
-        Enter the API token to start.
-      </p>
-      <p
-        v-else
         id="question-help"
         class="hint"
       >
@@ -100,16 +73,15 @@ export default {
   props: {
     messages: { type: Array, required: true },
     busy: { type: Boolean, default: false },
-    token: { type: String, default: "" },
     maxLength: { type: Number, default: 500 },
   },
-  emits: ["send", "update:token"],
+  emits: ["send"],
   data() {
     return { draft: "" };
   },
   computed: {
     canSend() {
-      return Boolean(this.token) && !this.busy && this.draft.trim().length > 0;
+      return !this.busy && this.draft.trim().length > 0;
     },
   },
   watch: {
