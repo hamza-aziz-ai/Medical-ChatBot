@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- A-14: a 150 ms time budget on spelling suggestions (worst case about 160 ms instead of 1 s); saturation near the rate limit remains possible.
 - A-13 fixed: spelling suggestions work for names that contain filler words or intent keywords (D-017 addendum).
 - Stack updater (D-021, FEATURE-007): `scripts/update_stack.py` updates the local stack on each release, with backup and rollback.
 - Automatic releases (D-019, D-020, FEATURE-006): one release per merge, in order; `release.yml` tags only after every gate.
@@ -29,7 +30,6 @@ Broken or risky:
 
 Next:
 - Watch the first chained releases; the owner enrols the stack and registers the update task (README, Automatic updates).
-- A-14: decide a reviewed limit on spelling-suggestion work for long questions of unknown words.
 - Optional: dataset pilot (MedlinePlus + DOID) behind a rights gate and the evaluation gate.
 
 Do not touch:
