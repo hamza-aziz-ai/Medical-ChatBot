@@ -260,7 +260,7 @@ def main(report_path=None):
     import database
 
     dataset = builder.load_dataset()
-    data = builder.graph_data(dataset)
+    data, document = builder.plan(dataset)
     counts = import_counts(dataset, data)
     baseline = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
 
@@ -274,6 +274,11 @@ def main(report_path=None):
         chips = chip_consistency(chatbot.searcher, dictionary)
         if chips["mismatches"] or chips["diseases"] != len(dictionary.get("diseases", [])):
             integrity_failures.append("chip_consistency")
+        # D-023: the shipped dictionary is exactly the one this plan publishes, and the API accepts the imported graph.
+        if dictionary != document:
+            integrity_failures.append("dictionary_plan")
+        if not chatbot.ready()[0]:
+            integrity_failures.append("readiness")
         integrity_counts["chip_mismatches"] = chips["mismatches"]
         report["integrity"] = {"failures": integrity_failures, "counts": integrity_counts}
         report["passed"] = report["passed"] and not integrity_failures
