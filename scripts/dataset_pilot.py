@@ -6,17 +6,22 @@ condition, that the source could answer our questions, or that either source is 
 
     python scripts/dataset_pilot.py            # download (cached in pilot-data/) and measure
     python scripts/dataset_pilot.py --offline  # reuse the cached downloads
+    python scripts/dataset_pilot.py --candidates  # step 2: unreviewed candidates for the unmatched names, cache only
 
 Writes the aggregate report to docs/pilot/DATASET-PILOT.md and the per-disease mappings to pilot-data/ (git-ignored,
 kept local by the owner's choice). Any download or parsing failure stops the run: it is never reported as zero coverage.
+With --candidates it leaves the step-1 results alone, writes per-name candidates to pilot-data/candidates.json and
+replaces only the report's aggregate "Candidates (unreviewed)" section.
 """
 import argparse
+import difflib
 import hashlib
 import json
 import os
 import re
 import subprocess
 import sys
+import time
 import unicodedata
 import urllib.request
 from datetime import datetime, timezone
@@ -158,7 +163,8 @@ def unescape_obo(text):
 
 
 def parse_doid(text):
-    """Non-obsolete DOID terms as {"id", "names": [name, EXACT synonyms...]}, plus the file's data-version."""
+    """Non-obsolete DOID terms as {"id", "names": [name, EXACT synonyms...], "scoped": [(synonym, scope)...]}, plus the
+    file's data-version. RELATED, BROAD and NARROW synonyms stay in "scoped", so exact matching never sees them."""
     version = re.search(r"^data-version: (.+)$", text, re.MULTILINE)
     terms, total = [], 0
     for stanza in re.split(r"\n(?=\[)", text):
@@ -170,12 +176,14 @@ def parse_doid(text):
         name = next((line[6:].strip() for line in lines if line.startswith("name: ")), "")
         if not term_id.startswith("DOID:") or not name or "is_obsolete: true" in lines:
             continue
-        names = [name]
+        names, scoped = [name], []
         for line in lines:
             match = OBO_SYNONYM.match(line)
             if match and match.group(2) == "EXACT":
                 names.append(unescape_obo(match.group(1)))
-        terms.append({"id": term_id, "names": names})
+            elif match:
+                scoped.append((unescape_obo(match.group(1)), match.group(2)))
+        terms.append({"id": term_id, "names": names, "scoped": scoped})
     if not terms:
         raise PilotError("The Disease Ontology file has no usable terms")
     return terms, total, version.group(1).strip() if version else "unknown"
@@ -208,6 +216,159 @@ def measure(diseases, medlineplus, doid):
         counts["medlineplus_ambiguous"] += len(mp) > 1
         counts["doid_ambiguous"] += len(do) > 1
     return mappings, counts
+
+
+# Candidates (step 2): leads for the names step 1 left unmatched, agreed with Codex in council. Retrieval only: no
+# method, score or order here says a candidate is the same condition, a broader one or a better one.
+
+QUALIFIERS = frozenset({"simple", "acute", "chronic", "pediatric", "infantile", "neonatal", "primary", "secondary", "idiopathic"})
+METHODS = ("punctuation_relaxed", "token_order_ignored", "doid_scoped", "qualifier_removed", "similar")  # display order only
+SIMILAR_MIN, SIMILAR_HIGH, SIMILAR_TOP = 0.88, 0.93, 3  # uncalibrated retrieval settings
+CANDIDATES_HEADING = "## Candidates (unreviewed)"
+
+
+def relaxed(name):
+    """normalise(), with punctuation and hyphens read as spaces. No plural folding: it would break "diabetes"."""
+    return " ".join(re.sub(r"[^\w\s]|_", " ", normalise(name)).split())
+
+
+def unordered(key):
+    # Lossy on purpose: "lung cancer with liver metastases" and its reverse share these tokens (repeats are kept).
+    return " ".join(sorted(key.split()))
+
+
+def source_names(medlineplus, doid):
+    """{relaxed name: [entries]} over every source name; an entry's scope is DOID's own annotation, or None."""
+    entries = [("medlineplus", t["url"], t["names"][0], name, None) for t in medlineplus for name in t["names"]]
+    for term in doid:
+        entries += [("doid", term["id"], term["names"][0], name, None) for name in term["names"]]
+        entries += [("doid", term["id"], term["names"][0], name, scope) for name, scope in term["scoped"]]
+    index = {}
+    for source, concept, label, name, scope in entries:
+        index.setdefault(relaxed(name), []).append(
+            {"source": source, "concept": concept, "label": label, "matched_name": name, "scope": scope})
+    return index
+
+
+def lexical(key, index, by_tokens):
+    """(entry, order_ignored) for source names equal to key once relaxed, or equal only when word order is ignored."""
+    found = [(entry, False) for entry in index.get(key, ())]
+    return found + [(entry, True) for other in by_tokens.get(unordered(key), ()) if other != key for entry in index[other]]
+
+
+def similar(key, index):
+    """(entry, score) for source names with a difflib ratio of at least SIMILAR_MIN, and every such concept's best score."""
+    matcher = difflib.SequenceMatcher(None, b=key)  # b is ours and cached; a is each source name
+    found = []
+    for other, entries in index.items():
+        matcher.set_seq1(other)
+        if matcher.real_quick_ratio() >= SIMILAR_MIN and matcher.quick_ratio() >= SIMILAR_MIN:
+            score = matcher.ratio()
+            if score >= SIMILAR_MIN:
+                found += [(entry, score) for entry in entries]
+    return found
+
+
+def grouped(evidence):
+    """Candidates deduplicated by (source, concept), each keeping every evidence path, in display order."""
+    concepts = {}
+    for entry, record in evidence:
+        concept = concepts.setdefault((entry["source"], entry["concept"]), {
+            "source": entry["source"], "concept": entry["concept"], "label": entry["label"], "evidence": []})
+        record = {"matched_name": entry["matched_name"], "scope": entry["scope"], **record}
+        if record not in concept["evidence"]:
+            concept["evidence"].append(record)
+
+    def rank(concept):
+        methods = [METHODS.index(e["method"]) for e in concept["evidence"]]
+        return min(methods), -max(e.get("score", 0) for e in concept["evidence"]), concept["source"], concept["concept"]
+
+    return sorted(concepts.values(), key=rank)
+
+
+def find_candidates(unmatched, medlineplus, doid):
+    """Per unmatched name, its candidates; and aggregate counts with no names in them."""
+    index = source_names(medlineplus, doid)
+    by_tokens = {}
+    for key in index:
+        by_tokens.setdefault(unordered(key), []).append(key)
+    rows = []
+    counts = {"cohort": len(unmatched), "with_candidates": 0, "without_candidates": 0, "more_than_one_concept": 0,
+              "per_method": dict.fromkeys(METHODS, 0), "primary": dict.fromkeys(METHODS, 0), "similar_high": 0,
+              "similar_truncated": 0}
+    for name in unmatched:
+        key = relaxed(name)
+        evidence = [(entry, {"method": "doid_scoped" if entry["scope"] else "token_order_ignored" if order else
+                             "punctuation_relaxed", "order_ignored": order}) for entry, order in lexical(key, index, by_tokens)]
+        words = key.split()
+        if len(words) > 1 and words[0] in QUALIFIERS:
+            evidence += [(entry, {"method": "qualifier_removed", "order_ignored": order, "removed_qualifier": words[0]})
+                         for entry, order in lexical(" ".join(words[1:]), index, by_tokens)]
+        candidates, truncated = grouped(evidence), False
+        if not candidates:
+            found = grouped([(entry, {"method": "similar", "score": round(score, 3)}) for entry, score in similar(key, index)])
+            # Ties go to the lower concept id; the cap counts concepts, after deduplication.
+            found.sort(key=lambda c: (-max(e["score"] for e in c["evidence"]), c["source"], c["concept"]))
+            candidates, truncated = found[:SIMILAR_TOP], len(found) > SIMILAR_TOP
+        rows.append({"disease": name, "candidates": candidates, "more_candidates": truncated})
+        methods = {e["method"] for c in candidates for e in c["evidence"]}
+        counts["with_candidates" if candidates else "without_candidates"] += 1
+        counts["more_than_one_concept"] += len(candidates) > 1
+        counts["similar_truncated"] += truncated
+        counts["similar_high"] += any(e.get("score", 0) >= SIMILAR_HIGH for c in candidates for e in c["evidence"])
+        for method in methods:
+            counts["per_method"][method] += 1
+        if candidates:
+            counts["primary"][min(methods, key=METHODS.index)] += 1
+    return rows, counts
+
+
+def candidates_report(result):
+    c, s = result["counts"], result["sources"]
+    described = {
+        "punctuation_relaxed": "punctuation and hyphens read as spaces",
+        "token_order_ignored": "also ignores word order, which can change the condition",
+        "doid_scoped": "DOID RELATED, BROAD or NARROW synonyms; the scope is DOID's annotation, not a relation to our name",
+        "qualifier_removed": "one leading qualifier (" + ", ".join(sorted(QUALIFIERS)) + ") removed; no relationship asserted",
+        "similar": f"difflib ratio of at least {SIMILAR_MIN}, at most {SIMILAR_TOP} concepts, only when nothing else matched",
+    }
+    rows = "\n".join(f"| `{m}` | {described[m]} | {c['per_method'][m]} | {c['primary'][m]} |" for m in METHODS)
+    return f"""{CANDIDATES_HEADING}
+
+Retrieved {result['measured_at']} at commit `{result['commit'][:12]}` by `scripts/dataset_pilot.py --candidates` in {result['seconds']} s, from the cached files only: MedlinePlus SHA-256 `{s['medlineplus']['sha256'][:16]}…`, Disease Ontology {s['doid']['version']} SHA-256 `{s['doid']['sha256'][:16]}…`, dictionary SHA-256 `{result['dictionary_sha256'][:16]}…` (CSV source `{result['source_sha256'][:16]}…`).
+
+**What this is.** Leads for the {c['cohort']} names with no exact match, for the owner to review. Every candidate is unreviewed lexical retrieval: it may name a different condition, and a mistranslated name may get none. Nothing here is added to the matches above or counted as coverage. The methods' order only sorts each list; it is not clinical confidence. The per-name candidates are in `pilot-data/candidates.json`, which is not committed.
+
+| Names | Count |
+|---|---|
+| Searched (no exact match above) | {c['cohort']} |
+| With at least one candidate | {c['with_candidates']} |
+| With none | {c['without_candidates']} |
+| With candidates for more than one concept | {c['more_than_one_concept']} |
+
+| Method | What it relaxes | Names with a candidate from it (a name can count more than once) | Names whose first-listed candidate comes from it |
+|---|---|---|---|
+{rows}
+
+At a ratio of at least {SIMILAR_HIGH}, {c['similar_high']} names have a `similar` candidate; {c['similar_truncated']} names had more than {SIMILAR_TOP} similar concepts, and the rest are not listed. These thresholds are uncalibrated, so the counts are candidate volumes, not precision.
+"""
+
+
+def write_candidates(result, unmatched, medlineplus, doid):
+    if not REPORT.exists():
+        raise PilotError(f"{REPORT.name} is missing; run the measurement first")
+    started = time.perf_counter()
+    rows, counts = find_candidates(unmatched, medlineplus, doid)
+    result = {**result, "counts": counts, "seconds": round(time.perf_counter() - started, 1),
+              "parameters": {"qualifiers": sorted(QUALIFIERS), "similar_min": SIMILAR_MIN, "similar_high": SIMILAR_HIGH,
+                             "similar_top": SIMILAR_TOP}}
+    DATA.mkdir(parents=True, exist_ok=True)
+    (DATA / "candidates.json").write_text(json.dumps({**result, "candidates": rows}, indent=1), encoding="utf-8")
+    # Step 1's section stays as it is; only an earlier candidates section is replaced.
+    measured = REPORT.read_text(encoding="utf-8").split("\n" + CANDIDATES_HEADING)[0].rstrip("\n")
+    REPORT.write_text(measured + "\n\n" + candidates_report(result), encoding="utf-8")
+    print(f"Candidates for {counts['with_candidates']} of {counts['cohort']} unmatched names; report in {REPORT.relative_to(ROOT)}")
+    return 0
 
 
 def sha256(data):
@@ -255,15 +416,18 @@ The per-disease mappings are in `pilot-data/mappings.json`, which is not committ
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--offline", action="store_true", help="use only cached downloads")
+    parser.add_argument("--candidates", action="store_true",
+                        help="list unreviewed candidates for the unmatched names (step 2; cached downloads only)")
     args = parser.parse_args(argv)
+    offline = args.offline or args.candidates
     try:
         dictionary_bytes = ENTITIES.read_bytes()
         dictionary = json.loads(dictionary_bytes)
         diseases = dictionary["diseases"]
-        index_html = cached(MEDLINEPLUS_INDEX, "xml.html", args.offline).decode("utf-8", "replace")
+        index_html = cached(MEDLINEPLUS_INDEX, "xml.html", offline).decode("utf-8", "replace")
         mp_url = newest_medlineplus(index_html)
-        mp_bytes = cached(mp_url, mp_url.rsplit("/", 1)[1], args.offline)
-        do_bytes = cached(DOID_URL, "doid.obo", args.offline)
+        mp_bytes = cached(mp_url, mp_url.rsplit("/", 1)[1], offline)
+        do_bytes = cached(DOID_URL, "doid.obo", offline)
         medlineplus, mp_total = parse_medlineplus(mp_bytes)
         doid, do_total, do_version = parse_doid(do_bytes.decode("utf-8"))
     except (OSError, ValueError, KeyError, PilotError) as error:
@@ -277,6 +441,13 @@ def main(argv=None):
         "sources": {"medlineplus": {"url": mp_url, "sha256": sha256(mp_bytes), "topics": mp_total, "english_topics": len(medlineplus)},
                     "doid": {"url": DOID_URL, "sha256": sha256(do_bytes), "version": do_version, "terms": do_total, "usable_terms": len(doid)}},
     }
+    if args.candidates:
+        unmatched = [m["disease"] for m in mappings if not (m["medlineplus"] or m["doid"])]
+        try:
+            return write_candidates(result, unmatched, medlineplus, doid)
+        except (OSError, PilotError) as error:
+            print(f"Dataset pilot failed: {error}", file=sys.stderr)
+            return 1
     DATA.mkdir(parents=True, exist_ok=True)
     (DATA / "mappings.json").write_text(json.dumps({**result, "mappings": mappings}, indent=1), encoding="utf-8")
     REPORT.parent.mkdir(parents=True, exist_ok=True)

@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 to 2026-10-26 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Dataset pilot, step 2 (FEATURE-009): an unreviewed local candidate list; 62 of the 451 unmatched names have a lexical lead, 389 none; nothing applied.
 - Per-client spelling-suggestion budget (D-025).
 - The owner's stack runs v1.1.6 with the plan fingerprint; the rollback drill also passed on v1.1.5 → v1.1.6.
 - D35 closed as far as detection goes (D-023 addendum): a plan fingerprint in the graph and the dictionary; questions refused with 503 while they do not match.
@@ -38,7 +39,7 @@ Broken or risky:
 - Many client addresses together can still keep the single API worker busy; one address is bounded to about one second of suggestion work per minute (A-14, D-025).
 
 Next:
-- Optional: a reviewed mapping of the 451 unmatched names before any sourced dataset (D-011); rights and evaluation gates still apply.
+- Optional: review `pilot-data/candidates.json` (local, unreviewed) and record evidence-backed decisions per candidate (equivalent, broader, narrower, related, rejected, uncertain) before any sourced dataset (D-011); rights and evaluation gates still apply. 389 names have no lexical lead and need another approach, likely manual.
 
 Do not touch:
 - `.env` contents, real credentials, the GitHub profile repository `hamza-aziz-ai/hamza-aziz-ai`, LinkedIn. See CONSTRAINTS.md.
