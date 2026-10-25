@@ -2,34 +2,28 @@ import ast
 import csv
 import hashlib
 import io
+import json
 import os
 import sys
 import tempfile
 from pathlib import Path
 
-from neo4j import RoutingControl
+from neo4j import RoutingControl, unit_of_work
 
 import database
 from terms import clean_terms
 
 BASE_DIR = Path(__file__).resolve().parent
 CSV_PATH = BASE_DIR / "data" / "medical.csv"
-DICTIONARY_DIR = BASE_DIR / "dictionary"
+ENTITIES_PATH = BASE_DIR / "dictionary" / "entities.json"
 
 SCALAR_FIELDS = {"Description": "description", "Prevention": "prevention", "Causes": "causes"}
 LIST_FIELDS = {"Symptoms": "symptoms", "Accompany": "accompany", "Cure Department": "cure_department", "Cure Way": "cure_way"}
 
-# Graph data each list field produces. A quarantined field must not already have data here,
-# because MERGE and SET += never remove what an earlier import wrote.
-STALE_FIELD_QUERIES = {
-    "symptoms": "UNWIND $names AS name MATCH (d:Disease {name: name})-[:has_symptom]->() RETURN DISTINCT d.name AS name",
-    "accompany": "UNWIND $names AS name MATCH (d:Disease {name: name})-[:accompany_with]->() RETURN DISTINCT d.name AS name",
-    "cure_department": (
-        "UNWIND $names AS name MATCH (d:Disease {name: name}) "
-        "WHERE d.cure_department IS NOT NULL OR (d)-[:disease_belongs_to]->() RETURN DISTINCT d.name AS name"
-    ),
-    "cure_way": "UNWIND $names AS name MATCH (d:Disease {name: name}) WHERE d.cure_way IS NOT NULL RETURN DISTINCT d.name AS name",
-}
+# Every node and relationship this importer writes carries this marker. A re-import replaces
+# exactly the marked snapshot and never touches anything else in the database.
+OWNER = "medical-chatbot-importer"
+WRITE_TIMEOUT_SECONDS = 120
 
 CONSTRAINTS = [
     "CREATE CONSTRAINT disease_name IF NOT EXISTS FOR (n:Disease) REQUIRE n.name IS UNIQUE",
@@ -37,22 +31,33 @@ CONSTRAINTS = [
     "CREATE CONSTRAINT department_name IF NOT EXISTS FOR (n:Department) REQUIRE n.name IS UNIQUE",
 ]
 
+# Unmarked nodes whose name the import would need: writing over them would overwrite foreign data.
+COLLISION_QUERY = (
+    "UNWIND $names AS name MATCH (n:{label} {{name: name}}) "
+    "WHERE n.owner IS NULL OR n.owner <> $owner RETURN n.name AS name"
+)
+# Unmarked relationships attached to owned nodes: replacing the snapshot would delete them.
+FOREIGN_RELATIONSHIP_QUERY = (
+    "MATCH (n {owner: $owner})-[r]-() WHERE r.owner IS NULL OR r.owner <> $owner "
+    "RETURN DISTINCT n.name AS name LIMIT 100"
+)
+
 RELATIONSHIP_QUERIES = {
     "has_symptom": (
-        "UNWIND $pairs AS p MATCH (a:Disease {name: p[0]}) MATCH (b:Symptom {name: p[1]}) "
-        "MERGE (a)-[:has_symptom {name: 'symptom'}]->(b)"
+        "UNWIND $pairs AS p MATCH (a:Disease {name: p[0], owner: $owner}) MATCH (b:Symptom {name: p[1], owner: $owner}) "
+        "CREATE (a)-[:has_symptom {name: 'symptom', owner: $owner}]->(b)"
     ),
     "accompany_with": (
-        "UNWIND $pairs AS p MATCH (a:Disease {name: p[0]}) MATCH (b:Disease {name: p[1]}) "
-        "MERGE (a)-[:accompany_with {name: 'complication'}]->(b)"
+        "UNWIND $pairs AS p MATCH (a:Disease {name: p[0], owner: $owner}) MATCH (b:Disease {name: p[1], owner: $owner}) "
+        "CREATE (a)-[:accompany_with {name: 'complication', owner: $owner}]->(b)"
     ),
     "disease_belongs_to": (
-        "UNWIND $pairs AS p MATCH (a:Disease {name: p[0]}) MATCH (b:Department {name: p[1]}) "
-        "MERGE (a)-[:disease_belongs_to {name: 'department'}]->(b)"
+        "UNWIND $pairs AS p MATCH (a:Disease {name: p[0], owner: $owner}) MATCH (b:Department {name: p[1], owner: $owner}) "
+        "CREATE (a)-[:disease_belongs_to {name: 'department', owner: $owner}]->(b)"
     ),
     "belongs_to": (
-        "UNWIND $pairs AS p MATCH (a:Department {name: p[0]}) MATCH (b:Department {name: p[1]}) "
-        "MERGE (a)-[:belongs_to {name: 'belong'}]->(b)"
+        "UNWIND $pairs AS p MATCH (a:Department {name: p[0], owner: $owner}) MATCH (b:Department {name: p[1], owner: $owner}) "
+        "CREATE (a)-[:belongs_to {name: 'belong', owner: $owner}]->(b)"
     ),
 }
 
@@ -103,7 +108,7 @@ def load_dataset(path=CSV_PATH):
             first["rows"] = [row for record in group for row in record["rows"]]
             diseases[name] = first
         else:
-            fields = sorted({key for other in group[1:] for key in content(first) if content(other)[key] != content(first)[key]})
+            fields = sorted({key for other in group[1:] for key in content(first) if key != "excluded" and content(other)[key] != content(first)[key]})
             quarantined[name] = {"rows": [r for record in group for r in record["rows"]], "fields": fields}
 
     field_issues = [issue for issue in issues if records[issue[0] - 1]["name"] in diseases]
@@ -163,23 +168,25 @@ def graph_data(dataset):
     }
 
 
-def existing_conflicts(driver, dataset):
-    def names(query, candidates):
-        if not candidates:
-            return []
+def existing_conflicts(driver, dataset, data):
+    def names(query, parameters):
         records, _, _ = driver.execute_query(
-            query, parameters_={"names": sorted(candidates)},
+            query, parameters_={"owner": OWNER, **parameters},
             database_=database.database_name(), routing_=RoutingControl.READ,
         )
         return [record["name"] for record in records]
 
-    conflicts = [
-        (name, "conflicting duplicate name")
-        for name in names("UNWIND $names AS name MATCH (d:Disease {name: name}) RETURN d.name AS name", dataset["quarantined_names"])
-    ]
-    for field, query in STALE_FIELD_QUERIES.items():
-        excluded = [name for name, record in dataset["diseases"].items() if field in record["excluded"]]
-        conflicts += [(name, f"quarantined field {field}") for name in names(query, excluded)]
+    planned = {
+        "Disease": sorted({row["name"] for row in data["diseases"]} | set(dataset["quarantined_names"])),
+        "Symptom": data["symptoms"],
+        "Department": data["departments"],
+    }
+    conflicts = []
+    for label, candidates in planned.items():
+        if candidates:
+            found = names(COLLISION_QUERY.format(label=label), {"names": candidates})
+            conflicts += [(name, f"{label} node not created by this importer") for name in found]
+    conflicts += [(name, "relationship not created by this importer") for name in names(FOREIGN_RELATIONSHIP_QUERY, {})]
     return conflicts
 
 
@@ -188,24 +195,45 @@ def create_constraints(driver):
         driver.execute_query(query, database_=database.database_name())
 
 
+@unit_of_work(timeout=WRITE_TIMEOUT_SECONDS)
 def write_graph(tx, data):
-    tx.run("UNWIND $rows AS row MERGE (d:Disease {name: row.name}) SET d += row.properties", rows=data["diseases"]).consume()
-    tx.run("UNWIND $names AS name MERGE (:Symptom {name: name})", names=data["symptoms"]).consume()
-    tx.run("UNWIND $names AS name MERGE (:Department {name: name})", names=data["departments"]).consume()
+    # Replace the importer's own snapshot; guards have already confirmed nothing foreign is attached.
+    tx.run("MATCH (n {owner: $owner}) DETACH DELETE n", owner=OWNER).consume()
+    tx.run(
+        "UNWIND $rows AS row CREATE (d:Disease) SET d = row.properties, d.name = row.name, d.owner = $owner",
+        rows=data["diseases"], owner=OWNER,
+    ).consume()
+    tx.run("UNWIND $names AS name CREATE (:Symptom {name: name, owner: $owner})", names=data["symptoms"], owner=OWNER).consume()
+    tx.run("UNWIND $names AS name CREATE (:Department {name: name, owner: $owner})", names=data["departments"], owner=OWNER).consume()
     for relationship, query in RELATIONSHIP_QUERIES.items():
-        tx.run(query, pairs=[list(pair) for pair in data["edges"][relationship]]).consume()
+        tx.run(query, pairs=[list(pair) for pair in data["edges"][relationship]], owner=OWNER).consume()
 
 
-def write_lines_atomically(path, lines):
+def entities_document(dataset, data):
+    return {
+        "source_sha256": dataset["source_sha256"],
+        "diseases": sorted(row["name"] for row in data["diseases"]),
+        "departments": data["departments"],
+        "symptoms": data["symptoms"],
+    }
+
+
+def stage_entities(document, path=ENTITIES_PATH):
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False, suffix=".tmp") as file:
-        file.write("\n".join(lines))
-    os.replace(file.name, path)
+        json.dump(document, file, ensure_ascii=False, indent=1)
+        file.write("\n")
+    return Path(file.name)
 
 
-def export_dictionaries(data):
-    write_lines_atomically(DICTIONARY_DIR / "diseases.txt", sorted(row["name"] for row in data["diseases"]))
-    write_lines_atomically(DICTIONARY_DIR / "symptoms.txt", data["symptoms"])
-    write_lines_atomically(DICTIONARY_DIR / "departments.txt", data["departments"])
+def publish_entities(staged, path=ENTITIES_PATH):
+    os.replace(staged, path)
+
+
+def discard(staged):
+    try:
+        staged.unlink()
+    except FileNotFoundError:
+        pass
 
 
 def print_report(dataset, data):
@@ -227,27 +255,40 @@ def main():
     print_report(dataset, data)
 
     try:
+        staged = stage_entities(entities_document(dataset, data))
+    except OSError as error:
+        print(f"Could not stage the entity dictionary ({type(error).__name__}); nothing was changed.", file=sys.stderr)
+        return 1
+
+    try:
         with database.create_driver() as driver:
-            conflicts = existing_conflicts(driver, dataset)
+            conflicts = existing_conflicts(driver, dataset, data)
             if conflicts:
                 for name, reason in conflicts:
-                    print(f"Refusing import: '{name}' already has graph data for a {reason}", file=sys.stderr)
+                    print(f"Refusing import: '{name}' has a {reason}", file=sys.stderr)
                 print("Reconcile these records manually or import into a fresh database. Nothing was changed.", file=sys.stderr)
+                discard(staged)
                 return 1
             create_constraints(driver)
             with driver.session(database=database.database_name()) as session:
                 session.execute_write(write_graph, data)
     except Exception as error:
+        discard(staged)
         print(f"Import failed ({type(error).__name__}); no graph data was committed.", file=sys.stderr)
         return 1
 
     try:
-        export_dictionaries(data)
+        publish_entities(staged)
     except OSError as error:
-        print(f"The graph was committed, but exporting the dictionaries failed ({type(error).__name__}).", file=sys.stderr)
+        discard(staged)
+        print(
+            f"The graph was committed, but publishing the entity dictionary failed ({type(error).__name__}). "
+            "The previous dictionary is unchanged; re-run the import to publish it.",
+            file=sys.stderr,
+        )
         return 1
 
-    print("Import committed and dictionaries exported.")
+    print("Import committed and entity dictionary published.")
     return 0
 
 

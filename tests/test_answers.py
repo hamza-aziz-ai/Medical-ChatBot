@@ -45,7 +45,7 @@ def test_missing_treatment_abstains_while_description_answers():
     assert searcher.answer_prettify("disease_cure_way", [{"subject": "asthma", "value": None}]) == []
     assert searcher.answer_prettify("disease_cure_way", [{"subject": "asthma", "value": []}]) == []
     assert searcher.answer_prettify("disease_description", [{"subject": "asthma", "value": "A lung disease."}]) == [
-        "asthma, familiar with: A lung disease."
+        "Description recorded for asthma: A lung disease."
     ]
 
 
@@ -78,5 +78,22 @@ def test_formatting_is_deterministic_and_capped():
     values = [f"treatment {i:02d}" for i in range(30)] * 2
     random.Random(7).shuffle(values)
     [answer] = searcher.answer_prettify("disease_cure_way", [{"subject": "asthma", "value": v} for v in values])
-    listed = answer.split(": ", 1)[1].split("; ")
+    assert answer.endswith(". This is not medical advice.")
+    listed = answer.split(": ", 1)[1].removesuffix(". This is not medical advice.").split("; ")
     assert listed == [f"treatment {i:02d}" for i in range(20)]
+
+
+def test_treatment_and_description_wording_is_not_advice():
+    searcher = AnswerSearcher(driver=FakeDriver())
+    [treatment] = searcher.answer_prettify("disease_cure_way", [{"subject": "asthma", "value": ["inhaler"]}])
+    assert treatment == "Treatments recorded for asthma: inhaler. This is not medical advice."
+    assert "you can try" not in treatment
+
+
+def test_queries_carry_a_timeout(monkeypatch):
+    monkeypatch.setenv("NEO4J_QUERY_TIMEOUT", "2.5")
+    driver = FakeDriver(rows=[{"subject": "asthma", "value": "dust"}])
+    searcher = AnswerSearcher(driver=driver)
+    searcher.search_main([{"question_type": "disease_cause", "sql": QuestionParser.sql_transfer("disease_cause", ["asthma"])}])
+    [query] = driver.raw_queries
+    assert query.timeout == 2.5

@@ -1,4 +1,4 @@
-from neo4j import RoutingControl
+from neo4j import Query, RoutingControl
 
 import database
 from terms import is_valid_term
@@ -9,8 +9,8 @@ FORMATS = {
     "symptom_disease": ("Diseases recorded as associated with symptom {0}: {1}. This is not a diagnosis.", ", ", True),
     "disease_prevention": ("Precautions for {0} include: {1}", "; ", False),
     "disease_cause": ("The possible causes of {0} are: {1}", "; ", False),
-    "disease_cure_way": ("For {0}, you can try the following treatments: {1}", "; ", True),
-    "disease_description": ("{0}, familiar with: {1}", "; ", False),
+    "disease_cure_way": ("Treatments recorded for {0}: {1}. This is not medical advice.", "; ", True),
+    "disease_description": ("Description recorded for {0}: {1}", "; ", False),
     "disease_accompany": ("Accompanying conditions recorded for {0}: {1}", "; ", True),
 }
 
@@ -19,6 +19,7 @@ class AnswerSearcher:
     def __init__(self, driver=None):
         self.driver = driver if driver is not None else database.create_driver()
         self.num_limit = 20
+        self.query_timeout = database.query_timeout()
 
     def close(self):
         self.driver.close()
@@ -49,7 +50,7 @@ class AnswerSearcher:
             answers = []
             for query, params in _sql["sql"]:
                 records, _, _ = self.driver.execute_query(
-                    query,
+                    Query(query, timeout=self.query_timeout),
                     parameters_=params,
                     database_=database.database_name(),
                     routing_=RoutingControl.READ,

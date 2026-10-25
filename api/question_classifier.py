@@ -1,3 +1,4 @@
+import json
 import re
 from pathlib import Path
 
@@ -5,12 +6,13 @@ import ahocorasick
 
 from terms import is_valid_term
 
-DICTIONARY_DIR = Path(__file__).resolve().parent / "dictionary"
+ENTITIES_PATH = Path(__file__).resolve().parent / "dictionary" / "entities.json"
 
 
-def load_terms(file_name):
-    with open(DICTIONARY_DIR / file_name, encoding="utf-8") as file:
-        return [line.strip() for line in file if is_valid_term(line)]
+def load_entities(path=ENTITIES_PATH):
+    with open(path, encoding="utf-8") as file:
+        data = json.load(file)
+    return {key: [term.strip() for term in data[key] if is_valid_term(term)] for key in ("diseases", "departments", "symptoms")}
 
 
 def is_word_char(char):
@@ -19,9 +21,10 @@ def is_word_char(char):
 
 class QuestionClassifier:
     def __init__(self):
-        self.disease_words = load_terms("diseases.txt")
-        self.department_words = load_terms("departments.txt")
-        self.symptom_words = load_terms("symptoms.txt")
+        entities = load_entities()
+        self.disease_words = entities["diseases"]
+        self.department_words = entities["departments"]
+        self.symptom_words = entities["symptoms"]
 
         self.region_words = set(self.department_words + self.disease_words + self. symptom_words)
 

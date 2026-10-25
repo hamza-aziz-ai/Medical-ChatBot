@@ -15,12 +15,15 @@ class FakeDriver:
 
     def __init__(self, rows=None, results=None):
         self.calls = []
+        self.raw_queries = []
         self.rows = rows or []
         self.results = results or {}
 
     def execute_query(self, query, parameters_=None, **kwargs):
-        self.calls.append((query, parameters_ or {}))
-        rows = self.results.get(query, self.rows)
+        self.raw_queries.append(query)
+        text = getattr(query, "text", query)
+        self.calls.append((text, parameters_ or {}))
+        rows = self.results.get(text, self.rows)
         return [FakeRecord(row) for row in rows], None, None
 
     def close(self):
