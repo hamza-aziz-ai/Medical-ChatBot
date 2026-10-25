@@ -48,7 +48,7 @@ describe("App", () => {
 
     finish(reply(200, { message: "done" }));
     await flushPromises();
-    expect(wrapper.find("button").element.disabled).toBe(false);
+    expect(wrapper.find('button[type="submit"]').element.disabled).toBe(false);
   });
 
   it("shows API errors and lets the user try again", async () => {
@@ -61,6 +61,7 @@ describe("App", () => {
     await ask(wrapper, "q1");
     await flushPromises();
     expect(wrapper.text()).toContain("Too many questions");
+    expect(wrapper.find(".message.is-error").exists()).toBe(true);
 
     await ask(wrapper, "q2");
     await flushPromises();
@@ -70,7 +71,8 @@ describe("App", () => {
 
   it("shows the medical-advice notice and makes no external image requests", () => {
     const wrapper = mount(App);
-    expect(wrapper.find('[role="note"]').text()).toContain("Not medical advice.");
+    expect(wrapper.find('[role="note"]').text()).toContain("Not medical advice");
+    expect(wrapper.text()).toContain("Always consult a qualified medical professional.");
     expect(wrapper.findAll("img").filter((img) => /^https?:/.test(img.attributes("src") || ""))).toHaveLength(0);
   });
 });

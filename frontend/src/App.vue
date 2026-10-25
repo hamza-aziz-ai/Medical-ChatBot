@@ -1,27 +1,53 @@
 <template>
-  <div class="layout">
-    <header class="site-header">
-      <h1>Mr. Healthcare</h1>
-      <p class="subtitle">
-        B.Tech final-year project by Hamza Aziz and Mahak Agrawal
-      </p>
-      <p
-        class="notice"
-        role="note"
-      >
-        <strong>Not medical advice.</strong> Answers come from a dataset whose source and clinical accuracy are unverified.
-        Always consult a qualified medical professional.
-      </p>
+  <div class="app">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <span
+            class="brand-mark"
+            aria-hidden="true"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+            ><path
+              d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"
+              fill="currentColor"
+            /></svg>
+          </span>
+          <div>
+            <h1>Mr. Healthcare</h1>
+            <p class="tagline">
+              Answers from a medical knowledge graph
+            </p>
+          </div>
+        </div>
+        <p
+          class="badge"
+          role="note"
+        >
+          Not medical advice
+        </p>
+      </div>
     </header>
 
     <main class="workspace">
       <ChatPanel
         :messages="messages"
         :busy="botTyping"
+        :suggestions="suggestions"
         @send="messageSendHandler"
       />
       <MedicalChatbot />
     </main>
+
+    <footer class="footer">
+      <p>
+        Answers come from a dataset whose source and clinical accuracy are unverified. Always consult a qualified medical professional.
+      </p>
+      <p>B.Tech final-year project by Hamza Aziz and Mahak Agrawal.</p>
+    </footer>
   </div>
 </template>
 
@@ -41,10 +67,17 @@ export default {
         {
           agent: "bot",
           type: "text",
-          text: "Hello! I'm Mr. Healthcare. Ask me about the symptoms, causes, prevention or treatments of a disease.",
+          text: "Hello! I'm Mr. Healthcare. Ask me about the symptoms, causes, prevention, treatments or complications of a disease.",
         },
       ],
       botTyping: false,
+      // Each one is answered by the shipped graph (see eval/cases.jsonl).
+      suggestions: [
+        "What are the symptoms of asthma?",
+        "What causes migraine?",
+        "How can I prevent anemia?",
+        "Which diseases cause tiredness?",
+      ],
     };
   },
   methods: {
