@@ -1047,3 +1047,6 @@ notebooks/data/train.csv
 
 # Application logs (see api/app_logging.py)
 logs/
+
+# Local deployment state and graph backups (see scripts/update_stack.py)
+deploy/

@@ -32,6 +32,18 @@ Releases go in merge order, so a merge whose release fails blocks the merges aft
 1. Point the stack at the last good images: copy `API_IMAGE` and `WEB_IMAGE` from that release's `release.env` into `.env`, then `docker compose up -d`.
 2. Check the page and one question (see TESTING.md, manual path).
 
+## The stack updater
+
+`scripts/update_stack.py` restores the previous release by itself when an update fails, and does not retry that release (`deploy/failed.json`; delete it to allow a retry). If it cannot restore, it leaves the app stopped and marks `deploy/journal.json` with `recovery_failed`, and every later run stops until you act:
+
+1. Disable the scheduled task.
+2. The journal names the previous release, its `compose.yaml` folder under `deploy/releases/`, and the graph backup under `deploy/backups/`.
+3. Restore the backup into the `medical-chatbot_neo4j-data` volume with the stack stopped (`docker run --rm -v medical-chatbot_neo4j-data:/data -v <backups folder>:/backup --entrypoint sh <neo4j image from compose.yaml> -c "find /data -mindepth 1 -delete && tar xzpf /backup/<archive> -C /data"`).
+4. Start the previous release: set `API_IMAGE` and `WEB_IMAGE` from its `release.env` and run `docker compose -f deploy/releases/<tag>/compose.yaml --project-directory . up -d`.
+5. Check the page and one question, delete `deploy/journal.json`, and enable the task again.
+
+Backups and release folders still referenced by the recorded release or a journal are never pruned.
+
 ## Graph data
 
 The importer replaces its snapshot, so a bad import is undone by importing again from a good version.

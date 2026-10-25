@@ -21,7 +21,7 @@ logger = logging.getLogger("app_logging")
 # This project's modules; each gets its own log file named after it.
 MODULES = frozenset({
     "main", "chatbot_graph_logic", "question_classifier", "question_parser",
-    "answer_searcher", "database", "terms", "build_medicalgraph", "app_logging",
+    "answer_searcher", "database", "terms", "build_medicalgraph", "app_logging", "update_stack",
 })
 
 DEFAULT_LOG_DIR = Path(__file__).resolve().parents[1] / "logs"

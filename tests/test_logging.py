@@ -119,5 +119,8 @@ def test_each_module_logs_to_its_own_file(tmp_path):
 
 def test_every_project_module_has_a_log_file():
     from pathlib import Path
-    modules = {p.stem for p in (Path(app_logging.__file__).parent).glob("*.py")}
+    root = Path(app_logging.__file__).resolve().parents[1]
+    modules = {p.stem for p in (root / "api").glob("*.py")}
+    # Scripts that log through app_logging, such as the stack updater, get a file too.
+    modules |= {p.stem for p in (root / "scripts").glob("*.py") if "setup_logging" in p.read_text(encoding="utf-8")}
     assert modules == set(app_logging.MODULES)

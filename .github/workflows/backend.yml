@@ -9,6 +9,7 @@ on:
       - "notebooks/**"
       - "scripts/evaluate_kg.py"
       - "scripts/next_release.py"
+      - "scripts/update_stack.py"
       - ".github/workflows/release.yml"
       - ".github/workflows/autorelease.yml"
       - "eval/**"

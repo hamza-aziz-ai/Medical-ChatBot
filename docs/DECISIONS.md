@@ -257,3 +257,16 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Trade-off:** About 15 minutes per release, one after another. A merge whose release keeps failing blocks later releases until the owner publishes a later commit by hand (`release.yml` with `tag` and `sha`), which deliberately skips separate releases for the merges in between. A change and its revert are two releases.
 - **Bootstrap:** everything merged before this is released by the owner as one `v1.1.0`; automatic runs pass `--require-baseline v1.1.0` and refuse to drain the older backlog one by one.
 - **Revisit if:** releases queue up faster than they publish.
+
+## D-021: Update the local stack automatically when a release is published
+
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5); design agreed with Codex in council (4 exchanges)
+- **Context:** Releases are now automatic (D-019, D-020). The owner asked for the running stack to update and restart itself. It runs on the owner's Windows machine, bound to loopback, with no inbound access.
+- **Options:**
+  1. a self-hosted GitHub runner that deploys from the release workflow
+  2. a container auto-updater (for example Watchtower) following a moving tag
+  3. a scheduled script on the machine that polls GitHub for releases
+- **Chosen:** 3. `scripts/update_stack.py`, run every 15 minutes by a Windows scheduled task while the owner is signed in. Read-only enrolment records a running published release. Each update pulls first, then, in a short maintenance window, stops the stack, takes and checks an offline backup of the graph volume, re-imports with the new image, starts the new images and checks health; a journal with phases lets any failure or crash restore the previous release, restoring the backup only once it was verified. A release whose `compose.yaml` differs from the enrolled one is not deployed automatically.
+- **Why:** No inbound access, no new secrets and no runner on a public repository. A compose file can grant host access, so only an enrolled one runs unattended. The backup is required before any import on a real database (CONSTRAINTS.md), and stopping the API during the import avoids an old dictionary answering against a new graph.
+- **Trade-off:** About a minute of downtime per release (backup 5 s and restore 3 s measured on a small volume; the full cycle is not yet measured). Updates happen only while the owner is signed in with Docker Desktop running. A release that changes `compose.yaml` needs the owner's review and a new enrolment.
+- **Revisit if:** the app is hosted somewhere else, or releases come faster than about one per 15 minutes.
