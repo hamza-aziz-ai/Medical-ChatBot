@@ -58,7 +58,7 @@ Set it up once:
 
 1. Run a published release: download its `compose.yaml` and `release.env` from the GitHub release, then `docker compose -f <that compose.yaml> --project-directory . up -d` with `API_IMAGE` and `WEB_IMAGE` set from `release.env`.
 2. Record it: `.venv\Scripts\python scripts\update_stack.py --enroll`. It checks that the running images and `compose.yaml` are that release's, and changes nothing.
-3. Schedule it: `schtasks /Create /TN "Medical-ChatBot update" /SC MINUTE /MO 15 /IT /F /TR "\"<repo>\.venv\Scripts\pythonw.exe\" \"<repo>\scripts\update_stack.py\""`, with `<repo>` the full path of this folder.
+3. Schedule it from PowerShell: `schtasks --% /Create /TN "Medical-ChatBot update" /SC MINUTE /MO 15 /IT /F /TR "<repo>\.venv\Scripts\pythonw.exe <repo>\scripts\update_stack.py"`, with `<repo>` the full path of this folder. `--%` stops PowerShell from rewriting the quotes; if the path contains spaces, use `Register-ScheduledTask` instead. Check it with `schtasks /Query /TN "Medical-ChatBot update" /V /FO LIST`.
 
 A release that changes `compose.yaml` is not deployed automatically: review it, deploy it by hand as in step 1, and enrol again. While the task is enabled, run `python scripts/update_stack.py` instead of pulling or restarting the stack by hand. Logs go to `logs/<year>/<Month>/update_stack.log`; recovery steps are in `docs/ROLLBACK.md`.
 
