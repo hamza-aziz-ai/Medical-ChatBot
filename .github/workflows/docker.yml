@@ -1,0 +1,37 @@
+name: docker
+
+# Builds both images and runs the disposable Compose smoke test when anything copied into them changes.
+on:
+  pull_request:
+    paths: &docker-paths
+      - "docker/**"
+      - "compose.yaml"
+      - "requirements.txt"
+      - "requirements-deploy.txt"
+      - "scripts/compose_smoke.sh"
+      - "api/**"
+      - "!api/models/**"
+      - "!api/data/questions.json"
+      - "frontend/**"
+      - "!frontend/tests/**"
+      - "!frontend/README.md"
+      - ".github/workflows/docker.yml"
+  push:
+    branches: [main]
+    paths: *docker-paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-docker-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - run: bash scripts/compose_smoke.sh

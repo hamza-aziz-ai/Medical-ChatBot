@@ -714,6 +714,8 @@ cython_debug/
 [Ll]ib64
 [Ll]ocal
 [Ss]cripts
+# The repository's own helper scripts (the pattern above targets virtualenv folders).
+!/scripts/
 pyvenv.cfg
 pip-selfcheck.json
 

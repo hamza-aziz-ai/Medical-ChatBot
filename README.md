@@ -35,9 +35,45 @@ flask --app main run
 
 The frontend is Vue 3 built with Vite and needs Node `^22.13.0 || ^24.0.0`. From `frontend/`, run `yarn install` and then `yarn dev` (development, http://localhost:8080) or `yarn build` and `yarn preview` (the built site on the same port, which the API's default CORS origins allow). Set `VITE_API_BASE_URL` in `frontend/.env` (template: `frontend/.env.example`) if the API is not at `http://localhost:5000`. Never put the API token in a `VITE_*` variable: Vite compiles those into the public bundle. Enter the value of `CHATBOT_API_TOKEN` in the page's "API token" field instead; the page keeps it in memory only.
 
-Run the checks with `python -m pytest tests` from the repository root, and `yarn lint` and `yarn test` from `frontend/` (`yarn test` runs the Node helper tests and the Vitest component tests). None of them needs a running Neo4j server. GitHub Actions runs them on every push and pull request, with the frontend on Node 22 and 24.
+Run the checks with `python -m pytest tests` from the repository root, and `yarn lint` and `yarn test` from `frontend/` (`yarn test` runs the Node helper tests and the Vitest component tests). None of them needs a running Neo4j server. GitHub Actions runs them when the files they cover change (see CI/CD and MLOps).
 
 The live tests in `tests/test_live_neo4j.py` run against a real server and **delete all data in it**, so they only run when `NEO4J_TEST_URI`, `NEO4J_PASSWORD` and `NEO4J_TEST_ALLOW_WIPE=1` are set. Use a disposable container, for example `docker run --rm -p 127.0.0.1:7687:7687 -e NEO4J_AUTH=neo4j/<test password> neo4j:5`. CI runs them against Neo4j 5 and 4.4.
+
+## Docker
+
+`compose.yaml` runs Neo4j, the API (gunicorn, one worker) and the web frontend (nginx), reading `NEO4J_PASSWORD` and `CHATBOT_API_TOKEN` from `.env`. Only the web port is published, on `127.0.0.1:8080` (`WEB_PORT` changes it); nginx serves the page and forwards `/api/` to the API, so the browser talks to one origin and no CORS setup is needed. Neo4j is reachable only inside the stack.
+
+```
+docker compose up -d --wait neo4j
+docker compose --profile init run --rm importer   # first run, or after the data changes
+docker compose up -d
+```
+
+The importer replaces the graph snapshot, so it runs only when asked for; a normal `up` or restart never re-imports. The graph lives in the `neo4j-data` volume and the API logs in `api-logs`. Back up the graph by stopping the stack and copying the `neo4j-data` volume; to roll back, restore the volume, or run the importer from the image of the release you want. Restart `api` after an import so it loads the new dictionary. To run a published release instead of building locally, set `API_IMAGE` and `WEB_IMAGE` to the values in that release's `release.env`.
+
+nginx writes no access or error log, because both would contain the question from the request URL. The cost is that nginx problems are not logged; to debug locally, temporarily set `error_log stderr warn;` in `docker/nginx.conf`, and never publish that image. The API container's healthcheck only shows that the port is open, not that the graph is imported.
+
+`scripts/compose_smoke.sh` builds both images and tests the whole stack in a throwaway project: import, the page, an authenticated answer through `/api`, a wrong token, an abstention, an API outage, and that no question or token reaches any container output or API log file.
+
+## CI/CD and MLOps
+
+Every workflow runs only when its inputs change, so documentation-only changes start nothing. Nothing is published until a version tag is pushed.
+
+| Workflow | Runs when these change | What it does |
+|---|---|---|
+| `backend.yml` | `api/`, `tests/`, `notebooks/`, `eval/`, `scripts/evaluate_kg.py`, `requirements*.txt` | Offline pytest suite |
+| `frontend.yml` | `frontend/` | Lint, tests and build on Node 22 and 24 |
+| `mlops.yml` | the CSV, the dictionary, the importer and the modules that answer questions, `eval/`, the evaluator, the requirements and the importer, evaluation and live tests | Data gates, live tests on Neo4j 5 and 4.4, then a real import and evaluation on Neo4j 5 |
+| `docker.yml` | `docker/`, `compose.yaml`, the requirements, the smoke script, and the `api/` and `frontend/` files copied into the images | Builds both images and runs the Compose smoke test |
+| `release.yml` | a pushed `vX.Y.Z` tag, or a manual run for an existing tag | Continuous delivery (below) |
+
+Superseded pull-request runs are cancelled; runs on `main` and releases are not. Each workflow can also be started by hand from the Actions tab. `main` has no branch protection, so a workflow skipped by its path filter blocks nothing. Before requiring status checks, add one always-running gate job, or skipped checks will stay pending forever.
+
+**MLOps.** The runtime serves a knowledge graph, not a trained model, so the pipeline manages the graph's lifecycle. The importer refuses a CSV with missing columns, rows without a disease name, or no diseases left after quarantine. `scripts/evaluate_kg.py` imports the shipped CSV into a disposable Neo4j and runs the reviewed cases in `eval/cases.jsonl` through the real chatbot: intents, entities, mandatory abstentions, and expected facts that tests trace back to the CSV records. It fails if any case fails, or if the import counts differ from the reviewed `eval/baseline.json`. Change the baseline or the cases only in a reviewed commit; CI never rewrites them. The report (`eval-report.json`, also shown in the run summary) holds counts, case IDs, the source hash, the commit and the Neo4j version, never a question or an answer. This checks that answers match the source data; it does not measure medical accuracy.
+
+**Releasing.** Push a tag such as `v1.0.0` from a commit on `main`. The release workflow checks that the tag is stable SemVer, is on `main`, and has no existing release or images. It then runs the backend, frontend and MLOps checks on that exact commit, and builds and pushes both images to GHCR under `sha-<commit>` with an SBOM and provenance. It smoke-tests those exact image digests with Compose, and then drafts a GitHub Release. The release holds `compose.yaml`, `env.example`, `release.env` (the image digests), the frontend build, `entities.json`, the evaluation report and a manifest. Only after every asset uploads does it add the version tag to the images and publish the release. There is no `latest` tag, and published versions are never overwritten. New GHCR packages are private even in a public repository; to allow anonymous pulls, change each package's visibility under the repository's Packages settings.
+
+**Not automated.** Deployment to a hosted server is not automated: there is no target, account or budget, and putting a medical-information service online is the owner's decision. To add it, create a protected `production` environment and a deploy job that runs after `publish`. Retraining the historical notebooks is not automated either, because they are not used at runtime, cannot be reproduced (see Known limitations), and need Kaggle access and the multi-gigabyte GloVe embeddings. There are no scheduled runs.
 
 ## Graph import
 
@@ -65,7 +101,7 @@ Every backend module writes its own rotating log file in `logs/<year>/<Month>/`,
 | `LOG_BACKUP_COUNT` | `30` | Rotated files kept per module log, across all folders; `0` keeps every file |
 | `LOG_DIR` | `logs` in the repository root | Where the year folders go; git-ignored |
 
-The API does not log questions, tokens or credentials, and silences the development server's request log, which would otherwise print each question in the URL. This applies to the Flask app and its local development server only; configure any other server or proxy separately.
+The API does not log questions, tokens or credentials, and silences the development server's request log, which would otherwise print each question in the URL. This applies to the Flask app and its local development server. The Docker images keep the same rule: gunicorn has no access log, and nginx logs nothing (see Docker). Configure any other server or proxy separately.
 
 ## Runtime behavior
 

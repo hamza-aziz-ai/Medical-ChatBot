@@ -1,0 +1,10 @@
+{
+  "counts": {
+    "diseases": 658,
+    "quarantined_names": 8,
+    "field_issues": 72,
+    "symptoms": 1772,
+    "departments": 43,
+    "unresolved_links": 659
+  }
+}

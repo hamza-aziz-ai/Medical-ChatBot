@@ -1,0 +1,187 @@
+name: release
+
+# Continuous delivery: runs only when the owner pushes a stable version tag (vX.Y.Z) that is on main,
+# or re-runs one by hand for an existing tag. Nothing is deployed to a host.
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing stable version tag on main, for example v1.0.0
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/medical-chatbot
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
+      sha: ${{ steps.tag.outputs.sha }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+      - id: tag
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || { echo "::error::$TAG is not a stable version tag (vX.Y.Z)"; exit 1; }
+          git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || { echo "::error::Tag $TAG does not exist"; exit 1; }
+          sha=$(git rev-list -n 1 "$TAG")
+          git merge-base --is-ancestor "$sha" origin/main || { echo "::error::$TAG ($sha) is not on main"; exit 1; }
+          if gh release view "$TAG" >/dev/null 2>&1; then echo "::error::Release $TAG already exists"; exit 1; fi
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin >/dev/null
+          for image in api web; do
+            if docker buildx imagetools inspect "$IMAGE_PREFIX-$image:${TAG#v}" >/dev/null 2>&1; then
+              echo "::error::$IMAGE_PREFIX-$image:${TAG#v} is already published"; exit 1
+            fi
+          done
+          { echo "tag=$TAG"; echo "version=${TAG#v}"; echo "sha=$sha"; } >> "$GITHUB_OUTPUT"
+
+  backend:
+    needs: resolve
+    uses: ./.github/workflows/backend.yml
+    with:
+      sha: ${{ needs.resolve.outputs.sha }}
+
+  frontend:
+    needs: resolve
+    uses: ./.github/workflows/frontend.yml
+    with:
+      sha: ${{ needs.resolve.outputs.sha }}
+
+  mlops:
+    needs: resolve
+    uses: ./.github/workflows/mlops.yml
+    with:
+      sha: ${{ needs.resolve.outputs.sha }}
+
+  images:
+    needs: [resolve, backend, frontend, mlops]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      api: ${{ steps.api.outputs.digest }}
+      web: ${{ steps.web.outputs.digest }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      # Pushed under the commit tag only; the version tag is added after the smoke test passes.
+      - id: api
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/api.Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}-api:sha-${{ needs.resolve.outputs.sha }}
+          provenance: mode=max
+          sbom: true
+      - id: web
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/web.Dockerfile
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}-web:sha-${{ needs.resolve.outputs.sha }}
+          provenance: mode=max
+          sbom: true
+
+  smoke:
+    needs: [resolve, images]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Smoke-test the exact published digests
+        env:
+          SKIP_BUILD: "1"
+          API_IMAGE: ${{ env.IMAGE_PREFIX }}-api@${{ needs.images.outputs.api }}
+          WEB_IMAGE: ${{ env.IMAGE_PREFIX }}-web@${{ needs.images.outputs.web }}
+        run: bash scripts/compose_smoke.sh
+
+  publish:
+    needs: [resolve, images, smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      packages: write
+    env:
+      TAG: ${{ needs.resolve.outputs.tag }}
+      VERSION: ${{ needs.resolve.outputs.version }}
+      SHA: ${{ needs.resolve.outputs.sha }}
+      API_DIGEST: ${{ needs.images.outputs.api }}
+      WEB_DIGEST: ${{ needs.images.outputs.web }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: eval-report
+          path: dist
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Collect release assets
+        run: |
+          cp compose.yaml api/dictionary/entities.json dist/
+          # Release assets cannot start with a dot.
+          cp .env.example dist/env.example
+          printf 'API_IMAGE=%s\nWEB_IMAGE=%s\n' "$IMAGE_PREFIX-api@$API_DIGEST" "$IMAGE_PREFIX-web@$WEB_DIGEST" > dist/release.env
+          # Ship the exact frontend that the tested web image serves.
+          container=$(docker create "$IMAGE_PREFIX-web@$WEB_DIGEST")
+          docker cp "$container:/usr/share/nginx/html" frontend-dist
+          docker rm "$container" >/dev/null
+          tar -czf dist/frontend-dist.tgz -C frontend-dist .
+          jq -n --arg tag "$TAG" --arg sha "$SHA" --arg api "$IMAGE_PREFIX-api@$API_DIGEST" --arg web "$IMAGE_PREFIX-web@$WEB_DIGEST" \
+            --slurpfile report dist/eval-report.json \
+            '{tag: $tag, commit: $sha, images: {api: $api, web: $web}, source_sha256: $report[0].source_sha256, evaluation_passed: $report[0].passed}' \
+            > dist/manifest.json
+      - name: Draft the release
+        run: gh release create "$TAG" --draft --verify-tag --generate-notes --title "$TAG" dist/*
+      - name: Add the version tag to the tested images
+        run: |
+          docker buildx imagetools create -t "$IMAGE_PREFIX-api:$VERSION" "$IMAGE_PREFIX-api@$API_DIGEST"
+          docker buildx imagetools create -t "$IMAGE_PREFIX-web:$VERSION" "$IMAGE_PREFIX-web@$WEB_DIGEST"
+      - name: Publish the release
+        run: gh release edit "$TAG" --draft=false

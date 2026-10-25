@@ -21,6 +21,7 @@ ENTITIES_PATH = BASE_DIR / "dictionary" / "entities.json"
 
 SCALAR_FIELDS = {"Description": "description", "Prevention": "prevention", "Causes": "causes"}
 LIST_FIELDS = {"Symptoms": "symptoms", "Accompany": "accompany", "Cure Department": "cure_department", "Cure Way": "cure_way"}
+REQUIRED_COLUMNS = {"Name", *SCALAR_FIELDS, *LIST_FIELDS}
 
 # Every node and relationship this importer writes carries this marker. A re-import replaces
 # exactly the marked snapshot and never touches anything else in the database.
@@ -93,11 +94,15 @@ def content(record):
 
 def load_dataset(path=CSV_PATH):
     raw = Path(path).read_bytes()
+    reader = csv.DictReader(io.StringIO(raw.decode("utf-8"), newline=""))
+    missing = REQUIRED_COLUMNS - set(reader.fieldnames or [])
+    if missing:
+        raise ValueError(f"{Path(path).name} is missing columns: {', '.join(sorted(missing))}")
     issues = []
-    records = [
-        parse_record(row, row_number, issues)
-        for row_number, row in enumerate(csv.DictReader(io.StringIO(raw.decode("utf-8"), newline="")), start=1)
-    ]
+    records = [parse_record(row, row_number, issues) for row_number, row in enumerate(reader, start=1)]
+    blank = [record["rows"][0] for record in records if not record["name"]]
+    if blank:
+        raise ValueError(f"{Path(path).name} has rows without a disease name: {blank[:10]}")
 
     by_name = {}
     for record in records:
@@ -113,6 +118,8 @@ def load_dataset(path=CSV_PATH):
             fields = sorted({key for other in group[1:] for key in content(first) if key != "excluded" and content(other)[key] != content(first)[key]})
             quarantined[name] = {"rows": [r for record in group for r in record["rows"]], "fields": fields}
 
+    if not diseases:
+        raise ValueError(f"{Path(path).name} has no diseases left after quarantine")
     field_issues = [issue for issue in issues if records[issue[0] - 1]["name"] in diseases]
     return {
         "source_file": Path(path).name,
@@ -269,7 +276,11 @@ def main():
     database.log_env_loaded(loaded)
     logging.getLogger("neo4j.notifications").setLevel(logging.ERROR)
     report("Import started")
-    dataset = load_dataset()
+    try:
+        dataset = load_dataset()
+    except ValueError as error:
+        report(f"Refusing import: {error}. Nothing was changed.", logging.ERROR)
+        return 1
     data = graph_data(dataset)
     print_report(dataset, data)
 
