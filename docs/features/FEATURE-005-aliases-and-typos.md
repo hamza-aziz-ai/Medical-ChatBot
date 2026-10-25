@@ -13,3 +13,4 @@
 ## Log
 
 - 2026-10-25: Built. Backend 172 tests offline and 181 live passed; evaluation 21/21 with no integrity failures and 0 chip mismatches; frontend 11 helper and 20 component tests passed.
+- 2026-10-25: A-13 fixed (D-017 addendum): names containing filler words or intent keywords are suggested whole, from the window that is the misspelling, with punctuation kept. Offline 249 passed, 9 skipped; live 258 passed. A normal typo question takes about 30 ms; the worst case is unchanged (A-14).

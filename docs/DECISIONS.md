@@ -217,6 +217,7 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** Aliases from MedlinePlus "Also called" lists are exact equivalents, so they apply directly and are shown in "Why this answer?". A misspelling is only ever offered ("Did you mean asthma?"), because a near-miss can be a different disease.
 - **Trade-off:** The alias list is small and maintained by hand; the typo cutoff (0.8, stdlib `difflib`) was tuned on a small reviewed set.
 - **Revisit if:** a curated synonym source (for example the Disease Ontology) is adopted.
+- **Addendum (2026-10-25, A-13, agreed with Codex in council):** candidates are now every 1-3-word window of the question that holds at least one word that is neither filler nor an intent keyword, deduplicated in order, keeping inner punctuation; each suggested name keeps the window it matches best (scored as difflib does) and names keep first-seen order. Names containing keywords or filler ("deep palm infection", "face of bruises") are now suggested whole: 69 of 69 one-swap typos of such names, against 14 before, with complete corrected questions. A 12-token cap was rejected because it broke ordinary long questions; global ordering by score was considered and not needed. Cutoff, limit of 3 and confirm-only are unchanged.
 
 ## D-018: Words inside a matched name are not intent keywords
 
