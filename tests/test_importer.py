@@ -70,6 +70,43 @@ def test_invalid_datasets_are_refused(tmp_path, text, problem):
         builder.load_dataset(path)
 
 
+def department_row(number, name, departments, accompany="[]"):
+    return f'{number},{name},d,p,c,"[\'cough\']","{accompany}","{departments}","[\'rest\']"\n'
+
+
+def test_self_companion_is_skipped_and_reported(tmp_path):
+    data = builder.graph_data(builder.load_dataset(write_csv(tmp_path, row(0, "a", accompany="['a', 'b']"), row(1, "b"))))
+    assert data["edges"]["accompany_with"] == [("a", "b")]
+    assert data["self_companions"] == ["a"]
+
+
+def test_repeated_department_is_one_department_without_a_hierarchy_edge(tmp_path):
+    data = builder.graph_data(builder.load_dataset(write_csv(tmp_path, department_row(0, "a", "['oncology', 'oncology']"))))
+    assert data["edges"]["disease_belongs_to"] == [("a", "oncology")]
+    assert data["edges"]["belongs_to"] == []
+    assert data["repeated_departments"] == ["a"]
+    # The source list is kept as written.
+    assert data["diseases"][0]["properties"]["cure_department"] == ["oncology", "oncology"]
+
+
+def test_more_than_two_departments_is_quarantined_for_that_disease(tmp_path):
+    dataset = builder.load_dataset(write_csv(tmp_path, department_row(0, "a", "['x', 'y', 'z']"), department_row(1, "b", "['x', 'y']")))
+    assert dataset["field_issues"] == [(1, "Cure Department", "more than two departments")]
+    data = builder.graph_data(dataset)
+    assert data["edges"]["disease_belongs_to"] == [("b", "y")]
+    assert "cure_department" not in data["diseases"][0]["properties"]
+
+
+def test_department_cycle_is_refused_before_anything_is_written(tmp_path, monkeypatch):
+    path = write_csv(tmp_path, department_row(0, "a", "['x', 'y']"), department_row(1, "b", "['y', 'x']"))
+    with pytest.raises(ValueError, match="department hierarchy has a cycle"):
+        builder.graph_data(builder.load_dataset(path))
+    load = builder.load_dataset
+    monkeypatch.setattr(builder, "load_dataset", lambda: load(path))
+    monkeypatch.setattr(builder.database, "create_driver", lambda: pytest.fail("must not connect"))
+    assert builder.main() == 1
+
+
 def plan(path):
     dataset = builder.load_dataset(path)
     return dataset, builder.graph_data(dataset)

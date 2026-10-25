@@ -5,6 +5,12 @@
     "field_issues": 72,
     "symptoms": 1772,
     "departments": 43,
-    "unresolved_links": 659
+    "unresolved_links": 659,
+    "self_companions": 5,
+    "repeated_departments": 14,
+    "has_symptom_relationships": 4332,
+    "accompany_with_relationships": 282,
+    "disease_belongs_to_relationships": 658,
+    "belongs_to_relationships": 29
   }
 }
