@@ -6,7 +6,10 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** original project (observed 2026-10-25); **Model:** original authors; reviewed by Claude Opus 5.5 + Codex
 - **Context:** A medical Q&A bot must not invent answers.
-- **Options:** 1) graph + templates  2) generative model  3) retrieval over stored Q&A
+- **Options:**
+  1. graph + templates
+  2. generative model
+  3. retrieval over stored Q&A
 - **Chosen:** 1
 - **Why:** Every answer is an inspectable query result.
 - **Trade-off:** Only questions matching the dictionaries and keywords are understood.
@@ -16,7 +19,9 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5) + Codex council
 - **Context:** When the graph had no answer, a Siamese-LSTM (trained on Kaggle Quora Question Pairs) picked the most similar stored questiondoctors.com question and returned its answer. Its weights were missing, the selection always picked record 0, and the ranking ignored the query (D1, D2, D23).
-- **Options:** 1) repair and retrain  2) remove and abstain
+- **Options:**
+  1. repair and retrain
+  2. remove and abstain
 - **Chosen:** 2
 - **Why:** Returning another patient's answer to an unrelated question is unsafe; retraining is not reproducible (D21).
 - **Trade-off:** More "I cannot answer" replies.
@@ -26,7 +31,10 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 + Codex council
 - **Context:** 72 malformed list fields and 8 conflicting disease names in the CSV.
-- **Options:** 1) repair heuristically  2) drop whole rows  3) exclude the bad field or name and report it
+- **Options:**
+  1. repair heuristically
+  2. drop whole rows
+  3. exclude the bad field or name and report it
 - **Chosen:** 3
 - **Why:** Keeps every valid fact without inventing any.
 - **Trade-off:** Some diseases answer fewer intents.
@@ -36,7 +44,10 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 + Codex council
 - **Context:** Re-imports left stale facts; imports could overwrite unrelated data.
-- **Options:** 1) MERGE upserts  2) wipe the database  3) mark owned data and replace only it, refusing collisions
+- **Options:**
+  1. MERGE upserts
+  2. wipe the database
+  3. mark owned data and replace only it, refusing collisions
 - **Chosen:** 3
 - **Why:** Removed facts disappear; foreign data is never touched.
 - **Trade-off:** Collisions need manual reconciliation.
@@ -46,7 +57,10 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 + Codex council
 - **Context:** The API was open to any caller.
-- **Options:** 1) user accounts  2) shared token  3) network isolation only
+- **Options:**
+  1. user accounts
+  2. shared token
+  3. network isolation only
 - **Chosen:** 2, plus loopback binding
 - **Why:** Proportionate for a local prototype.
 - **Trade-off:** One leaked token opens the API until rotated.
@@ -56,7 +70,10 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 + Codex council
 - **Context:** Vue 2 end of life; Vue CLI only installed on Node 18; 88 dependency alerts.
-- **Options:** 1) Vue 3 + keep a widget library  2) Vue 3 + small own panel  3) stay on Vue 2
+- **Options:**
+  1. Vue 3 + keep a widget library
+  2. Vue 3 + small own panel
+  3. stay on Vue 2
 - **Chosen:** 2
 - **Why:** Accessible, text-only rendering, no abandoned widget; alerts fell to 0.
 - **Trade-off:** We maintain the chat panel ourselves.
@@ -66,7 +83,9 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 + Codex council
 - **Context:** CI ran everything on every push; no delivery.
-- **Options:** 1) one orchestrator with change detection  2) native path filters per workflow
+- **Options:**
+  1. one orchestrator with change detection
+  2. native path filters per workflow
 - **Chosen:** 2
 - **Why:** Docs-only changes start nothing; no custom diff code to maintain.
 - **Trade-off:** Required status checks would need an always-running gate job.
@@ -76,7 +95,10 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 + Codex council
 - **Context:** Both logs would contain the question from `?search=`.
-- **Options:** 1) severity filtering  2) redaction  3) discard both
+- **Options:**
+  1. severity filtering
+  2. redaction
+  3. discard both
 - **Chosen:** 3
 - **Why:** Severity filtering does not redact; discarding is the smallest safe change.
 - **Trade-off:** nginx problems are not logged.
@@ -86,7 +108,9 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 + Codex council
 - **Context:** Audit found 5 self-complications and an oncology self-parent; plan equality cannot catch shared mistakes.
-- **Options:** 1) fix data by hand  2) fix in the importer and check invariants independently
+- **Options:**
+  1. fix data by hand
+  2. fix in the importer and check invariants independently
 - **Chosen:** 2
 - **Why:** Fixes every future import and catches what plan equality cannot.
 - **Trade-off:** More checks to maintain in `evaluate_kg.py`.
@@ -96,7 +120,10 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (owner's instruction)
 - **Context:** Owner wants no review step; CI is the gate.
-- **Options:** 1) human review  2) GitHub auto-merge with required checks  3) workflow that merges after checks
+- **Options:**
+  1. human review
+  2. GitHub auto-merge with required checks
+  3. workflow that merges after checks
 - **Chosen:** 3
 - **Why:** Works with path-filtered workflows and no branch protection; docs-only PRs also merge.
 - **Trade-off:** A wrong but passing change by a collaborator merges unreviewed.
@@ -116,7 +143,10 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5)
 - **Context:** The owner wants Codex and other agents to follow the same rules as Claude Code, plus a shared project memory.
-- **Options:** 1) separate `AGENTS.md` and `CLAUDE.md` kept in sync by a CI check  2) `AGENTS.md` as the single source, with `CLAUDE.md` importing it  3) generate one from the other
+- **Options:**
+  1. separate `AGENTS.md` and `CLAUDE.md` kept in sync by a CI check
+  2. `AGENTS.md` as the single source, with `CLAUDE.md` importing it
+  3. generate one from the other
 - **Chosen:** 2, plus a committed `MEMORY.md` imported the same way
 - **Why:** Claude Code's `@file` import means there is nothing to drift and nothing to check; Codex reads `AGENTS.md` natively.
 - **Trade-off:** Instructions must be written for every agent, not in Claude-specific terms.
