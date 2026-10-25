@@ -1050,3 +1050,6 @@ logs/
 
 # Local deployment state and graph backups (see scripts/update_stack.py)
 deploy/
+
+# Dataset pilot downloads and per-disease mappings (see scripts/dataset_pilot.py)
+pilot-data/

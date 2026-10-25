@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Dataset pilot, step 1 (FEATURE-009): exact name overlap with MedlinePlus and the Disease Ontology is 31.5% of 658 diseases; nothing imported.
 - D35 partially mitigated (D-023): one dictionary read at API start; the importer names one recovery for every partial outcome.
 - Readiness route (D-022, FEATURE-008): `GET /health` reports whether the graph matches the dictionary; Docker and the updater use it.
 - A-14: a 150 ms time budget on spelling suggestions (worst case about 160 ms instead of 1 s); saturation near the rate limit remains possible.
@@ -32,7 +33,7 @@ Broken or risky:
 
 Next:
 - Watch the first chained releases; the owner enrols the stack and registers the update task (README, Automatic updates).
-- Optional: dataset pilot (MedlinePlus + DOID) behind a rights gate and the evaluation gate.
+- Optional: a reviewed mapping of the 451 unmatched names before any sourced dataset (D-011); rights and evaluation gates still apply.
 
 Do not touch:
 - `.env` contents, real credentials, the GitHub profile repository `hamza-aziz-ai/hamza-aziz-ai`, LinkedIn. See CONSTRAINTS.md.
