@@ -1,58 +1,38 @@
 <template>
-  <div class="grid">
-    <div class="main">
-      <h1>
-        Mr. Healthcare
-        <span class="underlines">
-          <span class="underline" style="margin-left: 0"></span>
-          <span class="underline" style="margin-left: 25%"></span>
-          <span class="underline" style="margin-left: 50%"></span>
-          <span class="underline" style="margin-left: 75%"></span>
-        </span>
-      </h1>
+  <aside
+    class="about"
+    aria-labelledby="about-title"
+  >
+    <h2 id="about-title">
+      About
+    </h2>
+    <p>
+      Mr. Healthcare answers basic questions about diseases and symptoms from a knowledge graph of about 650 diseases
+      stored in Neo4j. It is a student prototype for local use, first built during the COVID-19 lockdowns.
+    </p>
 
-      <p class="subtitle">
-        Submission for B. Tech. final year project by Hamza Aziz and Mahak
-        Agrawal.
-      </p>
+    <h3>How it works</h3>
+    <ul>
+      <li>Disease and symptom names are found in your question as whole words.</li>
+      <li>Keywords decide what you are asking: symptoms, causes, prevention, treatments, complications or a description.</li>
+      <li>The matching facts are looked up in the graph and returned as plain sentences.</li>
+      <li>
+        If the graph has no answer, or you ask about treatment duration, cure probability or who is susceptible,
+        Mr. Healthcare says it cannot answer.
+      </li>
+    </ul>
 
-      <h2 style="margin-top: 1em">About</h2>
-      <p style="margin-top: 0.5em">
-        Mr. Healthcare is an AI-driven chatbot that will help you answer your basic medical queries, amidst the Covid-19 pandemic, where moving out to consult a doctor isn't a luxury anymore. The chatbot can respond to your medical queries only to the best of its knowledge graph base, so be mindful of that and always cross check the responses of Mr. Healthcare with a medical professional!
-      </p>
-
-      <h2 style="margin-top: 1em">Problem it solves</h2>
-      <p style="margin-top: 0.5em">
-        Today, as the world faces the Covid-19 Pandemic, the world has entered lockdown mode, with partial lockdown varying across demography. People are confused about a lot of things and wish to consult medical professional advice. However, lockdown restricts this luxury and hence it becomes very convenient to have a chatbot that can answer your basic medical queries.
-      </p>
-      <p style="margin-top: 0.5em">
-        Mr. Healthcare can attempt to answer your queries about a limited set of diseases as of now. It can tell you about its symptoms, precaution and description of the disease. In case it can't answer your queries, or if you feel unsatisfied by the response, you are strongly advised to consult a medical professional. Since this is a vanilla implementation of our chatbot, we strongly advice against blind faith in the responses.
-      </p>
-
-      <h2 style="margin-top: 1em">How it works</h2>
-      <ul>
-        <li style="margin-top: 0.5em">
-          We have built a knowledge graph database of selected diseases, their symptoms, precautions and description. These relationships are stored in a Neo4j database, from where the results can be fetched.
-        </li>
-        <li style="margin-top: 0.5em">
-          To understand user query, we make use of Aho-Corasick algorithm, to identify the patterns of type of question asked and fetch suitable results.
-        </li>
-        <li style="margin-top: 0.5em">
-          Our Neo4j database is queried, and the appropriate result is returned to the user.
-        </li>
-        <li style="margin-top: 0.5em">
-          If the knowledge graph cannot answer a question, the chatbot explicitly says so. Questions about treatment duration, cure probability or susceptibility are unsupported. Please consult a qualified medical professional.
-        </li>
-      </ul>
-    </div>
-    <div></div>
-  </div>
+    <h3>Limits</h3>
+    <ul>
+      <li>The data's source and clinical review are unknown, and some records were left out because they conflicted.</li>
+      <li>Symptom answers list diseases recorded with that symptom. They are not a diagnosis.</li>
+      <li>Questions phrased in other ways may not be understood.</li>
+    </ul>
+  </aside>
 </template>
 
 <script>
-export default {};
+export default {
+  name: "MedicalChatbot",
+};
 </script>
-
-<style scoped>
-@import "../assets/style.css";
-</style>
