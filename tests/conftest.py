@@ -28,3 +28,13 @@ class FakeDriver:
 
     def close(self):
         pass
+
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def ignore_local_env_file(monkeypatch, tmp_path_factory):
+    """Keep a developer's real .env out of the tests."""
+    import database
+    monkeypatch.setattr(database, "ENV_FILE", tmp_path_factory.getbasetemp() / "no-such.env")
