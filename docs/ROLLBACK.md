@@ -46,6 +46,8 @@ Backups and release folders still referenced by the recorded release or a journa
 
 ## Graph data
 
+If an import stopped part-way ("Graph committed, but dictionary publication failed" or "commit outcome is unknown"): stop serving, fix the error, rerun the same import, restart the API, and check that `GET /health` returns ok (D-023). Run one import at a time.
+
 The importer replaces its snapshot, so a bad import is undone by importing again from a good version.
 
 1. Before any import: stop the stack and back up the `neo4j-data` volume (for example `docker run --rm -v medical-chatbot_neo4j-data:/data -v "$PWD":/backup alpine tar czf /backup/neo4j-data.tgz -C /data .`).

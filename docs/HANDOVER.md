@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- D35 partially mitigated (D-023): one dictionary read at API start; the importer names one recovery for every partial outcome.
 - Readiness route (D-022, FEATURE-008): `GET /health` reports whether the graph matches the dictionary; Docker and the updater use it.
 - A-14: a 150 ms time budget on spelling suggestions (worst case about 160 ms instead of 1 s); saturation near the rate limit remains possible.
 - A-13 fixed: spelling suggestions work for names that contain filler words or intent keywords (D-017 addendum).
@@ -27,7 +28,7 @@ In progress:
 
 Broken or risky:
 - `medical.csv` and `questions.json` have unknown redistribution rights (D30, ASSUMPTIONS.md A-01, A-02).
-- Graph and dictionary publication are not one unit (D35).
+- Graph and dictionary publication are still two steps (D35, partially mitigated by D-023): a dictionary from another CSV is detected by `GET /health`; a same-CSV, different-importer mismatch is not.
 
 Next:
 - Watch the first chained releases; the owner enrols the stack and registers the update task (README, Automatic updates).
