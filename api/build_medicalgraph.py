@@ -84,6 +84,11 @@ def parse_record(row, row_number, issues):
         if values is None:
             record["excluded"].add(key)
             issues.append((row_number, column, "not a valid list of strings"))
+        elif key == "cure_department" and len(set(values)) > 2:
+            # Only a department or a [parent, child] pair can be linked; guessing the hierarchy would invent facts.
+            values = None
+            record["excluded"].add(key)
+            issues.append((row_number, column, "more than two departments"))
         record[key] = values
     return record
 
@@ -135,7 +140,7 @@ def graph_data(dataset):
     diseases = dataset["diseases"]
     disease_rows, symptoms, departments = [], set(), set()
     edges = {name: set() for name in RELATIONSHIP_QUERIES}
-    unresolved = []
+    unresolved, self_companions, repeated_departments = [], [], []
 
     for name, record in diseases.items():
         properties = {key: record[key] for key in SCALAR_FIELDS.values() if record[key]}
@@ -155,12 +160,18 @@ def graph_data(dataset):
             edges["has_symptom"].add((name, symptom))
 
         for companion in record["accompany"] or []:
-            if companion in diseases:
+            if companion == name:
+                # A disease listed as its own complication carries no information.
+                self_companions.append(name)
+            elif companion in diseases:
                 edges["accompany_with"].add((name, companion))
             else:
                 unresolved.append((name, companion))
 
-        cure_department = record["cure_department"] or []
+        # ['oncology', 'oncology'] names one department, not a department that is its own parent.
+        cure_department = list(dict.fromkeys(record["cure_department"] or []))
+        if len(cure_department) < len(record["cure_department"] or []):
+            repeated_departments.append(name)
         departments.update(cure_department)
         if len(cure_department) == 1:
             edges["disease_belongs_to"].add((name, cure_department[0]))
@@ -169,13 +180,45 @@ def graph_data(dataset):
             edges["belongs_to"].add((child, parent))
             edges["disease_belongs_to"].add((name, child))
 
+    cycle = department_cycle(edges["belongs_to"])
+    if cycle:
+        raise ValueError(f"department hierarchy has a cycle: {' -> '.join(cycle)}")
+
     return {
         "diseases": disease_rows,
         "symptoms": sorted(symptoms),
         "departments": sorted(departments),
         "edges": {name: sorted(pairs) for name, pairs in edges.items()},
         "unresolved": unresolved,
+        "self_companions": sorted(self_companions),
+        "repeated_departments": sorted(repeated_departments),
     }
+
+
+def department_cycle(child_parent_pairs):
+    """Return one cycle in the child -> parent hierarchy as a list of names, or None."""
+    parents = {}
+    for child, parent in child_parent_pairs:
+        parents.setdefault(child, set()).add(parent)
+    done = set()
+
+    def visit(node, path):
+        if node in path:
+            return path[path.index(node):] + [node]
+        if node in done:
+            return None
+        for parent in sorted(parents.get(node, ())):
+            found = visit(parent, path + [node])
+            if found:
+                return found
+        done.add(node)
+        return None
+
+    for start in sorted(parents):
+        found = visit(start, [])
+        if found:
+            return found
+    return None
 
 
 def existing_conflicts(driver, dataset, data):
@@ -261,6 +304,10 @@ def print_report(dataset, data):
     for row, column, reason in dataset["field_issues"]:
         report(f"Excluded field: row {row}, column '{column}': {reason}")
     report(f"Accompanying links with no matching disease: {len(data['unresolved'])}")
+    if data["self_companions"]:
+        report(f"Diseases listed as their own complication (link skipped): {', '.join(data['self_companions'])}")
+    if data["repeated_departments"]:
+        report(f"Diseases with a repeated department (linked once, no hierarchy edge): {len(data['repeated_departments'])}")
     report(
         f"Diseases: {len(data['diseases'])} imported, {len(dataset['quarantined_names'])} names excluded; "
         f"fields excluded: {len(dataset['field_issues'])}; symptoms: {len(data['symptoms'])}; "
@@ -278,10 +325,10 @@ def main():
     report("Import started")
     try:
         dataset = load_dataset()
+        data = graph_data(dataset)
     except ValueError as error:
         report(f"Refusing import: {error}. Nothing was changed.", logging.ERROR)
         return 1
-    data = graph_data(dataset)
     print_report(dataset, data)
 
     try:

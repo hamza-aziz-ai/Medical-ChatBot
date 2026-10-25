@@ -3,7 +3,10 @@
 They run only when NEO4J_TEST_URI and NEO4J_PASSWORD are set and NEO4J_TEST_ALLOW_WIPE=1,
 because every test deletes all data in the target database. Never point them at a real database.
 """
+import json
 import os
+import sys
+from pathlib import Path
 
 import pytest
 from neo4j.exceptions import ClientError
@@ -12,6 +15,9 @@ import build_medicalgraph as builder
 import database
 from answer_searcher import AnswerSearcher
 from question_parser import TEMPLATES, QuestionParser
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+import evaluate_kg  # noqa: E402
 
 pytestmark = pytest.mark.skipif(
     not (os.environ.get("NEO4J_TEST_URI") and os.environ.get("NEO4J_PASSWORD") and os.environ.get("NEO4J_TEST_ALLOW_WIPE") == "1"),
@@ -80,6 +86,32 @@ def test_full_import_is_idempotent_and_constrained(driver, tmp_path, monkeypatch
     constraints = scalar(driver, "SHOW CONSTRAINTS YIELD labelsOrTypes RETURN collect(labelsOrTypes[0])")
     assert {"Disease", "Symptom", "Department"} <= set(constraints)
     assert target.exists()
+
+    dataset = builder.load_dataset()
+    integrity, failures = evaluate_kg.integrity_checks(driver, builder.graph_data(dataset), json.loads(target.read_text(encoding="utf-8")))
+    assert failures == [], integrity
+
+
+def test_integrity_check_passes_a_clean_import_and_catches_planted_damage(driver, tmp_path):
+    path = write_csv(tmp_path, "a.csv", [
+        row(0, "a", accompany="['a', 'b']", department="['oncology', 'oncology']"),
+        row(1, "b", symptoms="['fever']"),
+    ])
+    import_csv(driver, path)
+    driver.execute_query("CREATE (:Note {name: 'unrelated'})")
+    dataset = builder.load_dataset(path)
+    plan = builder.graph_data(dataset)
+    dictionary = builder.entities_document(dataset, plan)
+
+    integrity, failures = evaluate_kg.integrity_checks(driver, plan, dictionary)
+    assert failures == [], integrity
+    assert integrity["unrelated_nodes"] == 1 and integrity["self_loops"] == 0
+
+    driver.execute_query("MATCH (:Disease {name: 'a'})-[r:has_symptom]->() DELETE r")
+    driver.execute_query("MATCH (d:Disease {name: 'b'}) CREATE (d)-[:accompany_with {name: 'complication', owner: $owner}]->(d)",
+                         parameters_={"owner": builder.OWNER})
+    _, failures = evaluate_kg.integrity_checks(driver, plan, dictionary)
+    assert {"missing_relationships", "extra_relationships", "self_loops"} <= set(failures)
 
 
 def test_every_template_runs_on_the_real_graph(driver, tmp_path):
