@@ -34,6 +34,8 @@ Releases go in merge order, so a merge whose release fails blocks the merges aft
 
 ## The stack updater
 
+Verified by a drill on 2026-10-26 (`python scripts/rollback_drill.py`, a throwaway stack): a failure after the graph changed, and the updater process dying mid-update, both ended with the backup and the previous release restored. Run the drill again after changing `update_stack.py`.
+
 `scripts/update_stack.py` restores the previous release by itself when an update fails, and does not retry that release (`deploy/failed.json`; delete it to allow a retry). If it cannot restore, it leaves the app stopped and marks `deploy/journal.json` with `recovery_failed`, and every later run stops until you act:
 
 1. Disable the scheduled task.
