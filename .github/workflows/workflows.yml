@@ -1,0 +1,26 @@
+name: workflows
+
+# Lints every workflow with actionlint whenever one changes, so release automation is checked before it merges.
+on:
+  pull_request:
+    paths: &workflow-paths
+      - ".github/workflows/**"
+  push:
+    branches: [main]
+    paths: *workflow-paths
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-workflows-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      # rhysd/actionlint:1.7.12, pinned by digest.
+      - run: docker run --rm -v "$PWD:/repo:ro" -w /repo rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
