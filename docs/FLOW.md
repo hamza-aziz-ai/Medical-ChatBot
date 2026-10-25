@@ -67,3 +67,13 @@ api/build_medicalgraph.py main()
        publish   create the tag -> draft with assets -> version image tags -> publish
   -> continue (only after success)   gh workflow run autorelease.yml -> the next merge
 ```
+
+## A readiness probe (D-022)
+
+```
+Docker healthcheck (every 30 s) or the stack updater  GET /health (via nginx: /api/health)
+  -> api/main.py health()
+  -> ChatBotGraph.ready()            the dictionary's disease count and CSV hash, read at start
+  -> AnswerSearcher.readiness()      one READ, no retries, timeout <= 1 s: owned diseases, and those with the hash
+  <- 200 {"status": "ok"} when both counts equal the dictionary's, else 503 {"status": "unavailable"}
+```

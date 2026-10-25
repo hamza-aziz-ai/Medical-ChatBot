@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Disposable end-to-end check of the Compose stack: init, static page, answer through the /api
-# proxy, abstention, rate limiting, API outage, and no question in any log.
+# proxy, abstention, rate limiting, API outage, graph readiness, and no question in any log.
 # Uses its own project name and throwaway secrets, and deletes its containers and volumes on exit.
 # Set SKIP_BUILD=1 with API_IMAGE and WEB_IMAGE to test images that are already built.
 set -euo pipefail
@@ -53,6 +53,15 @@ status=$(ask what causes asthma "$SENTINEL" | tail -n1)
 case "$status" in 502|504) ;; *) fail "outage returned $status, expected 502 or 504" ;; esac
 compose start api >/dev/null
 compose up -d --wait api >/dev/null
+
+# Readiness (D-022): ok with the imported graph, 503 while Neo4j is down and the API keeps running, ok again after.
+health() { curl -s -o /dev/null -w '%{http_code}' "$BASE/api/health"; }
+[ "$(health)" = 200 ] || fail "readiness with the imported graph"
+compose stop neo4j >/dev/null
+[ "$(health)" = 503 ] || fail "readiness during a graph outage, expected 503"
+compose up -d --wait neo4j >/dev/null
+for _ in $(seq 1 30); do [ "$(health)" = 200 ] && break; sleep 2; done
+[ "$(health)" = 200 ] || fail "readiness did not recover after the graph came back"
 
 logs=$(compose logs --no-color; compose exec -T api sh -c 'cat /app/logs/*/*/*.log')
 [ -n "$logs" ] || fail "no logs collected"

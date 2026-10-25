@@ -200,7 +200,7 @@ jobs:
           tar -czf dist/frontend-dist.tgz -C frontend-dist .
           jq -n --arg tag "$TAG" --arg sha "$SHA" --arg api "$IMAGE_PREFIX-api@$API_DIGEST" --arg web "$IMAGE_PREFIX-web@$WEB_DIGEST" \
             --slurpfile report dist/eval-report.json \
-            '{tag: $tag, commit: $sha, images: {api: $api, web: $web}, source_sha256: $report[0].source_sha256, evaluation_passed: $report[0].passed}' \
+            '{tag: $tag, commit: $sha, images: {api: $api, web: $web}, source_sha256: $report[0].source_sha256, evaluation_passed: $report[0].passed, capabilities: {health: true}}' \
             > dist/manifest.json
       - name: Create the version tag
         if: needs.resolve.outputs.new == 'true'

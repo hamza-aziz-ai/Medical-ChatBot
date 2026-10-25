@@ -141,8 +141,11 @@ def download(release):
     if manifest.get("evaluation_passed") is not True:
         raise Refused("The release's evaluation did not pass.")
     compose = folder / "compose.yaml"
+    # Releases with the /health route (D-022) say so; older records lack the flag and keep the older checks,
+    # so rolling back to them still works.
+    health = (manifest.get("capabilities") or {}).get("health") is True
     return {"tag": tag, "api_image": api, "web_image": web, "compose": str(compose),
-            "compose_sha256": hashlib.sha256(compose.read_bytes()).hexdigest()}
+            "compose_sha256": hashlib.sha256(compose.read_bytes()).hexdigest(), "health": health}
 
 
 # Docker.
@@ -204,7 +207,8 @@ def restore(deployment, archive):
 
 
 def healthy(deployment, attempts=30, pause=2):
-    """The page loads and a fixed question gets an answer. Neither the URL nor the replies are logged."""
+    """The page loads, a fixed question gets an answer and, for releases that have it, /api/health says ok.
+    Neither the URL nor the replies are logged."""
     for _ in range(attempts):
         result = compose_run(deployment, "port", "web", "8080")
         port = result.stdout.strip() if result.returncode == 0 else ""
@@ -213,7 +217,9 @@ def healthy(deployment, attempts=30, pause=2):
             try:
                 page = http_get(f"{base}/").decode("utf-8", "replace")
                 reply = json.loads(http_get(f"{base}/api/?search=what+causes+asthma"))
-                if '<div id="app">' in page and reply.get("status") == "answer":
+                # A 503 or 404 raises, so a release that claims the route but lacks it never passes.
+                ready = not deployment.get("health") or json.loads(http_get(f"{base}/api/health")).get("status") == "ok"
+                if '<div id="app">' in page and reply.get("status") == "answer" and ready:
                     return True
             except (OSError, ValueError):
                 pass

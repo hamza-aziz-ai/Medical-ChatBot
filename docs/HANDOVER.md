@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Readiness route (D-022, FEATURE-008): `GET /health` reports whether the graph matches the dictionary; Docker and the updater use it.
 - A-14: a 150 ms time budget on spelling suggestions (worst case about 160 ms instead of 1 s); saturation near the rate limit remains possible.
 - A-13 fixed: spelling suggestions work for names that contain filler words or intent keywords (D-017 addendum).
 - Stack updater (D-021, FEATURE-007): `scripts/update_stack.py` updates the local stack on each release, with backup and rollback.

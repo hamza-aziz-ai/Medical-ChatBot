@@ -272,3 +272,15 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** No inbound access, no new secrets and no runner on a public repository. A compose file can grant host access, so only an enrolled one runs unattended. The backup is required before any import on a real database (CONSTRAINTS.md), and stopping the API during the import avoids an old dictionary answering against a new graph.
 - **Trade-off:** About a minute of downtime per release (backup 5 s and restore 3 s measured on a small volume; the full cycle is not yet measured). Updates happen only while the owner is signed in with Docker Desktop running. A release that changes `compose.yaml` needs the owner's review and a new enrolment.
 - **Revisit if:** the app is hosted somewhere else, or releases come faster than about one per 15 minutes.
+
+## D-022: A readiness route that knows the graph is loaded
+
+- **Date:** 2026-10-26; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner chose a GET route; design agreed with Codex in council (2 exchanges)
+- **Context:** Docker's API healthcheck only opened the port, so an empty, stale or mismatched graph looked healthy, and the stack updater could only infer health from one question.
+- **Options:**
+  1. GET /health, used by Docker's healthcheck and the updater
+  2. a script inside the container with no HTTP route
+- **Chosen:** 1. `GET /health` returns 200 `{"status": "ok"}` only while the graph holds exactly the dictionary's diseases, all stamped with the dictionary's CSV hash (one non-retrying READ with a 1 s timeout, counting importer-owned diseases and those with the hash), else 503 `{"status": "unavailable"}`. It logs nothing on success and a fixed category on failure. The Dockerfile's healthcheck calls it (4 s HTTP, 5 s Docker timeout); `compose.yaml` is unchanged so the owner's enrolment stays valid. Release manifests carry `capabilities.health`; the updater requires `/api/health` only for releases that have it, so rolling back to older releases still works.
+- **Why:** It catches an empty graph, a wrong-sized or differently sourced graph and unstamped diseases, which the old check missed, for the cost of one count query.
+- **Trade-off:** It does not prove relationships, importer freshness or clinical accuracy; the evaluation and the updater's question probe still cover more. "Unhealthy" is a signal: Docker does not repair the data. The timeouts are not an end-to-end deadline, because connecting has its own limits.
+- **Revisit if:** the API gains a second worker or a real deployment with an orchestrator that restarts on health.

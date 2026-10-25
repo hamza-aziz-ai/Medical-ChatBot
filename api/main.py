@@ -85,6 +85,16 @@ def create_app(chatbot=None):
         logger.info("Replied (%s) to a question of %d characters", reply["status"], len(search_term))
         return jsonify(search=search_term, **reply)
 
+    @app.route("/health", methods=["GET"])
+    def health():
+        # D-022: ok only while the graph holds the dictionary's diseases from the same CSV. Docker's healthcheck
+        # calls this every 30 s, so success is not logged; the body never says more than ok or unavailable.
+        ready, reason = chatbot.ready()
+        if ready:
+            return jsonify(status="ok")
+        logger.warning("Not ready: %s", reason)
+        return jsonify(status="unavailable"), 503
+
     @app.errorhandler(HTTPException)
     def http_error(error):
         # Keep the exception's headers (for example Allow on 405); replace only the body.
