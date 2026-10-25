@@ -17,3 +17,19 @@ def test_a_new_version_tag_is_created_only_in_publish_after_the_smoke_test():
     publish = RELEASE[RELEASE.index("\n  publish:"):]
     assert "needs: [resolve, images, smoke]" in publish
     assert "git/refs" in publish and "git/refs" not in RELEASE[:RELEASE.index("\n  publish:")]
+
+
+AUTORELEASE = (Path(__file__).resolve().parents[1] / ".github" / "workflows" / "autorelease.yml").read_text(encoding="utf-8")
+
+
+def test_the_release_chain_continues_only_after_a_successful_release():
+    continue_job = AUTORELEASE[AUTORELEASE.index("\n  continue:"):]
+    assert "needs: release" in continue_job
+    assert "if: needs.release.result == 'success'" in continue_job
+    assert "gh workflow run autorelease.yml --ref main -f bump=auto" in continue_job
+    # The continue job alone may start workflows.
+    assert AUTORELEASE.count("actions: write") == 1 and "actions: write" in continue_job
+
+
+def test_automatic_runs_never_drain_the_backlog_before_the_bootstrap_release():
+    assert "--require-baseline v1.1.0" in AUTORELEASE

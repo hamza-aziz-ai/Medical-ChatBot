@@ -1,15 +1,19 @@
 name: autorelease
 
-# Releases main when its shipped files changed since the last published release (D-019).
-# scripts/next_release.py picks the version (patch, or the highest release:minor / release:major label
-# on the merged pull requests, or the `bump` input) and stops when a human must act first; release.yml
-# then runs every gate at that commit and creates the tag only after they pass.
-# Started by hand for now; the trigger after automerge is added once the owner accepts batching.
+# One release per merge (D-019). scripts/next_release.py picks the oldest merge on main, after the last
+# published release, that changed shipped files, and its version (patch, or its pull request's
+# release:minor / release:major label, or the `bump` input). release.yml runs every gate at that commit and
+# creates the tag only after they pass. After a successful release this workflow starts itself again for
+# the next merge; the chain ends when every shippable merge is released, and stops on any failure.
 on:
+  # Merges by automerge use the workflow token and start no push workflows, but workflow_run still fires.
+  workflow_run:
+    workflows: [automerge]
+    types: [completed]
   workflow_dispatch:
     inputs:
       bump:
-        description: Version bump; auto reads the release:minor / release:major labels
+        description: Version bump for this run's release; auto reads its pull request's release:minor / release:major label
         type: choice
         options: [auto, patch, minor, major]
         default: auto
@@ -18,7 +22,7 @@ permissions:
   contents: read
 
 # A running release is never cancelled. A newer waiting run may replace an older waiting one,
-# which is safe because every run releases the current state of main.
+# which is safe because every run plans from the published state of main.
 concurrency:
   group: autorelease
   cancel-in-progress: false
@@ -47,13 +51,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
+      # v1.1.0 releases everything merged before per-merge releases began; never drain that backlog one by one.
       - id: plan
         env:
           GH_TOKEN: ${{ github.token }}
           BUMP: ${{ inputs.bump || 'auto' }}
         run: |
           python3 scripts/next_release.py --repo "$GITHUB_REPOSITORY" \
-            --image-prefix "ghcr.io/${GITHUB_REPOSITORY_OWNER}/medical-chatbot" --bump "$BUMP" >> "$GITHUB_OUTPUT"
+            --image-prefix "ghcr.io/${GITHUB_REPOSITORY_OWNER}/medical-chatbot" --bump "$BUMP" \
+            --require-baseline v1.1.0 >> "$GITHUB_OUTPUT"
 
   release:
     needs: plan
@@ -65,3 +71,18 @@ jobs:
     permissions:
       contents: write
       packages: write
+
+  # Only after a successful release: start the next run, which releases the next merge or finds none.
+  # workflow_dispatch is one of the events the workflow token may start.
+  continue:
+    needs: release
+    if: needs.release.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - run: gh workflow run autorelease.yml --ref main -f bump=auto
