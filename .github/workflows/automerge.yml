@@ -1,0 +1,57 @@
+name: automerge
+
+# Merges a pull request into main as soon as every check on its latest commit has passed.
+# Runs when a CI workflow finishes, and when a PR is opened or updated (which covers PRs whose
+# changes start no CI at all). Only branches of this repository are merged, never forks.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_run:
+    workflows: [backend, frontend, mlops, docker]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+concurrency:
+  group: automerge-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  automerge:
+    if: >-
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+      || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request'
+          && github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+      EVENT: ${{ github.event_name }}
+    steps:
+      - name: Merge when every check has passed
+        run: |
+          # A new PR's CI checks appear within seconds; wait so a PR with CI is never merged early.
+          if [ "$EVENT" = pull_request ]; then sleep 60; fi
+
+          pr=$(gh api "repos/$GH_REPO/commits/$SHA/pulls" \
+            --jq "[.[] | select(.state == \"open\" and .draft == false and .base.ref == \"main\" and .head.sha == \"$SHA\")][0].number // empty")
+          if [ -z "$pr" ]; then echo "No open, ready PR into main at $SHA; nothing to do."; exit 0; fi
+
+          # Every check run on this commit except this workflow's own.
+          checks=$(gh api --paginate "repos/$GH_REPO/commits/$SHA/check-runs?per_page=100" \
+            --jq '.check_runs[] | select(.name != "automerge") | "\(.status) \(.conclusion // "none") \(.name)"')
+          echo "${checks:-no other checks}"
+          if [ -n "$checks" ] && grep -qv '^completed ' <<<"$checks"; then echo "Checks still running; a later run will merge."; exit 0; fi
+          if [ -n "$checks" ] && grep -Ev '^completed (success|skipped|neutral) ' <<<"$checks" | grep -q .; then
+            echo "A check did not pass; not merging PR #$pr."; exit 0
+          fi
+
+          # --match-head-commit refuses the merge if a newer commit arrived meanwhile.
+          gh pr merge "$pr" --merge --delete-branch --match-head-commit "$SHA" \
+            || [ "$(gh pr view "$pr" --json state --jq .state)" = MERGED ]
+          echo "PR #$pr merged."

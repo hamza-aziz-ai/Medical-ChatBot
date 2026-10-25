@@ -66,6 +66,9 @@ Every workflow runs only when its inputs change, so documentation-only changes s
 | `mlops.yml` | the CSV, the dictionary, the importer and the modules that answer questions, `eval/`, the evaluator, the requirements and the importer, evaluation and live tests | Data gates, live tests on Neo4j 5 and 4.4, then a real import and evaluation on Neo4j 5 |
 | `docker.yml` | `docker/`, `compose.yaml`, the requirements, the smoke script, and the `api/` and `frontend/` files copied into the images | Builds both images and runs the Compose smoke test |
 | `release.yml` | a pushed `vX.Y.Z` tag, or a manual run for an existing tag | Continuous delivery (below) |
+| `automerge.yml` | a CI workflow finishes, or a pull request is opened or updated | Merges the pull request into `main` once every check on its latest commit has passed |
+
+**Automatic merging.** A pull request from a branch of this repository is merged into `main` as soon as every check on its latest commit has passed, with no review. If a check fails, the pull request stays open; push a fix and it merges when the checks pass. A pull request whose changes start no CI (documentation only) is merged about a minute after it is opened. Pull requests from forks and drafts are never merged automatically. The merge is made with the workflow's own token, so it does not start the `main` runs of the other workflows again; the pull request's runs already tested the change.
 
 Superseded pull-request runs are cancelled; runs on `main` and releases are not. Each workflow can also be started by hand from the Actions tab. `main` has no branch protection, so a workflow skipped by its path filter blocks nothing. Before requiring status checks, add one always-running gate job, or skipped checks will stay pending forever.
 
