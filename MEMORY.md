@@ -20,6 +20,6 @@ Shared, durable memory for every coding agent in this repository. Read it at the
 - 2026-10-25: `.gitignore` ignores `[Ss]cripts` (a virtualenv pattern); `!/scripts/` un-ignores the repository's own `scripts/` folder.
 - 2026-10-25: `load_dataset(path=CSV_PATH)` binds its default at definition time, so tests must patch `builder.load_dataset`, not `CSV_PATH`.
 - 2026-10-25: Workflows use YAML anchors for path lists; lint with actionlint 1.7.12 or newer (1.7.7 rejects anchors).
-- 2026-10-25: Merges made by `automerge.yml` use the workflow token, so the `main` push runs of the other workflows do not start again.
+- 2026-10-25: Merges made by `automerge.yml` use the workflow token, so the `main` push runs of the other workflows do not start again. The same holds for tags pushed with that token; only `workflow_dispatch`, `repository_dispatch` and `workflow_run` chains start from it, which is why `autorelease.yml` calls `release.yml` instead of pushing a tag.
 - 2026-10-25: The local `gh` login lacks the `read:packages` scope; check GHCR images with the anonymous token endpoint instead. Both images are public.
 - 2026-10-25: In claude.ai artifact pages, scrolling inside the frame does not work in browser automation; navigate to `#anchor` ids (figures A5–A7 have ids) to check diagrams.

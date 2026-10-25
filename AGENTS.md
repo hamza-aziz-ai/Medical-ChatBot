@@ -25,7 +25,7 @@ This project follows the "Defend What You Ship: AI Field Guide v2". The `docs/` 
 ## Delivery
 
 - Work on a branch, open a pull request into `main`, and let `.github/workflows/automerge.yml` merge it once every check passes. Do not merge by hand and do not request reviews.
-- Never push to `main` directly, force-push, rewrite published history, or push release tags unless the owner asks.
+- Never push to `main` directly, force-push, rewrite published history, or push release tags by hand unless the owner asks. Release tags are created only by `release.yml` after every gate passes; `autorelease.yml` decides when (D-019).
 
 ## Memory
 

@@ -51,3 +51,17 @@ api/build_medicalgraph.py main()
 .github/workflows/mlops.yml -> data gate tests -> live tests (Neo4j 5, 4.4) -> import (Neo4j 5)
   -> scripts/evaluate_kg.py: integrity_checks() + evaluate() -> eval-report.json (counts and IDs only)
 ```
+
+## A release
+
+```
+.github/workflows/autorelease.yml   (started by hand today; after automerge once enabled)
+  -> scripts/next_release.py        last published release on main; stop on a draft, version images without a release, or a failed lookup
+                                    nothing shipped changed -> no release; else next version (patch, labels, or the bump input)
+  -> release.yml (workflow_call, tag + sha)
+       resolve   tag absent, sha on main, no release or version images
+       backend, frontend, mlops at that sha
+       images    pushed as sha-<sha>-<run_id>-<run_attempt>
+       smoke     Compose smoke test of those digests
+       publish   create the tag -> draft with assets -> version image tags -> publish
+```
