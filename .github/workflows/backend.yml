@@ -11,6 +11,7 @@ on:
       - "scripts/next_release.py"
       - "scripts/update_stack.py"
       - "scripts/dataset_pilot.py"
+      - "scripts/rollback_drill.py"
       - ".github/workflows/release.yml"
       - ".github/workflows/autorelease.yml"
       - "eval/**"

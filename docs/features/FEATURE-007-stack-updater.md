@@ -8,8 +8,9 @@
 
 **Status.** Built on branch `feat/update-stack`. The owner enrols and registers the task.
 
-**Open questions.** The full update time on the real graph is not measured yet.
+**Open questions.** None; pull and health-check failures are covered by the unit tests only.
 
 ## Log
 
 - 2026-10-25: Design agreed with Codex in council. Offline 231 passed, 9 skipped; live 240 passed. Backup (5.4 s) and restore (2.8 s) tested for real on a disposable Neo4j volume: ownership kept, Neo4j started, data restored. The Windows task and a full update are not run yet.
+- 2026-10-26: Rollback drill (`scripts/rollback_drill.py`, agreed with Codex in council) on a throwaway Compose project from the real v1.1.4 and v1.1.5 releases, Windows, Docker Desktop. Only release discovery was substituted. Scenario 1: the importer step failed after a committed graph change; the same run restored the backup and v1.1.4 (60 s). Scenario 2: the updater process exited abruptly after the change; a fresh process took the lock and recovered from the journal (57 s). Both times the change was undone, graph counts matched, the old images ran, `/api/health` was ok, a question was answered, and a later run skipped the failed release. Teardown removed the drill project and its volumes.

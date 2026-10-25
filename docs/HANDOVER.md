@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 to 2026-10-26 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Rollback drill passed on a throwaway stack (FEATURE-007): restore after a failed step and after the updater process died.
 - The owner's stack is enrolled and updates itself: it moved from v1.1.1 to v1.1.5 overnight (backup, re-import, readiness check each time, about 40 s of downtime), and `/api/health` is ok.
 - Dataset pilot, step 1 (FEATURE-009): exact name overlap with MedlinePlus and the Disease Ontology is 31.5% of 658 diseases; nothing imported.
 - D35 partially mitigated (D-023): one dictionary read at API start; the importer names one recovery for every partial outcome.
@@ -34,7 +35,6 @@ Broken or risky:
 - One client near nginx's rate limit can still keep the single API worker busy with long nonsense questions (A-14, reduced to about 160 ms each).
 
 Next:
-- The updater's rollback path has only run in tests; exercise it once on a disposable stack.
 - Same-CSV, different-importer mismatches: consider storing a dictionary fingerprint with the graph and refusing to answer while not ready (D-023).
 - Optional: a reviewed mapping of the 451 unmatched names before any sourced dataset (D-011); rights and evaluation gates still apply.
 
