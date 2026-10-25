@@ -1,0 +1,19 @@
+# FAILURE
+
+How the system fails, dependency by dependency, and how we would notice.
+
+| Dependency or limit | If it is slow, down, wrong or empty | What the user sees | How we notice |
+|---|---|---|---|
+| Neo4j down | Driver raises ServiceUnavailable or SessionExpired | 503 "The knowledge graph is unavailable"; the page shows a fixed error and recovers on the next question | `main.log` error with the exception type; Compose healthcheck on Neo4j |
+| Neo4j slow | Query exceeds `NEO4J_QUERY_TIMEOUT` (5 s) | 503, same message | `main.log` "query timed out" |
+| Graph empty or stale (no import yet) | Queries return no rows | "I cannot answer..." for every question | Evaluation in CI fails; in Docker, the API healthcheck is liveness only and will not show it |
+| API down (Docker) | nginx cannot reach it | 502 or 504; the page shows a fixed error | Container status; nothing in nginx logs by design (D-008) |
+| API slow | Frontend aborts after 10 s | Fixed error message; input re-enabled | Browser only; no server-side metric |
+| gunicorn single worker | Requests queue behind each other | Slower replies under concurrent use | First limit expected as usage grows |
+| Importer write fails | Transaction rolls back to the previous snapshot | Nothing changes | Importer exits non-zero; `build_medicalgraph.log` |
+| Dictionary publish fails after the graph commits (D35) | Graph is new, `entities.json` is old | New diseases are not recognised | Importer exits non-zero with an explicit message; re-run the import |
+| Bad CSV (missing columns, unnamed rows, nothing left, department cycle) | Import refused before writing | Nothing changes | Importer error; MLOps CI fails |
+| Two processes logging the same module | Midnight rotation of shared files can fail | Nothing | A log line or a missing rotated file |
+| GHCR or GitHub down | Releases and CI pause | Nothing for local users | Workflow failures |
+
+Limits: 500 characters per question; 20 values per answer; 10 s browser timeout; 5 s query timeout; 120 s import transaction; one gunicorn worker. There is no alerting or dashboard: this is a local prototype.

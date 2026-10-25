@@ -127,6 +127,10 @@ kaggle competitions download -c quora-question-pairs -p notebooks/data
 
 Unzip the download so that `notebooks/data/train.csv` exists.
 
+## Project documentation
+
+The `docs/` folder follows the "Defend What You Ship" field guide. Start with [docs/HANDOVER.md](docs/HANDOVER.md) (where things stand) and [docs/CONSTRAINTS.md](docs/CONSTRAINTS.md) (rules for changes). It also holds the decision log, rejected alternatives, architecture, request flow, threat and failure maps, data structures, test checklist, rollback plan, open assumptions, dependency and secrets log, and a one-page defense brief.
+
 ## Known limitations
 
 - **Training reproducibility.** The notebook fits its tokenizer before splitting the data, does not seed the split, and has no separate test set. Fixing this needs the training data, the GloVe embeddings and a new evaluation run, so it has not been done.
