@@ -178,3 +178,29 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Trade-off:** We maintain the styles ourselves; the look depends on the user's system font.
 - **Revisit if:** the UI grows into several pages or needs complex components.
 
+
+## D-015: Guided conversation with structured replies, without a language model
+
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5) + Codex council; owner approved steps 1 and 2
+- **Context:** Every question was answered in isolation: no follow-ups, no clarifying questions, and one fixed abstention sentence for every kind of miss.
+- **Options:**
+  1. keep plain text replies and add heuristics in the page
+  2. a structured reply (status, reason, grouped answers, topic, interpretation, options) with `message` kept, and a page-held topic sent back with the next question
+  3. server-side conversation sessions
+- **Chosen:** 2
+- **Why:** Keeps the API stateless and the questions unlogged, keeps every answer a template over graph facts, and lets the page offer follow-ups, clarifications and "Why this answer?".
+- **Trade-off:** A larger reply contract to maintain; the evaluator and safety tests now check `status` instead of one fixed sentence.
+- **Revisit if:** a language model takes over understanding questions (step 3).
+
+## D-016: Answerable intents are written by the importer, not looked up at runtime
+
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5); Codex council (disconnected before the last point), then the LLM council fallback
+- **Context:** Suggestion chips must only offer questions the graph can answer. A per-request lookup could delay an answer past the browser timeout (connect 10 s, acquisition 60 s, lazy reads are not bounded by a 1 s query timeout).
+- **Options:**
+  1. a per-request Cypher lookup with bounded waits
+  2. one Cypher query at API start, with retries
+  3. the importer writes each disease's answerable intents into `entities.json`
+- **Chosen:** 3
+- **Why:** The facts are fixed when the graph is built. No database call at start or per request, no new timeouts, and the existing dictionary check plus a live chip check in the MLOps gate keep it in step with the graph.
+- **Trade-off:** `entities.json` grows (about 4,800 lines); a missing table means no chips until the importer runs again.
+- **Revisit if:** the graph is updated without re-running the importer.

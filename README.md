@@ -110,7 +110,7 @@ The API does not log questions, tokens or credentials, and silences the developm
 
 The API answers supported questions from the Neo4j knowledge graph. It returns an explicit abstention when no graph answer is available or a question requests treatment duration, cure probability or susceptibility. Questions combining supported and unsupported intents also abstain. Intents are detected from whole words and phrases (for example "cause", "symptoms", "how long"), so classification is still limited: a supported question phrased with words outside these lists gets a description or an abstention instead.
 
-The API accepts `GET /?search=<question>` only; other methods return a JSON 405 error.
+The API accepts `GET /?search=<question>` only; other methods return a JSON 405 error. The reply is JSON with `message` (the plain answer) plus `status` (answer, clarify or abstain), `reason`, `answers` (list answers carry `lead`, `items` and `note`), `topic`, `interpretation` and `options` (suggested or clarifying questions). The page sends back the confirmed `topic` and `topic_type` so follow-ups such as "what causes it?" work, and `selection=<name>:<type>` for choices made while clarifying. Neither is stored or logged. Suggestions come from the answerable intents the importer writes into `entities.json`, so they never need a database query.
 
 The API does not load similarity models or return stored patient answers. No model weights or Quora training download are required for the API.
 
