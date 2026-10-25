@@ -12,8 +12,10 @@ frontend/src/components/ChatPanel.vue  submit() / ask(chip)   typed question, or
   -> api/main.py                       home()                 empty and 500-char checks; topic_from(), selections_from() bound the extras
   -> api/chatbot_graph_logic.py        ChatBotGraph.respond()
        valid_topic()                   topic must be a dictionary name of that type
-       classifier.check_medical()      Aho-Corasick entity spans, whole words only
+       classifier.check_medical()      Aho-Corasick entity spans, whole words only; sourced aliases map to their entry
+       alias with several meanings     -> clarify which one
        is_follow_up()                  no entity + "it"/"and ..." and every other word is filler or an intent keyword -> reuse the topic
+       close_matches()                 still no entity: offer up to 3 close names (difflib, cutoff 0.8) to confirm, never applied
        valid_selections()              clarification choices must name an entity in this question, with a type it really has
        classifier.classify_with()      keyword intents for the (now typed) entities
        unsupported intent -> abstain   no database call

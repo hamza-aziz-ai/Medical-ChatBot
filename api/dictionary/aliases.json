@@ -1,0 +1,13 @@
+{
+ "note": "Other names for dictionary entries. Each alias must come from a source that names it as the same condition (MedlinePlus 'Also called') and point to a dictionary name of the given type. Add only exact equivalents; leave out broader or narrower terms.",
+ "aliases": [
+  {"alias": "whooping cough", "name": "pertussis", "type": "disease", "source": "https://medlineplus.gov/whoopingcough.html"},
+  {"alias": "underactive thyroid", "name": "hypothyroidism", "type": "disease", "source": "https://medlineplus.gov/hypothyroidism.html"},
+  {"alias": "overactive thyroid", "name": "hyperthyroidism", "type": "disease", "source": "https://medlineplus.gov/hyperthyroidism.html"},
+  {"alias": "stomach ulcer", "name": "peptic ulcer", "type": "disease", "source": "https://medlineplus.gov/pepticulcer.html"},
+  {"alias": "gastric ulcer", "name": "peptic ulcer", "type": "disease", "source": "https://medlineplus.gov/pepticulcer.html"},
+  {"alias": "duodenal ulcer", "name": "peptic ulcer", "type": "disease", "source": "https://medlineplus.gov/pepticulcer.html"},
+  {"alias": "degenerative joint disease", "name": "osteoarthritis", "type": "disease", "source": "https://medlineplus.gov/osteoarthritis.html"},
+  {"alias": "osteoarthrosis", "name": "osteoarthritis", "type": "disease", "source": "https://medlineplus.gov/osteoarthritis.html"}
+ ]
+}

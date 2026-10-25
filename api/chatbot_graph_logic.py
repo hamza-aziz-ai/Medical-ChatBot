@@ -70,6 +70,12 @@ with in on should we you please get got have has had from or by up so more some
 PUNCTUATION = "?.!,;:'\"()"
 
 
+def replace_phrase(question, phrase, replacement):
+    """The question with one whole-word phrase replaced, ignoring case."""
+    pattern = r"(?<!\w)" + r"\s+".join(re.escape(part) for part in phrase.split()) + r"(?!\w)"
+    return re.sub(pattern, lambda _: replacement, question, count=1, flags=re.IGNORECASE)
+
+
 class ChatBotGraph:
     def __init__(self):
         self.classifier = QuestionClassifier()
@@ -109,11 +115,21 @@ class ChatBotGraph:
         clarifying this same question. Log intent names and counts only: names come from the user.
         """
         topic = self.valid_topic(topic)
-        arguments = self.classifier.check_medical(question.lower())
+        alias_hits = []
+        arguments = self.classifier.check_medical(question.lower(), alias_hits)
+        ambiguous_alias = next((hit for hit in alias_hits if len(hit["names"]) > 1), None)
+        if ambiguous_alias:
+            logger.info("Clarifying: an alias names several entries")
+            return self.clarify_alias(question, ambiguous_alias)
         used_topic = False
         if not arguments and topic and self.is_follow_up(question):
             arguments, used_topic = {topic["name"]: [topic["type"]]}, True
         if not arguments:
+            typos = self.classifier.close_matches(self.unexplained_phrases(question))
+            if typos:
+                # Offered, never applied: the user confirms by choosing (step 2 of D-015).
+                logger.info("Clarifying: %d possible spelling(s) offered", len(typos))
+                return self.clarify_typo(question, typos)
             logger.info("Abstained: no known entity in the question")
             return self.abstain("no_entity")
 
@@ -125,7 +141,7 @@ class ChatBotGraph:
                 arguments[name] = [topic["type"]]
         classified = self.classifier.classify_with(question, arguments)
         intents = classified["question_types"]
-        interpretation = self.interpretation(arguments, intents, used_topic)
+        interpretation = self.interpretation(arguments, intents, used_topic, alias_hits)
         topic_out = self.single_topic(arguments, intents)
         logger.debug("Classified %d entit(ies) with intents %s (topic used: %s)", len(arguments), intents, used_topic)
 
@@ -175,6 +191,33 @@ class ChatBotGraph:
                 chosen[name] = entity_type
         return chosen
 
+    def unexplained_phrases(self, question):
+        """Runs of 1-3 words that are neither filler nor intent keywords: the candidates for a misspelled name."""
+        keywords = {word for phrase in self.classifier.intent_keywords() for word in phrase.lower().split()}
+        runs, run = [], []
+        for token in (token.strip(PUNCTUATION) for token in question.lower().split()):
+            if token and token not in FILLER and token not in keywords:
+                run.append(token)
+            elif run:
+                runs.append(run)
+                run = []
+        if run:
+            runs.append(run)
+        phrases = []
+        for run in runs:
+            for size in (3, 2, 1):
+                phrases += [" ".join(run[i:i + size]) for i in range(len(run) - size + 1)]
+        return phrases
+
+    def clarify_typo(self, question, typos):
+        names = " or ".join(f'"{name}"' for _, name in typos)
+        options = [{"label": name, "question": replace_phrase(question, phrase, name)} for phrase, name in typos]
+        return self.reply("clarify", "possible_typo", f"I don't recognise that name. Did you mean {names}?", options=options)
+
+    def clarify_alias(self, question, hit):
+        options = [{"label": target["name"], "question": replace_phrase(question, hit["alias"], target["name"])} for target in hit["names"]]
+        return self.reply("clarify", "ambiguous_alias", f'"{hit["alias"]}" can mean more than one thing. Which did you mean?', options=options)
+
     def is_follow_up(self, question):
         """True for "what causes it?" or "and prevention?"; false as soon as any word could name a subject."""
         tokens = [token.strip(PUNCTUATION) for token in question.lower().split()]
@@ -222,11 +265,12 @@ class ChatBotGraph:
         )
 
     @staticmethod
-    def interpretation(arguments, intents, used_topic):
+    def interpretation(arguments, intents, used_topic, alias_hits=()):
         return {
             "entities": [{"name": name, "types": types} for name, types in arguments.items()],
             "intents": [{"intent": intent, "label": INTENT_LABELS.get(intent, intent)} for intent in intents],
             "used_topic": used_topic,
+            "aliases": [{"alias": hit["alias"], "name": hit["names"][0]["name"]} for hit in alias_hits if len(hit["names"]) == 1],
         }
 
     def abstain(self, reason, interpretation=None, topic=None, suggest=False):

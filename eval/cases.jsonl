@@ -17,3 +17,5 @@
 {"id": "abstain-new-unknown-subject-after-topic", "question": "what about flu?", "topic": {"name": "asthma", "type": "disease"}, "abstain": true}
 {"id": "clarify-disease-or-symptom", "question": "what are the symptoms of anemia", "status": "clarify", "intents": ["disease_symptom", "symptom_disease"], "entities": {"anemia": ["disease", "symptom"]}}
 {"id": "clarified-as-disease", "question": "what are the symptoms of anemia", "selections": [{"name": "anemia", "type": "disease"}], "intents": ["disease_symptom"], "entities": {"anemia": ["disease"]}, "facts": [{"disease": "anemia", "field": "symptoms", "value": "tiredness"}]}
+{"id": "alias-whooping-cough", "question": "what are the symptoms of whooping cough", "intents": ["disease_symptom"], "entities": {"pertussis": ["disease"]}, "facts": [{"disease": "pertussis", "field": "symptoms", "value": "chest tightness"}]}
+{"id": "typo-offered-not-applied", "question": "what causes asthama", "status": "clarify"}

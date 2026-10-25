@@ -115,11 +115,13 @@ describe("ChatPanel", () => {
 
   it("explains how a question was understood", () => {
     const wrapper = panel({ messages: [{ agent: "bot", type: "answer", text: "t", answers: [],
-      interpretation: { entities: [{ name: "asthma", types: ["disease"] }], intents: [{ intent: "disease_cause", label: "Causes" }], used_topic: true } }] });
+      interpretation: { entities: [{ name: "asthma", types: ["disease"] }], intents: [{ intent: "disease_cause", label: "Causes" }], used_topic: true,
+        aliases: [{ alias: "whooping cough", name: "pertussis" }] } }] });
     const why = wrapper.find(".why").text();
     expect(why).toContain("asthma (disease)");
     expect(why).toContain("Causes");
     expect(why).toContain("referred back");
+    expect(why).toContain('"whooping cough" was read as pertussis');
   });
 
   it("links one-disease answers to MedlinePlus as an external site", () => {

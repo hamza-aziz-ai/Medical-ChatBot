@@ -92,6 +92,12 @@
               <li v-if="message.interpretation.intents.length">
                 Question type: {{ message.interpretation.intents.map((item) => item.label).join(", ") }}
               </li>
+              <li
+                v-for="alias in message.interpretation.aliases || []"
+                :key="alias.alias"
+              >
+                "{{ alias.alias }}" was read as {{ alias.name }}, another name for it.
+              </li>
               <li v-if="message.interpretation.used_topic">
                 Your question referred back to the previous topic.
               </li>

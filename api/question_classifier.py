@@ -1,3 +1,4 @@
+import difflib
 import json
 import logging
 import re
@@ -10,6 +11,10 @@ from terms import is_valid_term
 logger = logging.getLogger(__name__)
 
 ENTITIES_PATH = Path(__file__).resolve().parent / "dictionary" / "entities.json"
+ALIASES_PATH = Path(__file__).resolve().parent / "dictionary" / "aliases.json"
+# Typo suggestions: tuned on reviewed misspellings and unrelated words (see tests/test_matching.py).
+TYPO_CUTOFF = 0.8
+MAX_TYPO_SUGGESTIONS = 3
 
 
 def load_entities(path=ENTITIES_PATH):
@@ -18,6 +23,28 @@ def load_entities(path=ENTITIES_PATH):
     entities = {key: [term.strip() for term in data[key] if is_valid_term(term)] for key in ("diseases", "departments", "symptoms")}
     logger.info("Loaded %s from %s", ", ".join(f"{len(v)} {k}" for k, v in entities.items()), Path(path).name)
     return entities
+
+
+def load_aliases(names_by_type, path=ALIASES_PATH):
+    """{alias: [(name, type), ...]} for aliases whose target exists with that type; others are skipped and logged."""
+    try:
+        with open(path, encoding="utf-8") as file:
+            entries = json.load(file).get("aliases", [])
+    except (OSError, ValueError) as error:
+        logger.warning("No aliases loaded from %s (%s)", Path(path).name, type(error).__name__)
+        return {}
+    known = {name for names in names_by_type.values() for name in names}
+    aliases = {}
+    for entry in entries:
+        alias, name, entity_type = (str(entry.get(key, "")).strip().lower() for key in ("alias", "name", "type"))
+        if not alias or alias in known or name not in names_by_type.get(entity_type, ()):
+            logger.warning("Skipped an alias whose target is not a %s in the dictionary", entity_type or "known type")
+            continue
+        targets = aliases.setdefault(alias, [])
+        if (name, entity_type) not in targets:
+            targets.append((name, entity_type))
+    logger.info("Loaded %d alias(es) from %s", len(aliases), Path(path).name)
+    return aliases
 
 
 def is_word_char(char):
@@ -32,8 +59,10 @@ class QuestionClassifier:
         self.symptom_words = entities["symptoms"]
 
         self.region_words = set(self.department_words + self.disease_words + self. symptom_words)
+        # Sourced other names ("whooping cough" -> pertussis). Matched like names, reported in the interpretation.
+        self.aliases = load_aliases({"disease": set(self.disease_words), "symptom": set(self.symptom_words)})
 
-        self.region_tree = self.build_acyclic_tree(list(self.region_words))
+        self.region_tree = self.build_acyclic_tree(list(self.region_words | set(self.aliases)))
         self.word_type_dictionary = self.build_word_type_dictionary()
 
         self.symptom_question_words = [
@@ -159,7 +188,7 @@ class QuestionClassifier:
 
         return word_dictionary
 
-    def check_medical(self, question):
+    def check_medical(self, question, alias_hits=None):
         spans = []
         for end, (_, word) in self.region_tree.iter(question):
             start = end - len(word) + 1
@@ -176,9 +205,27 @@ class QuestionClassifier:
 
         final_dictionary = {}
         for _, _, word in sorted(kept):
-            final_dictionary.setdefault(word, self.word_type_dictionary.get(word))
+            if word in self.word_type_dictionary:
+                final_dictionary.setdefault(word, self.word_type_dictionary.get(word))
+                continue
+            targets = self.aliases[word]
+            if alias_hits is not None:
+                alias_hits.append({"alias": word, "names": [{"name": name, "type": t} for name, t in targets]})
+            if len(targets) == 1:
+                (name, entity_type), = targets
+                final_dictionary.setdefault(name, [entity_type])
 
         return final_dictionary
+
+    def close_matches(self, words):
+        """Dictionary names close to each of the given word sequences, as (sequence, name) pairs, best first."""
+        names = sorted(set(self.disease_words) | set(self.symptom_words) | set(self.aliases))
+        suggestions = []
+        for sequence in words:
+            for name in difflib.get_close_matches(sequence, names, n=MAX_TYPO_SUGGESTIONS, cutoff=TYPO_CUTOFF):
+                if all(name != existing for _, existing in suggestions):
+                    suggestions.append((sequence, name))
+        return suggestions[:MAX_TYPO_SUGGESTIONS]
 
     @staticmethod
     def check_words(words, sent):

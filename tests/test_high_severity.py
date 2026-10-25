@@ -25,7 +25,9 @@ def test_high_severity_paths():
     def ask(intents, result_rows, arguments=None):
         arguments = arguments or {"asthma": ["disease"], "wheeze": ["symptom"]}
         bot.classifier = SimpleNamespace(
-            check_medical=lambda _: {} if intents is None else dict(arguments),
+            check_medical=lambda _, hits=None: {} if intents is None else dict(arguments),
+            close_matches=lambda phrases: [],
+            intent_keywords=lambda: [],
             classify_with=lambda _, args: {"arguments": args, "question_types": intents},
             has_intent_keyword=lambda _: True,
         )
