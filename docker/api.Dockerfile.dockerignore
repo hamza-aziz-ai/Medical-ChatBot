@@ -1,0 +1,9 @@
+# Only the runtime code, the source CSV and the entity dictionary go into the API image.
+*
+!requirements.txt
+!requirements-deploy.txt
+!api/
+api/models/
+api/data/questions.json
+api/__pycache__/
+api/**/*.pyc

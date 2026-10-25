@@ -1,0 +1,10 @@
+# Only what the frontend build and nginx need.
+*
+!docker/nginx.conf
+!frontend/
+frontend/node_modules/
+frontend/dist/
+frontend/tests/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example

@@ -58,6 +58,18 @@ def test_lineage_is_recorded(tmp_path):
     assert len(disease["properties"]["source_sha256"]) == 64
 
 
+@pytest.mark.parametrize("text, problem", [
+    ("S.No.,Name,Description\n0,a,d\n", "missing columns: Accompany, Causes, Cure Department, Cure Way, Prevention, Symptoms"),
+    (HEADER + row(0, "a") + row(1, " "), "rows without a disease name: [2]"),
+    (HEADER + row(0, "a") + row(1, "a", description="other"), "no diseases left after quarantine"),
+])
+def test_invalid_datasets_are_refused(tmp_path, text, problem):
+    path = tmp_path / "medical.csv"
+    path.write_text(text, encoding="utf-8")
+    with pytest.raises(ValueError, match=problem.replace("[", r"\[").replace("]", r"\]")):
+        builder.load_dataset(path)
+
+
 def plan(path):
     dataset = builder.load_dataset(path)
     return dataset, builder.graph_data(dataset)
