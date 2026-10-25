@@ -19,12 +19,13 @@ def image(name, n):
     return f"ghcr.io/hamza-aziz-ai/medical-chatbot-{name}@sha256:{str(n) * 64}"
 
 
-def release_files(tag, n, compose=COMPOSE, evaluation=True):
+def release_files(tag, n, compose=COMPOSE, evaluation=True, health=False):
     api, web = image("api", n), image("web", n)
     return {
         "compose.yaml": compose,
         "release.env": f"API_IMAGE={api}\nWEB_IMAGE={web}\n".encode(),
-        "manifest.json": json.dumps({"tag": tag, "images": {"api": api, "web": web}, "evaluation_passed": evaluation}).encode(),
+        "manifest.json": json.dumps({"tag": tag, "images": {"api": api, "web": web}, "evaluation_passed": evaluation,
+                                     **({"capabilities": {"health": True}} if health else {})}).encode(),
     }
 
 
@@ -35,6 +36,7 @@ class Fake:
         self.calls = []
         self.fail = set()
         self.healthy = True
+        self.health_route = {}  # api image -> /api/health status; images without an entry have no route (404)
         self.running = {}  # service -> image reference
         self.releases = {}
         self.files = {}
@@ -58,6 +60,11 @@ class Fake:
         if url.startswith(us.ASSET_URL):
             tag, name = url[len(us.ASSET_URL):].split("/")
             return self.files[tag][name]
+        if url.endswith("/api/health"):
+            code = self.health_route.get(self.running.get("api"), 404)
+            if code != 200:
+                raise OSError(f"HTTP {code}")
+            return b'{"status": "ok"}'
         if url.endswith("/api/?search=what+causes+asthma"):
             return json.dumps({"status": "answer" if self.healthy else "abstain"}).encode()
         return b'<div id="app">' if self.healthy else b""
@@ -354,3 +361,26 @@ def test_enrolling_records_the_running_release_only_if_it_really_is_that_release
     with pytest.raises(us.Refused, match="compose.yaml"):
         us.enroll()
     assert not us.STATE.exists()
+
+
+# D-022: releases that have the /health route must pass it; older ones keep the older checks.
+
+def test_a_release_with_the_health_route_must_report_ok(fake):
+    enrolled(fake)
+    fake.add_release("v1.2.0", 2, health=True)
+    fake.health_route[image("api", 2)] = 200
+    assert us.update() == 0
+    state = json.loads(us.STATE.read_text())
+    assert state["tag"] == "v1.2.0" and state["health"] is True
+
+
+@pytest.mark.parametrize("code", [503, 404])
+def test_a_release_whose_health_route_fails_is_rolled_back_to_one_without_it(fake, code):
+    enrolled(fake)  # v1.1.0: no health route, so its own checks do not ask for one
+    fake.add_release("v1.2.0", 2, health=True)
+    if code == 503:
+        fake.health_route[image("api", 2)] = 503
+    assert us.update() == 1
+    state = json.loads(us.STATE.read_text())
+    assert state["tag"] == "v1.1.0" and not state.get("health")
+    assert fake.running["api"] == image("api", 1)
