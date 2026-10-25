@@ -20,7 +20,6 @@ Broken or risky:
 - Graph and dictionary publication are not one unit (D35).
 
 Next:
-- Owner: rewrite `docs/defense/DEFENSE-medical-chatbot.md` in your own words (it is an AI draft).
 - Optional: dataset pilot (MedlinePlus + DOID) behind a rights gate and the evaluation gate.
 
 Do not touch:
