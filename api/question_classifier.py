@@ -1,4 +1,5 @@
 import difflib
+from itertools import groupby
 import json
 import logging
 import re
@@ -188,7 +189,8 @@ class QuestionClassifier:
 
         return word_dictionary
 
-    def check_medical(self, question, alias_hits=None):
+    def entity_spans(self, question):
+        """(start, end, word) for every name or alias occurring as a whole word in the lowercased question."""
         spans = []
         for end, (_, word) in self.region_tree.iter(question):
             start = end - len(word) + 1
@@ -196,6 +198,25 @@ class QuestionClassifier:
             after = question[end + 1] if end + 1 < len(question) else ""
             if not (is_word_char(before) or is_word_char(after)):
                 spans.append((start, end, word))
+        return spans
+
+    def mask_entities(self, question):
+        """The lowercased question with each run of entity names replaced by '#', so their words are not read as intent keywords (BUG-002).
+
+        '#' is neither a word character nor a space, so a keyword phrase cannot bridge a masked name.
+        A name that is itself an intent keyword ("phenomenon") stays readable as one, which keeps today's behaviour.
+        """
+        question = question.lower()
+        keywords = {keyword.lower() for keyword in self.intent_keywords()}
+        covered = [False] * len(question)
+        for start, end, word in self.entity_spans(question):
+            if word not in keywords:
+                covered[start:end + 1] = [True] * (end + 1 - start)
+        runs = groupby(zip(question, covered), key=lambda pair: pair[1])
+        return "".join("#" if hidden else "".join(char for char, _ in run) for hidden, run in runs)
+
+    def check_medical(self, question, alias_hits=None):
+        spans = self.entity_spans(question)
 
         # Drop a match only when its own occurrence lies inside another match's occurrence.
         kept = [
@@ -241,7 +262,7 @@ class QuestionClassifier:
         return [phrase for name, words in vars(self).items() if name.endswith("_question_words") for phrase in words]
 
     def has_intent_keyword(self, question):
-        return self.check_words(self.intent_keywords(), question)
+        return self.check_words(self.intent_keywords(), self.mask_entities(question))
 
     def classify(self, question):
         medical_dictionary = self.check_medical(question.lower())
@@ -255,7 +276,7 @@ class QuestionClassifier:
     def classify_with(self, question, medical_dictionary):
         """Intents for a question whose entities (name -> types) are already known."""
         data = {}
-        question_2 = question.lower()
+        question_2 = self.mask_entities(question)
         data['arguments'] = medical_dictionary
         types = []
 

@@ -48,3 +48,44 @@ def test_unused_keyword_lists_are_gone():
     classifier = QuestionClassifier()
     assert not hasattr(classifier, "belong_question_words")
     assert not hasattr(classifier, "cure_question_words")
+
+
+# BUG-002: words inside a matched name are not intent keywords.
+KEYWORD_IN_NAME = ["deep palm infection", "non-cholesteric infection", "retroperitoneal infection and abscess"]
+
+
+def test_a_keyword_inside_a_disease_name_is_not_an_intent():
+    classifier = QuestionClassifier()
+    for name in KEYWORD_IN_NAME:
+        assert classifier.classify(f"what causes {name}")["question_types"] == ["disease_cause"]
+        assert classifier.classify(name)["question_types"] == ["disease_description"]
+        assert not classifier.has_intent_keyword(name)
+
+
+def test_keywords_outside_the_name_still_count_and_still_veto():
+    classifier = QuestionClassifier()
+    assert classifier.classify("who gets deep palm infection")["question_types"] == ["disease_easy_get"]
+    assert classifier.classify("does infection cause deep palm infection?")["question_types"] == ["disease_cause", "disease_easy_get"]
+    assert classifier.classify("how long does deep palm infection last")["question_types"] == ["disease_last_time"]
+
+
+def test_masking_handles_nested_and_crossing_names_without_bridging():
+    classifier = QuestionClassifier()
+    assert classifier.mask_entities("How is ACUTE HEART FAILURE treated?") == "how is # treated?"
+    assert classifier.classify("how is acute heart failure treated")["question_types"] == ["disease_cure_way"]
+    assert classifier.mask_entities("what causes lip pale pale") == "what causes #"
+    assert classifier.mask_entities("how asthma long") == "how # long"
+    assert classifier.classify("how asthma long")["question_types"] == ["disease_description"]
+
+
+def test_masking_covers_aliases():
+    classifier = QuestionClassifier()
+    classifier.aliases = {"who knows fever": [("asthma", "disease")]}
+    classifier.region_tree = classifier.build_acyclic_tree(list(classifier.region_words | set(classifier.aliases)))
+    assert classifier.classify("what causes who knows fever")["question_types"] == ["disease_cause"]
+
+
+def test_a_name_that_is_itself_a_keyword_keeps_its_keyword_role():
+    classifier = QuestionClassifier()
+    assert classifier.classify("phenomenon")["question_types"] == ["symptom_disease"]
+    assert classifier.classify("what is the phenomenon of asthma")["question_types"] == ["disease_symptom", "symptom_disease"]
