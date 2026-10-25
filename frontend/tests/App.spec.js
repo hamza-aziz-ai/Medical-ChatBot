@@ -7,8 +7,7 @@ function reply(status, body) {
   return { ok: status >= 200 && status < 300, status, json: async () => body };
 }
 
-async function ask(wrapper, token, question) {
-  await wrapper.find("#api-token").setValue(token);
+async function ask(wrapper, question) {
   await wrapper.find("textarea").setValue(question);
   await wrapper.find("textarea").trigger("keydown", { key: "Enter" });
 }
@@ -20,17 +19,17 @@ afterEach(() => {
 });
 
 describe("App", () => {
-  it("sends the token and question through the real transport and shows the reply", async () => {
+  it("sends the question through the real transport, with no credentials, and shows the reply", async () => {
     const fetch = vi.fn(async () => reply(200, { message: "The possible causes of asthma are: dust" }));
     vi.stubGlobal("fetch", fetch);
     const wrapper = mount(App);
 
-    await ask(wrapper, "secret-token", "what causes asthma?");
+    await ask(wrapper, "what causes asthma?");
     await flushPromises();
 
     const [url, init] = fetch.mock.calls[0];
     expect(url).toBe("http://localhost:5000/?search=what+causes+asthma%3F");
-    expect(init.headers.Authorization).toBe("Bearer secret-token");
+    expect(init.headers).toBeUndefined();
     expect(wrapper.find('[role="log"]').text()).toContain("The possible causes of asthma are: dust");
   });
 
@@ -40,7 +39,7 @@ describe("App", () => {
     vi.stubGlobal("fetch", fetch);
     const wrapper = mount(App);
 
-    await ask(wrapper, "t", "first");
+    await ask(wrapper, "first");
     await wrapper.find("textarea").setValue("second");
     await wrapper.find("textarea").trigger("keydown", { key: "Enter" });
     await wrapper.find("form").trigger("submit");
@@ -54,28 +53,19 @@ describe("App", () => {
 
   it("shows API errors and lets the user try again", async () => {
     const fetch = vi.fn()
-      .mockResolvedValueOnce(reply(401, { error: "Missing or invalid API token." }))
+      .mockResolvedValueOnce(reply(429, null))
       .mockRejectedValueOnce(new TypeError("Failed to fetch"));
     vi.stubGlobal("fetch", fetch);
     const wrapper = mount(App);
 
-    await ask(wrapper, "wrong", "q1");
+    await ask(wrapper, "q1");
     await flushPromises();
-    expect(wrapper.text()).toContain("The API token was rejected");
+    expect(wrapper.text()).toContain("Too many questions");
 
-    await ask(wrapper, "wrong", "q2");
+    await ask(wrapper, "q2");
     await flushPromises();
     expect(wrapper.text()).toContain("couldn't get an answer");
     expect(wrapper.find("textarea").element.disabled).toBe(false);
-  });
-
-  it("never stores the token", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => reply(200, { message: "ok" })));
-    const wrapper = mount(App);
-    await ask(wrapper, "secret-token", "q");
-    await flushPromises();
-    expect(JSON.stringify({ ...localStorage })).not.toContain("secret-token");
-    expect(JSON.stringify({ ...sessionStorage })).not.toContain("secret-token");
   });
 
   it("shows the medical-advice notice and makes no external image requests", () => {

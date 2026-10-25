@@ -53,7 +53,7 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Trade-off:** Collisions need manual reconciliation.
 - **Revisit if:** several importers must share one graph.
 
-## D-005: Shared Bearer token and exact-origin CORS
+## D-005: Shared Bearer token and exact-origin CORS (token superseded by D-013)
 
 - **Date:** 2026-10-25; **Model:** Claude Opus 5.5 + Codex council
 - **Context:** The API was open to any caller.
@@ -151,3 +151,16 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** Claude Code's `@file` import means there is nothing to drift and nothing to check; Codex reads `AGENTS.md` natively.
 - **Trade-off:** Instructions must be written for every agent, not in Claude-specific terms.
 - **Revisit if:** an agent needs instructions the others must not follow.
+
+## D-013: Remove the API token; rate-limit in nginx instead
+
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5); owner's choice
+- **Context:** The owner asked why users must paste a token. The API is read-only over public data, listens on this machine only, and calls no paid service; the token (D-005) protected little and added friction and a secret to manage.
+- **Options:**
+  1. remove the token; keep loopback binding and input limits; add an nginx rate limit
+  2. make the token optional, checked only when set
+  3. keep it
+- **Chosen:** 1
+- **Why:** The real risks (flooding, abuse of a public endpoint) are not addressed by a shared secret every user must know; a rate limit addresses flooding, and the API is not public.
+- **Trade-off:** Anyone on this machine can query the API. Exposing it beyond the machine now requires adding real authentication and HTTPS first (CONSTRAINTS.md).
+- **Revisit if:** the bot is hosted for other people.

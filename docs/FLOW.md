@@ -7,9 +7,9 @@ How execution travels. Update this when a path changes, and mark the functions a
 ```
 frontend/src/components/ChatPanel.vue  submit()            Enter or Send; blocks empty, over-long and duplicate submits
   -> frontend/src/App.vue              messageSendHandler()
-  -> frontend/src/chatApi.mjs          sendMessage() -> fetchHttp.get()   GET {base}/?search=..., Bearer token, 10 s timeout
-  -> docker/nginx.conf                 location /api/  (Docker only; strips /api, logs nothing)
-  -> api/main.py                       home()           token check (constant time), empty and 500-char checks
+  -> frontend/src/chatApi.mjs          sendMessage() -> fetchHttp.get()   GET {base}/?search=..., no credentials, 10 s timeout
+  -> docker/nginx.conf                 location /api/  (Docker only; rate limit 10/s per client, strips /api, logs nothing)
+  -> api/main.py                       home()           empty and 500-char checks
   -> api/chatbot_graph_logic.py        ChatBotGraph.chat_main()
        -> api/question_classifier.py   QuestionClassifier.classify()
             check_medical()            Aho-Corasick entity spans, whole words only

@@ -16,7 +16,6 @@
 
     <main class="workspace">
       <ChatPanel
-        v-model:token="apiToken"
         :messages="messages"
         :busy="botTyping"
         @send="messageSendHandler"
@@ -42,12 +41,10 @@ export default {
         {
           agent: "bot",
           type: "text",
-          text: "Hello! I'm Mr. Healthcare. Enter the API token, then ask about the symptoms, causes, prevention or treatments of a disease.",
+          text: "Hello! I'm Mr. Healthcare. Ask me about the symptoms, causes, prevention or treatments of a disease.",
         },
       ],
       botTyping: false,
-      // Held in memory only: never stored or compiled into the bundle.
-      apiToken: "",
     };
   },
   methods: {

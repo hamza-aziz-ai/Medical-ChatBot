@@ -20,7 +20,6 @@ Configuration comes from environment variables. For local use, copy `.env.exampl
 | `NEO4J_USER` | no | `neo4j` |
 | `NEO4J_DATABASE` | no | `neo4j` |
 | `NEO4J_QUERY_TIMEOUT` | no | `5` (seconds per API query; must be a positive number) |
-| `CHATBOT_API_TOKEN` | yes, for the API | none |
 | `CORS_ORIGINS` | no | `http://localhost:8080,http://127.0.0.1:8080` (exact `http(s)://host[:port]` origins, comma-separated; patterns and `*` are refused) |
 
 An earlier version of this repository contained a hard-coded Neo4j password. If you used that password anywhere, change it.
@@ -33,7 +32,7 @@ python build_medicalgraph.py
 flask --app main run
 ```
 
-The frontend is Vue 3 built with Vite and needs Node `^22.13.0 || ^24.0.0`. From `frontend/`, run `yarn install` and then `yarn dev` (development, http://localhost:8080) or `yarn build` and `yarn preview` (the built site on the same port, which the API's default CORS origins allow). Set `VITE_API_BASE_URL` in `frontend/.env` (template: `frontend/.env.example`) if the API is not at `http://localhost:5000`. Never put the API token in a `VITE_*` variable: Vite compiles those into the public bundle. Enter the value of `CHATBOT_API_TOKEN` in the page's "API token" field instead; the page keeps it in memory only.
+The frontend is Vue 3 built with Vite and needs Node `^22.13.0 || ^24.0.0`. From `frontend/`, run `yarn install` and then `yarn dev` (development, http://localhost:8080) or `yarn build` and `yarn preview` (the built site on the same port, which the API's default CORS origins allow). Set `VITE_API_BASE_URL` in `frontend/.env` (template: `frontend/.env.example`) if the API is not at `http://localhost:5000`. Never put a secret in a `VITE_*` variable: Vite compiles those into the public bundle. The page needs no login or token.
 
 Run the checks with `python -m pytest tests` from the repository root, and `yarn lint` and `yarn test` from `frontend/` (`yarn test` runs the Node helper tests and the Vitest component tests). None of them needs a running Neo4j server. GitHub Actions runs them when the files they cover change (see CI/CD and MLOps).
 
@@ -41,7 +40,7 @@ The live tests in `tests/test_live_neo4j.py` run against a real server and **del
 
 ## Docker
 
-`compose.yaml` runs Neo4j, the API (gunicorn, one worker) and the web frontend (nginx), reading `NEO4J_PASSWORD` and `CHATBOT_API_TOKEN` from `.env`. Only the web port is published, on `127.0.0.1:8080` (`WEB_PORT` changes it); nginx serves the page and forwards `/api/` to the API, so the browser talks to one origin and no CORS setup is needed. Neo4j is reachable only inside the stack.
+`compose.yaml` runs Neo4j, the API (gunicorn, one worker) and the web frontend (nginx), reading `NEO4J_PASSWORD` from `.env`. Only the web port is published, on `127.0.0.1:8080` (`WEB_PORT` changes it); nginx serves the page and forwards `/api/` to the API, so the browser talks to one origin and no CORS setup is needed. Neo4j is reachable only inside the stack.
 
 ```
 docker compose up -d --wait neo4j
@@ -53,7 +52,7 @@ The importer replaces the graph snapshot, so it runs only when asked for; a norm
 
 nginx writes no access or error log, because both would contain the question from the request URL. The cost is that nginx problems are not logged; to debug locally, temporarily set `error_log stderr warn;` in `docker/nginx.conf`, and never publish that image. The API container's healthcheck only shows that the port is open, not that the graph is imported.
 
-`scripts/compose_smoke.sh` builds both images and tests the whole stack in a throwaway project: import, the page, an authenticated answer through `/api`, a wrong token, an abstention, an API outage, and that no question or token reaches any container output or API log file.
+`scripts/compose_smoke.sh` builds both images and tests the whole stack in a throwaway project: import, the page, an answer through `/api`, an abstention, rate limiting, an API outage, and that no question reaches any container output or API log file.
 
 ## CI/CD and MLOps
 
@@ -134,4 +133,4 @@ The `docs/` folder follows the "Defend What You Ship" field guide. Start with [d
 ## Known limitations
 
 - **Training reproducibility.** The notebook fits its tokenizer before splitting the data, does not seed the split, and has no separate test set. Fixing this needs the training data, the GloVe embeddings and a new evaluation run, so it has not been done.
-- **Access control.** The API uses one shared token. It has no user accounts.
+- **Access control.** The API has no authentication (D-013 in `docs/DECISIONS.md`). It answers read-only questions over public data and listens on this machine only; in Docker, nginx limits each client to 10 questions per second. Putting it on the internet would need real authentication and HTTPS first.
