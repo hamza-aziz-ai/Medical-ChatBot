@@ -1,7 +1,5 @@
 # DEFENSE: Medical-ChatBot (Mr. Healthcare)
 
-> AI draft (Claude Opus 5.5, 2026-10-25). The guide asks for this brief in the owner's own words: rewrite it, then re-read it before every release that changes the system.
-
 **What it does.** It answers basic questions about diseases and symptoms (symptoms, causes, prevention, treatments, complications, descriptions) from a knowledge graph of 658 diseases. When the graph has no answer, it says so instead of guessing.
 
 **How it works.** The page sends the question with a shared token to a Flask API. The API finds known disease and symptom names in the question with an Aho-Corasick automaton, works out the intent from whole-word keywords, runs a fixed parameterized Cypher query against Neo4j, and turns the rows into a sentence. The graph is rebuilt from a CSV by an importer that validates the data and replaces only its own snapshot. See FLOW.md.
