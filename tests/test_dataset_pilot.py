@@ -86,7 +86,8 @@ def test_doid_keeps_live_terms_and_exact_synonyms_only():
     assert version == "releases/2026-09-30/doid.obo" and total == 4
     names = {t["id"]: t["names"] for t in terms}
     assert names["DOID:2841"] == ["asthma", 'bronchial "asthma"']  # escaped quotes unescaped
-    assert names["DOID:13189"] == ["gout"]                         # RELATED synonym ignored
+    assert names["DOID:13189"] == ["gout"]                         # RELATED synonym ignored here...
+    assert {t["id"]: t["scoped"] for t in terms}["DOID:13189"] == [("gouty arthritis", "RELATED")]  # ...kept apart
     assert "DOID:9999" not in names                                # obsolete term ignored
 
 
@@ -151,3 +152,91 @@ def test_the_cache_is_written_only_after_a_complete_download(tmp_path, monkeypat
     assert pilot.cached(pilot.DOID_URL, "doid.obo", offline=True, fetcher=failing) == b"data"
     with pytest.raises(pilot.PilotError, match="not cached"):
         pilot.cached(pilot.DOID_URL, "other.obo", offline=True)
+
+
+# Step 2: candidates.
+
+def term(concept, names, scoped=()):
+    return {"id": concept, "names": list(names), "scoped": list(scoped)}
+
+
+def candidates(unmatched, medlineplus=(), doid=()):
+    rows, counts = pilot.find_candidates(unmatched, list(medlineplus), list(doid))
+    return {r["disease"]: r for r in rows}, counts
+
+
+def test_each_candidate_method_records_what_it_relaxed():
+    medlineplus = [{"id": "1", "url": "u/crohn", "names": ["Crohn's Disease"]}]
+    doid = [term("DOID:1", ["obesity"]), term("DOID:2", ["lung cancer with liver metastases"]),
+            term("DOID:3", ["gout"], [("gouty arthritis", "RELATED")])]
+    rows, counts = candidates(["crohn's disease,", "liver metastases lung cancer with", "lung lung cancer with liver metastases",
+                               "gouty-arthritis", "simple obesity", "obesity simple", "three room heart"], medlineplus, doid)
+
+    def only(name):
+        [candidate] = rows[name]["candidates"]
+        [evidence] = candidate["evidence"]
+        return candidate, evidence
+
+    candidate, evidence = only("crohn's disease,")
+    assert (candidate["source"], candidate["concept"], evidence["method"]) == ("medlineplus", "u/crohn", "punctuation_relaxed")
+    assert only("liver metastases lung cancer with")[1] == {
+        "matched_name": "lung cancer with liver metastases", "scope": None, "method": "token_order_ignored", "order_ignored": True}
+    # Repeated words are kept, so only the similar fallback finds it.
+    assert {e["method"] for c in rows["lung lung cancer with liver metastases"]["candidates"] for e in c["evidence"]} == {"similar"}
+    candidate, evidence = only("gouty-arthritis")
+    assert (candidate["label"], evidence["method"], evidence["scope"]) == ("gout", "doid_scoped", "RELATED")
+    candidate, evidence = only("simple obesity")
+    assert (evidence["method"], evidence["removed_qualifier"]) == ("qualifier_removed", "simple")
+    assert rows["obesity simple"]["candidates"] == []                          # only a leading qualifier is removed
+    assert rows["three room heart"]["candidates"] == []
+    assert counts["cohort"] == 7 and counts["with_candidates"] == 5 and counts["without_candidates"] == 2
+    assert counts["per_method"]["similar"] == 1 and counts["primary"]["token_order_ignored"] == 1
+    assert pilot.relaxed("Diabetes") == "diabetes"                             # no plural folding
+
+
+def test_similar_candidates_are_a_fallback_capped_by_concept_with_ties_to_the_lower_id():
+    doid = [term("DOID:1", ["abcdefghix", "abcdefghiy"]), term("DOID:2", ["abcdefghiz"]), term("DOID:3", ["abcdefghiw"]),
+            term("DOID:4", ["abcdefghiv"]), term("DOID:5", ["bronchial asthma"]), term("DOID:6", ["asthma"]),
+            term("DOID:7", ["simple asthmaa"])]
+    rows, counts = candidates(["abcdefghij", "bronchial asthmaa", "simple asthma", "unrelated"], doid=doid)
+    row = rows["abcdefghij"]
+    assert [c["concept"] for c in row["candidates"]] == ["DOID:1", "DOID:2", "DOID:3"] and row["more_candidates"]
+    assert len(row["candidates"][0]["evidence"]) == 2                          # one concept, both names kept as evidence
+    assert row["candidates"][0]["evidence"][0]["score"] == 0.9
+    assert rows["bronchial asthmaa"]["candidates"][0]["concept"] == "DOID:5"   # 0.97: counted as high
+    # A lexical candidate exists (qualifier removed), so the similar fallback does not run for this name.
+    assert {e["method"] for c in rows["simple asthma"]["candidates"] for e in c["evidence"]} == {"qualifier_removed"}
+    assert rows["unrelated"]["candidates"] == []
+    assert counts["similar_high"] == 1 and counts["similar_truncated"] == 1 and counts["more_than_one_concept"] == 1
+
+
+def test_candidates_mode_reads_only_the_cache_keeps_step_1_and_commits_no_names(tmp_path, monkeypatch):
+    data, report = tmp_path / "pilot-data", tmp_path / "DATASET-PILOT.md"
+    entities = tmp_path / "entities.json"
+    entities.write_text('{"diseases": ["asthma", "zzsentinel disease", "bronchial asthmaa"], "source_sha256": "x"}', encoding="utf-8")
+    monkeypatch.setattr(pilot, "DATA", data)
+    monkeypatch.setattr(pilot, "REPORT", report)
+    monkeypatch.setattr(pilot, "ENTITIES", entities)
+    monkeypatch.setattr(pilot, "ROOT", tmp_path)
+
+    class NoNetwork:
+        def open(self, *args, **kwargs):
+            raise AssertionError("the network was used")
+
+    monkeypatch.setattr(pilot, "OPENER", NoNetwork())
+    assert pilot.main(["--candidates"]) == 1                                   # nothing cached: fails, never zero
+    data.mkdir()
+    (data / "xml.html").write_text('<a href="https://medlineplus.gov/xml/mplus_topics_2026-10-24.xml">x</a>', encoding="utf-8")
+    (data / "mplus_topics_2026-10-24.xml").write_bytes(MEDLINEPLUS)
+    (data / "doid.obo").write_text(DOID, encoding="utf-8")
+    assert pilot.main(["--candidates"]) == 1                                   # no step-1 report yet
+    assert pilot.main(["--offline"]) == 0
+    measured = report.read_text(encoding="utf-8")
+    mappings = (data / "mappings.json").read_text(encoding="utf-8")
+    assert pilot.main(["--candidates"]) == 0 and pilot.main(["--candidates"]) == 0
+    text = report.read_text(encoding="utf-8")
+    assert text.startswith(measured.rstrip("\n")) and text.count(pilot.CANDIDATES_HEADING) == 1
+    assert (data / "mappings.json").read_text(encoding="utf-8") == mappings    # step 1's outputs are untouched
+    assert "zzsentinel" not in text and "asthmaa" not in text                  # no per-name data in the report
+    assert "| Searched (no exact match above) | 2 |" in text
+    assert "zzsentinel disease" in (data / "candidates.json").read_text(encoding="utf-8")
