@@ -52,6 +52,16 @@ The importer replaces the graph snapshot, so it runs only when asked for; a norm
 
 nginx writes no access or error log, because both would contain the question from the request URL. The cost is that nginx problems are not logged; to debug locally, temporarily set `error_log stderr warn;` in `docker/nginx.conf`, and never publish that image. The API container's healthcheck only shows that the port is open, not that the graph is imported.
 
+**Automatic updates.** `scripts/update_stack.py` updates the running stack when a new release is published. Every 15 minutes it checks the latest release; if it is newer, it pulls the images, stops the stack for about a minute, backs up the graph volume to `deploy/backups/`, re-imports the graph with the new image, starts the new release and checks that it answers. If anything fails, it restores the previous release and backup and does not try that release again. It never starts a stack you stopped, and it only runs while you are signed in with Docker Desktop running.
+
+Set it up once:
+
+1. Run a published release: download its `compose.yaml` and `release.env` from the GitHub release, then `docker compose -f <that compose.yaml> --project-directory . up -d` with `API_IMAGE` and `WEB_IMAGE` set from `release.env`.
+2. Record it: `.venv\Scripts\python scripts\update_stack.py --enroll`. It checks that the running images and `compose.yaml` are that release's, and changes nothing.
+3. Schedule it: `schtasks /Create /TN "Medical-ChatBot update" /SC MINUTE /MO 15 /IT /F /TR "\"<repo>\.venv\Scripts\pythonw.exe\" \"<repo>\scripts\update_stack.py\""`, with `<repo>` the full path of this folder.
+
+A release that changes `compose.yaml` is not deployed automatically: review it, deploy it by hand as in step 1, and enrol again. While the task is enabled, run `python scripts/update_stack.py` instead of pulling or restarting the stack by hand. Logs go to `logs/<year>/<Month>/update_stack.log`; recovery steps are in `docs/ROLLBACK.md`.
+
 `scripts/compose_smoke.sh` builds both images and tests the whole stack in a throwaway project: import, the page, an answer through `/api`, an abstention, rate limiting, an API outage, and that no question reaches any container output or API log file.
 
 ## CI/CD and MLOps

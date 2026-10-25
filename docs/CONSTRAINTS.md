@@ -35,6 +35,7 @@ Lane A today: a local student prototype with no real users. The owner asked for 
 - `api/build_medicalgraph.py`: ownership marker, refusal guards, snapshot replacement, quarantine rules.
 - `scripts/evaluate_kg.py`, `eval/`: the MLOps gate.
 - `.github/workflows/release.yml`, `autorelease.yml` and `automerge.yml`: publication, release planning and merging.
+- `scripts/update_stack.py` and the owner's `deploy/` folder: the updater replaces the running stack and its graph; never run it against a stack you do not own, and never weaken its backup, journal or compose checks.
 - `docker/nginx.conf`: request logging.
 
 ## AI allow policy (habit 22)
