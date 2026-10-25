@@ -10,6 +10,7 @@ Shared, durable memory for every coding agent in this repository. Read it at the
 - 2026-10-25: Write enumerations (options, steps, alternatives) as real Markdown numbered or bulleted lists, never inline as "1) … 2) …" on one line.
 - 2026-10-25: Follow the "Defend What You Ship" field guide; the rules are in AGENTS.md and the files in `docs/`.
 - 2026-10-25: "Council with Codex" means Claude Code discusses with the owner's Codex session named `Medical-ChatBot` (codex-claude-council plugin, `council_join`) until both agree, then implements, opens a PR and lets automerge merge it.
+- 2026-10-25: If the codex-claude-council plugin fails for any reason (Codex error, disconnect, timeout, lock), fall back to the `/llm-council` skill for the same question or the unresolved point, and say so.
 - 2026-10-25: After significant changes the owner may ask to "update the two artifacts": the claude.ai pages Solution Architecture and Software & System Design, published by Claude Code.
 - 2026-10-25: Never touch the GitHub profile repository `hamza-aziz-ai/hamza-aziz-ai` or LinkedIn from this project, never read `.env`, and never repeat the old (rotated) Neo4j password.
 
