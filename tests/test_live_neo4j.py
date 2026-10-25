@@ -177,3 +177,21 @@ def test_query_timeout_is_enforced(driver):
     with pytest.raises(ClientError) as raised:
         searcher.search_main([{"question_type": "disease_cause", "sql": [(slow, {})]}])
     assert "TransactionTimedOut" in raised.value.code
+
+
+def test_listed_intents_match_what_the_live_graph_answers(driver, tmp_path):
+    path = write_csv(tmp_path, "a.csv", [
+        row(0, "a", accompany="['b']", cure_way="['rest']"),
+        row(1, "b", symptoms="[]", cure_way="[]"),
+    ])
+    import_csv(driver, path)
+    dataset = builder.load_dataset(path)
+    dictionary = builder.entities_document(dataset, builder.graph_data(dataset))
+    searcher = AnswerSearcher(driver=driver)
+    assert dictionary["intents"]["b"] == ["disease_cause", "disease_prevention", "disease_accompany", "disease_description"]
+    assert evaluate_kg.chip_consistency(searcher, dictionary) == {"diseases": 2, "mismatches": 0}
+
+    # A listed intent the graph cannot answer is caught.
+    driver.execute_query("MATCH (:Disease {name: 'a'})-[r:has_symptom]->() DELETE r")
+    assert evaluate_kg.chip_consistency(searcher, dictionary)["mismatches"] == 1
+

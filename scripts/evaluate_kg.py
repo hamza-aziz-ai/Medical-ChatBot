@@ -18,7 +18,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "api"))
 
 import build_medicalgraph as builder  # noqa: E402
-from chatbot_graph_logic import ABSTENTION  # noqa: E402
 
 CASES_PATH = ROOT / "eval" / "cases.jsonl"
 BASELINE_PATH = ROOT / "eval" / "baseline.json"
@@ -183,23 +182,50 @@ def integrity_checks(driver, plan, dictionary, owner=builder.OWNER, database_nam
     return counts, failures
 
 
+def chip_consistency(searcher, dictionary):
+    """Every intent the dictionary lists for a disease must answer on the live graph, and no other may.
+
+    Suggestion chips come from that list, so a mismatch would offer a question that gets "nothing recorded".
+    """
+    from question_parser import QuestionParser
+
+    listed = dictionary.get("intents") or {}
+    mismatches = 0
+    for disease in dictionary.get("diseases", []):
+        for intent in DISEASE_INTENTS:
+            sqls = [{"question_type": intent, "sql": QuestionParser.sql_transfer(intent, [disease])}]
+            if bool(searcher.search_structured(sqls)) != (intent in listed.get(disease, ())):
+                mismatches += 1
+    return {"diseases": len(listed), "mismatches": mismatches}
+
+
+DISEASE_INTENTS = ("disease_symptom", "disease_cause", "disease_prevention", "disease_cure_way",
+                   "disease_accompany", "disease_description")
+
+
 def first(labels):
     return labels[0] if labels else None
 
 
-def check_case(case, classified, answer):
-    """Names of the checks this case failed; empty when it passed."""
+def check_case(case, reply):
+    """Names of the checks this case failed; empty when it passed.
+
+    Intents and entities are read from the reply's own interpretation, so a follow-up answered about the
+    wrong subject fails even when its wording looks right.
+    """
     failures = []
-    if "intents" in case and sorted(case["intents"]) != sorted(classified.get("question_types", [])):
+    interpretation = reply.get("interpretation") or {}
+    intents = [item["intent"] for item in interpretation.get("intents", [])]
+    entities = {item["name"]: sorted(item["types"]) for item in interpretation.get("entities", [])}
+    if "intents" in case and sorted(case["intents"]) != sorted(intents):
         failures.append("intents")
-    if "entities" in case and case["entities"] != {name: sorted(kinds) for name, kinds in classified.get("arguments", {}).items()}:
+    if "entities" in case and case["entities"] != entities:
         failures.append("entities")
-    if case.get("abstain"):
-        if answer != ABSTENTION:
-            failures.append("abstention")
-    elif answer == ABSTENTION:
-        failures.append("unexpected_abstention")
-    else:
+    expected_status = "abstain" if case.get("abstain") else case.get("status", "answer")
+    if reply.get("status") != expected_status:
+        failures.append("abstention" if expected_status == "abstain" else f"status_{reply.get('status')}")
+    elif expected_status == "answer":
+        answer = reply.get("message", "")
         for index, fact in enumerate(case.get("facts", [])):
             if fact["disease"] not in answer or fact["value"] not in answer:
                 failures.append(f"fact_{index}")
@@ -210,9 +236,9 @@ def evaluate(cases, chatbot, counts, baseline):
     results, latencies = [], []
     for case in cases:
         started = time.perf_counter()
-        answer = chatbot.chat_main(case["question"])
+        reply = chatbot.respond(case["question"], topic=case.get("topic"), selections=case.get("selections", ()))
         latencies.append((time.perf_counter() - started) * 1000)
-        failures = check_case(case, chatbot.classifier.classify(case["question"]), answer)
+        failures = check_case(case, reply)
         results.append({"id": case["id"], "failed_checks": failures})
 
     count_mismatches = sorted(key for key in baseline["counts"] if counts.get(key) != baseline["counts"][key])
@@ -245,6 +271,10 @@ def main(report_path=None):
         driver = chatbot.searcher.driver
         report = evaluate(load_cases(), chatbot, counts, baseline)
         integrity_counts, integrity_failures = integrity_checks(driver, data, dictionary, database_name=database.database_name())
+        chips = chip_consistency(chatbot.searcher, dictionary)
+        if chips["mismatches"] or chips["diseases"] != len(dictionary.get("diseases", [])):
+            integrity_failures.append("chip_consistency")
+        integrity_counts["chip_mismatches"] = chips["mismatches"]
         report["integrity"] = {"failures": integrity_failures, "counts": integrity_counts}
         report["passed"] = report["passed"] and not integrity_failures
         report["server"] = driver.get_server_info().agent

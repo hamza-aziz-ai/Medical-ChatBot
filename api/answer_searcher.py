@@ -28,11 +28,9 @@ class AnswerSearcher:
     def close(self):
         self.driver.close()
 
-    def answer_prettify(self, question_type, answers):
-        if question_type not in FORMATS:
-            return []
-
-        template, separator, terms_only = FORMATS[question_type]
+    def group_values(self, question_type, answers):
+        """{subject: sorted usable values} for one intent, capped at num_limit values each."""
+        _, _, terms_only = FORMATS[question_type]
         grouped = {}
         for row in answers:
             values = row.get("value")
@@ -41,15 +39,36 @@ class AnswerSearcher:
             for value in values:
                 if isinstance(value, str) and value.strip() and (not terms_only or is_valid_term(value)):
                     usable.add(value.strip())
-
-        return [
-            template.format(subject, separator.join(sorted(values)[:self.num_limit]))
+        return {
+            subject: sorted(values)[:self.num_limit]
             for subject, values in sorted(grouped.items(), key=lambda item: str(item[0]))
             if subject and values
-        ]
+        }
 
-    def search_main(self, sqls):
-        final_answers = []
+    def answer_prettify(self, question_type, answers):
+        if question_type not in FORMATS:
+            return []
+        template, separator, _ = FORMATS[question_type]
+        return [template.format(subject, separator.join(values)) for subject, values in self.group_values(question_type, answers).items()]
+
+    def structure(self, question_type, answers):
+        """One entry per subject: the plain sentence, plus a lead, bullet items and a note for list answers."""
+        if question_type not in FORMATS:
+            return []
+        template, separator, terms_only = FORMATS[question_type]
+        prefix, suffix = template.split("{1}")
+        results = []
+        for subject, values in self.group_values(question_type, answers).items():
+            entry = {"intent": question_type, "subject": subject, "text": template.format(subject, separator.join(values))}
+            if terms_only:
+                # Lists render as bullets: "The symptoms of asthma include:" + items + an optional note.
+                entry.update(lead=prefix.format(subject).strip(), items=values, note=suffix.strip(". ").strip() or None)
+            results.append(entry)
+        return results
+
+    def run(self, sqls):
+        """Run each intent's queries; returns [(question_type, rows)]."""
+        results = []
         for _sql in sqls:
             answers = []
             for query, params in _sql["sql"]:
@@ -61,6 +80,11 @@ class AnswerSearcher:
                 )
                 answers += [record.data() for record in records]
             logger.debug("Intent %s: %d query(ies) returned %d row(s)", _sql["question_type"], len(_sql["sql"]), len(answers))
-            final_answers += self.answer_prettify(_sql["question_type"], answers)
+            results.append((_sql["question_type"], answers))
+        return results
 
-        return final_answers
+    def search_main(self, sqls):
+        return [sentence for question_type, rows in self.run(sqls) for sentence in self.answer_prettify(question_type, rows)]
+
+    def search_structured(self, sqls):
+        return [entry for question_type, rows in self.run(sqls) for entry in self.structure(question_type, rows)]

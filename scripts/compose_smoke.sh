@@ -41,7 +41,7 @@ reply=$(ask what are the symptoms of asthma "$SENTINEL")
 [ "$(tail -n1 <<<"$reply")" = 200 ] || fail "graph answer status"
 grep -q 'breathing difficulty' <<<"$reply" || fail "graph answer content"
 
-grep -q 'I cannot answer' <<<"$(ask how long does asthma last "$SENTINEL")" || fail "abstention"
+grep -Eq '"status": *"abstain"' <<<"$(ask how long does asthma last "$SENTINEL")" || fail "abstention"
 
 # 60 parallel requests exceed nginx's 10/s rate with a burst of 20, so some must get 429.
 codes=$(seq 1 60 | xargs -P 30 -I{} curl -s -o /dev/null -w '%{http_code}\n' "$BASE/api/?search=what+causes+asthma")

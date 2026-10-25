@@ -6,15 +6,22 @@ from neo4j.exceptions import ServiceUnavailable
 
 from main import create_app
 
-def client(chat_main=lambda text: "answer"):
-    return create_app(chatbot=SimpleNamespace(chat_main=chat_main)).test_client()
+def client(chat_main=lambda text: "answer", seen=None):
+    def respond(text, topic=None, selections=()):
+        if seen is not None:
+            seen.append({"topic": topic, "selections": selections})
+        return {"status": "answer", "reason": "answered", "message": chat_main(text), "answers": [],
+                "topic": None, "interpretation": None, "options": []}
+
+    return create_app(chatbot=SimpleNamespace(respond=respond)).test_client()
 
 
 def test_answer_is_json():
     response = client().get("/", query_string={"search": "what causes asthma"})
     assert response.status_code == 200
     assert response.is_json
-    assert response.get_json() == {"search": "what causes asthma", "message": "answer"}
+    body = response.get_json()
+    assert body["search"] == "what causes asthma" and body["message"] == "answer" and body["status"] == "answer"
 
 
 def test_no_token_is_needed():
@@ -125,3 +132,26 @@ def test_query_timeout_returns_503():
     response = client(fail).get("/", query_string={"search": "x"})
     assert response.status_code == 503
     assert response.is_json
+
+
+def test_topic_and_selections_are_passed_on_and_bounded():
+    seen = []
+    app_client = client(seen=seen)
+    app_client.get("/", query_string=[("search", "what causes it"), ("topic", "asthma"), ("topic_type", "disease"),
+                                      ("selection", "anemia:disease"), ("selection", "no-colon"), ("selection", "x" * 300 + ":disease")]
+                   + [("selection", f"n{i}:symptom") for i in range(20)])
+    passed = seen[0]
+    assert passed["topic"] == {"name": "asthma", "type": "disease"}
+    assert passed["selections"][0] == {"name": "anemia", "type": "disease"}
+    assert all(len(s["name"]) <= 200 for s in passed["selections"]) and len(passed["selections"]) <= 10
+    app_client.get("/", query_string={"search": "x", "topic": "y" * 300, "topic_type": "disease"})
+    assert seen[1]["topic"] is None
+
+
+def test_topic_and_selections_never_reach_the_logs(caplog):
+    sentinel = "PRIVATE_TOPIC_SENTINEL"
+    with caplog.at_level(logging.DEBUG):
+        client().get("/", query_string=[("search", "what causes it"), ("topic", sentinel), ("topic_type", "disease"),
+                                         ("selection", f"{sentinel}:symptom")])
+    assert sentinel not in caplog.text
+

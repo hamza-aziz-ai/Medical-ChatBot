@@ -2478,5 +2478,4822 @@
   "zhan siqiao",
   "zhenshui sound",
   "汕-amino acid urine"
- ]
+ ],
+ "intents": {
+  "1-1-antitrypsin deficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "abdominal aortic thrombosis syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "abdominal cramp syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "abdominal epilepsy syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "abdominal migraine syndrome": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "abdominal muscle deficiency syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "abdominal stroke syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "abnormal hemoglobinopathy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acinar cell carcinoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acquired arteriovenous fistula": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acquired circulatory anticoagulant syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acquired platelet dysfunction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acquired tricuspid regurgitation": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "active cecal syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute abdominal-hyperlipidemia syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute appendicitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute cardiac insufficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute cholecystitis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute colonic pseudoobstructive syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute corrosive gastritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute gastric dilatation": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute gastric mucosal lesions": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute gastritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute gastroenteritis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute heart failure": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute hemorrhagic necrotic enteritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute infective endocarditis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute leukemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute lung abscess": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute lymphangitis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute lymphocytic leukemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute myelitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute myocardial infarction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute pancreatitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute perforation of stomach and duodenal ulcer": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute pericarditis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute peritonitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute respiratory distress syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute respiratory failure": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute simple gastritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute suppurative cholangitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "acute suppurative tenosynovitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "acute toxic encephalitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "adenoid cystic carcinoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "adenoid hypertrophy": [
+   "disease_symptom",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "adenolymphoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "adenovirus pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "adh hypersecretion syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "adhesive intestinal obstruction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "adrenal crisis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "adult respiratory distress syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "adult total pituitary dysfunction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "agranulocytosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "alcoholic cardiomyopathy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "alcoholic liver disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "alcoholism": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "alkaline calcium phosphate crystal deposition disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "allergic asthma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "allergic vasculitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "alzheimers disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "amenorrhea": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "amniotic fluid and meconium aspiration syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "amoebic bowel disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "amoebic liver abscess": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "anal atresia": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "anaphylactic shock": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "anastomotic ulcer": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "anemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "anemia caused by excessive hemolysis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "anemia caused by folic acid deficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "anemia caused by vitamin b12 deficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "anemia of chronic diseases": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "aneurysm": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "angina pectoris": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "ankylosing spondylitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "anorexia in children": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "anterior pituitary hypofunction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "aorta": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "aortic dissection": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "aortic insufficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "aortic stenosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "aortic stenosis combined with insufficiency": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "aortic valve stenosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "aplastic anemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "arachnoiditis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "arsenic poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "arteriosclerosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "ascariasis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "aspiration pneumonia": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "asthma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "asthmatic bronchitis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "asthmatic pulmonary eosinophilic infiltration": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "atherosclerosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "autoimmune hemolytic anemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "autonomic dysfunction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "bacteremia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "bacterial liver abscess": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "bacterial pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "barrett syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "barretts esophagus": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "benign tumor of the stomach": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "benzene poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "bile reflux gastritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "bile reflux gastritis after gastrectomy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "biliary cirrhosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "blindness syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "boric acid poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "brain abscess": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "brain liver and kidney syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "brain schistosomiasis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "breast cancer": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "breast fibroma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "breast hyperplasia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "brenneman syndrome": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "bronchiectasis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "bronchopneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "building disease syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "buka syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "c islet functional beta cell tumor": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "cadmium poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "caffeine and aminophylline poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "calculous cholecystitis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "carbamate pesticide poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "carbon disulfide poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "carbon tetrachloride poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "carcinoid": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cardia cancer": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cardiac neurosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "carotid body tumor": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "castor bean poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cavernous sinus": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "celiac artery compression syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "central nervous system stimulant poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "cerebral infarction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cerebral palsy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cerebral palsy syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cerebrostomy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cerebrovascular": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cervical spondylosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "chest wall tuberculosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "child abdominal pain": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "child sleep disorder": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "child stuttering": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "childrens learning ability disorder": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "chlamydia pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "chloral hydrate poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "chloroquine poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "chlorpromazine poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cholangiocarcinoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cholera-like syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "chronic gastritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "chronic granulomatosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "chronic lymphadenitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "chronic lymphocytic leukemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "chronic lymphocytic thyroiditis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "chronic myeloid leukemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "chronic osteomyelitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "chronic progressive chorea": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "chronic pulmonary heart disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "chronic skin mucosal candidiasis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cold": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "colon cancer": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "colon injury": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "colon polyps": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "colonic atresia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "colonic diverticulosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "colonic fecal perforation": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "colonic fistula": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "colonic torsion": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "colorectal cancer": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "colorectal carcinoid": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "colorectal injury": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "coma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "common peroneal nerve damage": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "common vomiting in childhood": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "complete anomalous pulmonary venous return": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "complete aortic dislocation": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "concentrated bile syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "congenital absence, atresia and stenosis of the duodenum": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "congenital biliary atresia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "congenital erythrocyte disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "congenital hypertrophic pyloric stenosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "congenital intestinal atresia and stenosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "congenital intestinal rotation abnormality": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "congenital megacolon": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "congenital pulmonary cyst": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "congenital rubella": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "congenital thymic hypoplasia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "congestive splenomegaly": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "connective tissue enteritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "constipation": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "coronary artery ectopic origin": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "coronary heart disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "cranfield syndrome": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "crohns disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "crude cottonseed oil poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "cushing syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "cyanide poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "cypress-check syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "cystic fibrosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "d-type viral hepatitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "decompression sickness": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "deep palm infection": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "dermatomyositis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "desquamative interstitial pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "detoxification": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "diabetic foot": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "diabetic ketoacidosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "diabetic lactic acidosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "diaphragmatic paralysis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "diarrhea": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "diffuse esophageal fistula": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "digestive tract repeat deformity": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "dilated cardiomyopathy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "discoid lupus erythematosus": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "disorder of consciousness": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "disseminated intravascular coagulation": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "divided hyperbilirubinemia syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "drowning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "drug allergy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "dumping syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "duodenal diverticulum obstructive jaundice syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "duodenal hoarding": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "duodenal vascular compression syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "ehler-danlos syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "elderly vertigo": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "emphysema": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "endocardial elastinosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "endocrine eyeball": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "enemy mouse poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "enteral torsion": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "enteropathic cutaneous dermatitis syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "eosinophilia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "eosinophilic adenoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "eosinophilic fasciitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "eosinophilic gastroenteritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "esophageal achalasia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "esophageal cancer": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "esophageal diverticulum": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "esophageal foreign body": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_description"
+  ],
+  "esophageal leiomyoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "esophageal rupture": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "esophageal scarring": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "essential thrombocytopenia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "ether poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "exogenous allergic alveolitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "eye movement, trochlear and abducens neuropathy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "facial neuritis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "familial colon polyp": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "fecal incontinence": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "fecal nematode": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "felty syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "fibromatosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "food allergies and intolerance": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "food poisoning": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "formalin poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "freckle": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "fulminant hepatitis-like syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "fulminant liver failure": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "functional vomiting": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "galactosemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gardner syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gas gangrene": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gasoline poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gasoline, kerosene poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gastric and duodenal ulcer bleeding": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "gastric heart syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gastric mucosal prolapse": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gastric polyp": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gastric rhythm disorder syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "gastrinoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "gastrointestinal cancer syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gastrointestinal dysfunction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "gastrointestinal fistula": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "gastrointestinal food intolerance": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gastrointestinal food poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "gastrojejunal sputum syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "gastroparesis syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gastroptosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "germinated potato poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "giant bladder-small colon-intestinal peristalsis syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "giant cell arteritis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gilbert syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "glucose-6-phosphate dehydrogenase deficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gonococcal anal proctitis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "goodpasture syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gout": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "gouty arthritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "graves disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "green tumor": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "guillain-barre syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hay heat": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "headache": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "heatstroke failure": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hemangioblastoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hemangioma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hematoporphyria": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hemolytic anemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hemophilia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hemoptysis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hemorrhage": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hemorrhagic shock": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hepatic-thyroid syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hepatitis a": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hepatitis c virus": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hepatitis e virus": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hepatolenticular degeneration": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hepatopulmonary syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hereditary angioedema": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hereditary ataxia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hereditary complement deficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hereditary hemochromatosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hereditary hemorrhagic telangiectasia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hiccup": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "histiocytosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hodgkins lymphoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hydroxyapatite deposition": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hyperlipidemia": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hyperosmolar nonketotic diabetic coma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hypersensitivity pneumonitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hyperthyroidism": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hyperuricemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hypoglycemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hypothalamic disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "hypothyroidism": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "hysteria": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "idiopathic hemosiderin": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "idiopathic hypereosinophilic syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "idiopathic obstructive bronchiolitis with organizing pneumonia": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "idiopathic pulmonary fibrosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "idiopathic thrombocytopenic purpura": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "ileocecal valve syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "infectious shock": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "infective endocarditis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "inhalation injury": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "insecticide poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "insulinoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "inter-abdominal abscess": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "intermittent eyeball": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "intestinal emphysema syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "intestinal flora disorder": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "intestinal malabsorption syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "intestinal obstruction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "intestinal torsion syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "intussusception": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "iris parasitic disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "iron deficiency anemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "iron utilization anemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "irritable bowel syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "ischemic cardiomyopathy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "ischemic colitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "ischemic hepatitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "jaundice": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "kawasaki disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "kelamin poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "keshan disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "knot, rectal melanosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "large amount of amniotic fluid inhalation": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "large intestine malignant lymphoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "lead poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "left ventricle double outlet": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "left ventricular dysplasia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "legionellosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "legionnaires disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "leiomyosarcoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "leukemia-like reaction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "liver fibrosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "lobular pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "local anesthetic poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "lower gastrointestinal bleeding": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "lung abscess": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "lung actinomycosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "lung bubble": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "lung bullae": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "lung cancer": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "lung candidiasis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "lung metastases": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "lupus": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "lymphocytic choriomeningitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "lymphopenia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "macroglobulinemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "magnesium deficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "magnesium hypertrophy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "main-pulmonary septal defect": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "male breast hypertrophy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "male gonads hypofunction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "mania": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "mast cell hyperplasia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "mausoleum intestinal obstruction syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "median nerve injury": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "medullary progressive paralysis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "megaloblastic anemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "melanoma - gastrointestinal polyposis syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "mens breast development": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "mercury poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "mesenteric lymph node tuberculosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "metabolic acidosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "metabolic alkalosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "meteorite": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "methanol poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "migraine": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "milk spill": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "mixed connective tissue disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "motion sickness": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "mucopolysaccharidosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "multiple endocrine neoplasia syndrome type i": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "multiple peripheral neuritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "multiple sclerosis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "myasthenia gravis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "myasthenia gravis crisis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "mycoplasma pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "mycoplasmal pneumonia in children": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "neonatal apnea": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neonatal asphyxia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neonatal atelectasis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "neonatal bilirubin encephalopathy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neonatal hemolytic disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neonatal hypoglycemia and hyperglycemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neonatal hypoxic ischemic encephalopathy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neonatal respiratory distress syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "neonatal scleredema": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "neonatal seizure": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neonatal sepsis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neonatal subcutaneous gangrene": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neonatal wet lung": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neuropathic vomiting": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neurotic food poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "neutral white (granulocytopenia)": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "nickel carbonyl poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "niemann-picks disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "nitrite-containing plant food poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "no biliary pigmentary urinary jaundice syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "nodular panniculitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "nodular polyarteritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "nodular sclerosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "non-cholesteric infection": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "non-parasitic hepatic cyst": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "non-ulcer indigestion": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "nonalcoholic fatty liver disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "norwalk virus gastroenteritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "nutritional giant erythrocyte anemia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "obesity": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "obstructive emphysema": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "omental cyst": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "omental primary segmental infarction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "omental tumor": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "opioid poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "oppressive optic neuropathy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "organophosphorus pesticide poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "orthostatic hypotension": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "osteoarthritis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "osteoporosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "otogenic brain abscess": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pancreatic insufficiency and neutropenia syndrome in children": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "papillary adenoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "papillary cystadenocarcinoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "paralytic brachial plexus neuritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "parkinsons disease": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "parotid cyst": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "parotid mixed tumor": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "parotid tuberculosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "parotid virus disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "paroxysmal nocturnal hemoglobinuria": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "paroxysmal supraventricular tachycardia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "paroxysmal ventricular tachycardia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "patent ductus arteriosus": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric acute bronchitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric acute cholecystitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pediatric acute laryngitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric acute pancreatitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric allergic purpura": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric asthma": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pediatric cold": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric influenza": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric peptic ulcer": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric staphylococcus aureus pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric tuberculosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric tuberculous meningitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pediatric vomiting": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pelvic floor syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "penetrating heart trauma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "peptic ulcer": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "peripheral neuritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "peripheral neuropathy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "peritoneal mesothelioma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "peritonitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "permethrin poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pertussis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pesticide poisoning": [
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pharyngeal muscle paralysis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pharyngeal schwannomas": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "phenothiazine antipsychotic drug poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pheochromocytoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "phosphorus poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "phrenic nerve palsy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "physical allergic": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pillow nerve pain": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pineal tumor": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pituitary crisis and pituitary apoplexy": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pituitary dwarf disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pituitary tumor": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "plummer-vinson syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pneumococcal pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pneumocystis carinii": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pneumonia in children": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pneumonia pseudotumor": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "poisoned by carbon monoxide": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "poisoning poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "polycystic ovary syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "polycythemia vera": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "polyglandular deficiency syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "polyneuritis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "positional vertigo": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "potassium permanganate poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "premature beat": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "primary aldosteronism": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "primary hyperparathyroidism": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "primary immunodeficiency disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "primary thrombocytopenic purpura": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "prolactinoma": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "proteus food poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "psoriatic arthritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pulmonary aspergillosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pulmonary cryptococcosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pulmonary edema": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pulmonary embolism": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pulmonary hemorrhage-nephritis syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "pulmonary-pleural amebiasis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "pyrazolone poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "quinine poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "radiation enteritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "radiation pneumonitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "raynauds disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "reflux esophagitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "reiter syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "residual gastric cancer": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "residual sinus syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "respiratory acidosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "respiratory alkalosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "respiratory bronchiole-associated interstitial lung disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "respiratory failure": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "respiratory foreign body": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "respiratory syncytial virus pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "retinitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "retroperitoneal fluid infiltration": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "retroperitoneal hernia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "retroperitoneal infection and abscess": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "retroperitoneal lymphadenitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "retroperitoneal space bleeding": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "reynolds syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "rheumatic chorea": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "rheumatic fever in children": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "rheumatoid arthritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "rotavirus-induced gastroenteritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "salivary fistula": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "salmonella food poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "sarcoidosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "sars": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "scorpion bruise": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "sebaceous gland": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "sedative, stable, hypnotic poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "selective iga deficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "senile deafness": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "serum disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "severe combined immunodeficiency disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "sexual perversion": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "shock": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "shock pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_description"
+  ],
+  "shoulder joint tuberculosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "sick sinus syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "sickle cell disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "silicosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "simple goiter": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "simple lower extremity varices": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "simple obesity": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "simple pulmonary eosinophilic infiltration": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "single atrium": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "single ventricle": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "sinus arrest": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "sinus tachycardia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "sjogren syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "skin allergies": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "small chorea": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "small intestine": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "small intestine injury": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "small mesenteric injury": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "sodium pentachlorophenol poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "soft tissue tumor": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "spinal cord compression": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "spinal radiculitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "spinal vascular disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "spleen rupture": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "spleen-hepatic syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "spontaneous hemothorax": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "staphylococcal food poisoning": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "staphylococcus aureus pneumonia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "stiff man syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "stomach ache": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "stomach disease": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "stomach injury": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "stomach retention": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "stomach twist": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "strong acid, strong alkali poisoning": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "strong base poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "subacute combined degeneration of the spinal cord": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "subacute thyroiditis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "subcutaneous lipid granulomatosis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "superior mesenteric artery compression syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "suppurative osteomyelitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "suppurative sweat gland": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "surgical lymphangioma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "surgical sebaceous cyst": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "systemic infections caused by enterovirus": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "tension headache": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "tetanus": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "thoracic aortic dissection": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "thoracic descending aortic aneurysm": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "three room heart": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "thromboangiitis obliterans": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "thrombocytopenia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "thrombotic superficial phlebitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "thrombotic thrombocytopenic purpura": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "thymoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "tongue lichen planus": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "total autonomic dysfunction": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "tracheobronchial foreign body": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "transient ischemic attack": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "transverse colonic embedding syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "tricuspid atresia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "tricuspid regurgitation": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "tricuspid stenosis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "tricuspid valvular deformity": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "tropical inflammatory diarrhea": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "tuberculous empyema": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "tuberculous mesenteric lymphadenitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "tuberculous peritonitis": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "turcot syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "type iii hypersensitivity disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "type iv hypersensitivity disease": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "ulcerative colitis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "umbilical bulging - giant tongue - giant somatic syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "undifferentiated carcinoma of the parotid gland": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "upper gastrointestinal bleeding": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "upper urethra": [
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "vascular hemophilia": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "vestibular neuritis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "vibrio parahaemolyticus food poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "viral myocarditis": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "vitamin c deficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "vitamin d poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "vitamin e deficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "vitamin k deficiency": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "whipple disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "whipworm disease": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "wright syndrome": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "xanthium poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ],
+  "xanthoma": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_description"
+  ],
+  "zinc poisoning": [
+   "disease_symptom",
+   "disease_cause",
+   "disease_prevention",
+   "disease_cure_way",
+   "disease_accompany",
+   "disease_description"
+  ]
+ }
 }

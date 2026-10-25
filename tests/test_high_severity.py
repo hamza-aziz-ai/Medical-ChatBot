@@ -14,36 +14,41 @@ def test_high_severity_paths():
     bot.parser = QuestionParser()
     bot.searcher = AnswerSearcher(driver=driver)
 
-    expected = (
-        "I cannot answer this question from the available medical "
-        "knowledge graph. Please consult a qualified medical professional."
-    )
     rows = [
         {"subject": "asthma", "value": "fixture value"},
         {"subject": "asthma", "value": ["fixture treatment"]},
     ]
     unsupported = ("disease_last_time", "disease_cure_probability", "disease_easy_get")
 
-    def ask(intents, result_rows):
-        result = {} if intents is None else {
-            "arguments": {"asthma": ["disease"], "wheeze": ["symptom"]},
-            "question_types": intents,
-        }
-        bot.classifier = SimpleNamespace(classify=lambda _: result)
+    bot.availability = {"asthma": ["disease_symptom", "disease_cause"]}
+
+    def ask(intents, result_rows, arguments=None):
+        arguments = arguments or {"asthma": ["disease"], "wheeze": ["symptom"]}
+        bot.classifier = SimpleNamespace(
+            check_medical=lambda _: {} if intents is None else dict(arguments),
+            classify_with=lambda _, args: {"arguments": args, "question_types": intents},
+            has_intent_keyword=lambda _: True,
+        )
         driver.calls.clear()
         driver.rows = result_rows
         with patch.object(builtins, "open", side_effect=AssertionError("unexpected runtime asset read")):
-            return bot.chat_main("fixture")
+            return bot.respond("fixture")
 
-    assert ask(None, []) == expected
-    assert ask([], []) == expected
-    assert ask(["disease_cause"], []) == expected
+    def abstained(reply, reason):
+        return reply["status"] == "abstain" and reply["reason"] == reason and reply["message"].endswith(cg.CONSULT)
+
+    assert abstained(ask(None, []), "no_entity")
+    assert abstained(ask([], []), "no_facts")
+    assert abstained(ask(["disease_cause"], []), "no_facts")
 
     for intent in unsupported:
         assert bot.parser.sql_transfer(intent, ["asthma"]) == []
         assert not bot.searcher.answer_prettify(intent, rows)
         for intents in ([intent], ["disease_cause", intent]):
-            assert ask(intents, rows) == expected
+            assert abstained(ask(intents, rows), "unsupported_question")
+            assert driver.calls == []
+            # One subject gives a topic; the abstention still makes no database call.
+            assert abstained(ask(intents, rows, {"asthma": ["disease"]}), "unsupported_question")
             assert driver.calls == []
 
     for intent in (
@@ -51,6 +56,6 @@ def test_high_severity_paths():
         "disease_prevention", "disease_cure_way",
         "disease_description", "disease_accompany",
     ):
-        answer = ask([intent], rows)
-        assert answer and answer != expected
+        reply = ask([intent], rows)
+        assert reply["status"] == "answer" and reply["message"]
         assert driver.calls
