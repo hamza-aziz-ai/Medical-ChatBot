@@ -6,7 +6,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 
 Done:
 - Dataset pilot, step 2 (FEATURE-009): an unreviewed local candidate list; 62 of the 451 unmatched names have a lexical lead, 389 none; nothing applied.
-- Per-client spelling-suggestion budget (D-025).
+- Per-client spelling-suggestion budget (D-025), released in v1.1.7 and running on the owner's stack; checked end to end on a throwaway stack (the budget follows the forwarded client address).
 - The owner's stack runs v1.1.6 with the plan fingerprint; the rollback drill also passed on v1.1.5 → v1.1.6.
 - D35 closed as far as detection goes (D-023 addendum): a plan fingerprint in the graph and the dictionary; questions refused with 503 while they do not match.
 - Rollback drill passed on a throwaway stack (FEATURE-007): restore after a failed step and after the updater process died.
