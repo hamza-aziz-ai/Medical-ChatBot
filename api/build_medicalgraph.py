@@ -10,6 +10,7 @@ import tempfile
 from pathlib import Path
 
 from neo4j import RoutingControl, unit_of_work
+from neo4j.exceptions import IncompleteCommit
 
 import app_logging
 import database
@@ -26,6 +27,11 @@ REQUIRED_COLUMNS = {"Name", *SCALAR_FIELDS, *LIST_FIELDS}
 # Every node and relationship this importer writes carries this marker. A re-import replaces
 # exactly the marked snapshot and never touches anything else in the database.
 OWNER = "medical-chatbot-importer"
+
+# D35: a graph commit and the dictionary file cannot be published as one unit, and a running API keeps the
+# dictionary it read at start, so every partial outcome is repaired the same way.
+RECOVER = ("Fix the publication error, rerun the same import, then restart the API and verify readiness "
+           "(GET /health) before serving.")
 WRITE_TIMEOUT_SECONDS = 120
 
 CONSTRAINTS = [
@@ -374,6 +380,11 @@ def main():
             create_constraints(driver)
             with driver.session(database=database.database_name()) as session:
                 session.execute_write(write_graph, data)
+    except IncompleteCommit:
+        # The commit may or may not have happened (D35), so the graph and the dictionary may now disagree.
+        discard(staged)
+        report("The import's commit outcome is unknown. " + RECOVER, logging.ERROR)
+        return 1
     except Exception as error:
         discard(staged)
         report(f"Import failed ({type(error).__name__}); no graph data was committed.", logging.ERROR)
@@ -383,11 +394,7 @@ def main():
         publish_entities(staged)
     except OSError as error:
         discard(staged)
-        report(
-            f"The graph was committed, but publishing the entity dictionary failed ({type(error).__name__}). "
-            "The previous dictionary is unchanged; re-run the import to publish it.",
-            logging.ERROR,
-        )
+        report(f"Graph committed, but dictionary publication failed ({type(error).__name__}). " + RECOVER, logging.ERROR)
         return 1
 
     report("Import committed and entity dictionary published.")

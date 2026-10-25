@@ -256,3 +256,16 @@ def test_the_source_is_read_from_the_dictionary(tmp_path):
     assert cg.ChatBotGraph.load_source(tmp_path / "entities.json") is None
     (tmp_path / "entities.json").write_text(json.dumps({"diseases": [], "source_sha256": "a" * 64}), encoding="utf-8")
     assert cg.ChatBotGraph.load_source(tmp_path / "entities.json") is None
+
+
+def test_the_dictionary_is_read_once_at_start_so_two_versions_never_mix(monkeypatch):
+    """D35: if the importer replaced entities.json between separate reads, the classifier, the suggestions and
+    readiness could describe different dictionaries while /health said ok."""
+    document = json.loads(cg.ENTITIES_PATH.read_text(encoding="utf-8"))
+    reads = []
+    monkeypatch.setattr(cg, "read_dictionary", lambda: reads.append(1) or document)
+    monkeypatch.setattr(cg, "AnswerSearcher", lambda: SimpleNamespace())
+    bot = cg.ChatBotGraph()
+    assert reads == [1]
+    assert bot.source["diseases"] == len(document["diseases"]) and bot.availability == document["intents"]
+    assert set(bot.classifier.disease_words) <= set(document["diseases"])

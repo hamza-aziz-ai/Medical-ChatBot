@@ -215,3 +215,35 @@ def test_readiness_matches_the_imported_dictionary_only(driver, tmp_path):
     driver.execute_query("MATCH (d:Disease {name: 'a', owner: $owner}) REMOVE d.source_sha256", parameters_={"owner": builder.OWNER})
     assert searcher.readiness(builder.OWNER, expected[1]) == (expected[0], expected[0] - 1)
 
+
+def test_a_failed_publication_is_repaired_by_rerunning_and_restarting(driver, tmp_path, monkeypatch):
+    """D35 on a real server: after a commit whose dictionary was not published, a running API stays not ready even
+    once a re-run publishes the file; only a restarted API (a fresh read) is ready."""
+    import chatbot_graph_logic as cg
+    target = tmp_path / "entities.json"
+    monkeypatch.setattr(builder, "ENTITIES_PATH", target)
+    monkeypatch.setattr(builder.stage_entities, "__defaults__", (target,))
+    monkeypatch.setattr(builder.publish_entities, "__defaults__", (target,))
+    load = builder.load_dataset
+    old = write_csv(tmp_path, "old.csv", [row(0, "a"), row(1, "b")])
+    new = write_csv(tmp_path, "new.csv", [row(0, "a"), row(1, "b"), row(2, "c")])
+    searcher = AnswerSearcher(driver=driver)
+
+    def ready(source):
+        return searcher.readiness(builder.OWNER, source["sha256"]) == (source["diseases"], source["diseases"])
+
+    monkeypatch.setattr(builder, "load_dataset", lambda *args: load(old))
+    assert builder.main() == 0
+    running = cg.ChatBotGraph.load_source(target)
+    assert ready(running)
+
+    real_replace = builder.os.replace
+    monkeypatch.setattr(builder, "load_dataset", lambda *args: load(new))
+    monkeypatch.setattr(builder.os, "replace", lambda src, dst: (_ for _ in ()).throw(OSError("disk full")))
+    assert builder.main() == 1                       # the new graph is committed, the file is not
+    assert not ready(running)                        # detected: the running API's dictionary no longer matches
+
+    monkeypatch.setattr(builder.os, "replace", real_replace)
+    assert builder.main() == 0                       # the re-run publishes the file
+    assert not ready(running)                        # but the running API still holds the old dictionary
+    assert ready(cg.ChatBotGraph.load_source(target))  # a restart (a fresh read) is ready

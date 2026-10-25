@@ -7,7 +7,7 @@ from neo4j.exceptions import DriverError, Neo4jError
 
 from answer_searcher import AnswerSearcher
 from build_medicalgraph import OWNER
-from question_classifier import ENTITIES_PATH, QuestionClassifier
+from question_classifier import ENTITIES_PATH, QuestionClassifier, read_dictionary
 from question_parser import ENTITY_TYPES, QuestionParser
 
 logger = logging.getLogger(__name__)
@@ -91,20 +91,22 @@ def replace_phrase(question, phrase, replacement):
 
 class ChatBotGraph:
     def __init__(self):
-        self.classifier = QuestionClassifier()
+        # D35: one read of the dictionary, so the classifier, the suggestions and readiness can never come from two
+        # versions of the file if the importer replaces it while the API starts.
+        document = read_dictionary()
+        self.classifier = QuestionClassifier(document)
         self.parser = QuestionParser()
         self.searcher = AnswerSearcher()
-        self.availability = self.load_availability()
-        self.source = self.load_source()
+        self.availability = self.load_availability(document=document)
+        self.source = self.load_source(document=document)
         logger.info("Chatbot ready: %d disease, %d symptom and %d department terms loaded",
                     len(self.classifier.disease_words), len(self.classifier.symptom_words), len(self.classifier.department_words))
 
     @staticmethod
-    def load_source(path=ENTITIES_PATH):
+    def load_source(path=ENTITIES_PATH, document=None):
         """The dictionary's CSV hash and disease count, which the graph must match to be ready (D-022)."""
         try:
-            with open(path, encoding="utf-8") as file:
-                data = json.load(file)
+            data = document if document is not None else read_dictionary(path)
         except (OSError, ValueError) as error:
             logger.warning("Readiness unknown: cannot read %s (%s)", Path(path).name, type(error).__name__)
             return None
@@ -131,15 +133,14 @@ class ChatBotGraph:
         return False, "graph does not match the dictionary"
 
     @staticmethod
-    def load_availability(path=ENTITIES_PATH):
+    def load_availability(path=ENTITIES_PATH, document=None):
         """Which intents have facts, per disease, as written by the importer next to the dictionary.
 
         Reading a file means no database call at start or per request; it changes only with a re-import,
         which already needs an API restart for the dictionary itself.
         """
         try:
-            with open(path, encoding="utf-8") as file:
-                table = json.load(file).get("intents") or {}
+            table = (document if document is not None else read_dictionary(path)).get("intents") or {}
         except (OSError, ValueError) as error:
             logger.warning("Suggestions disabled: cannot read intents from %s (%s)", Path(path).name, type(error).__name__)
             return {}

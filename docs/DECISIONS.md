@@ -284,3 +284,15 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** It catches an empty graph, a wrong-sized or differently sourced graph and unstamped diseases, which the old check missed, for the cost of one count query.
 - **Trade-off:** It does not prove relationships, importer freshness or clinical accuracy; the evaluation and the updater's question probe still cover more. "Unhealthy" is a signal: Docker does not repair the data. The timeouts are not an end-to-end deadline, because connecting has its own limits.
 - **Revisit if:** the API gains a second worker or a real deployment with an orchestrator that restarts on health.
+
+## D-023: Graph and dictionary publication stays two steps, with detection and one recovery (D35)
+
+- **Date:** 2026-10-26; **Model:** Claude Opus 5.5 (claude-opus-5-5); agreed with Codex in council (2 exchanges); the owner asked for D35 to be addressed
+- **Context:** The importer commits the graph, then replaces `entities.json`. A failure or crash in between, or an unknown commit outcome, leaves a graph and a dictionary from different imports; a running API also keeps the dictionary it read at start.
+- **Options:**
+  1. a two-phase commit or a roll-forward that keeps the staged file
+  2. keep two steps, make every mismatch we can see visible, and give one recovery for all partial outcomes
+- **Chosen:** 2, recorded as **partially mitigated**. The API now reads the dictionary once at start, so the classifier, suggestions and readiness cannot mix two versions (a start-up race Codex reproduced). The importer reports a failed publication after commit and an unknown commit outcome (`IncompleteCommit`) with the same instruction: fix the publication error, rerun the same import, then restart the API and check `GET /health` before serving.
+- **Why:** True atomicity across a Neo4j transaction and a file needs a two-phase commit, which a local prototype does not justify. A re-run is idempotent and takes seconds.
+- **Trade-off:** Readiness detects a dictionary from a different CSV or with a different disease count, but not a different importer version on the same CSV, which can change entity sets, relationships and suggestions; equal counts do not prove equal names. `/health` reporting unavailable does not stop `/` from answering. Imports must run one at a time, during maintenance. In Docker the updater imports with the image it then starts, and its rollback restores the verified backup rather than re-importing.
+- **Revisit if:** the importer logic changes without the CSV, or the API serves real users; then store a dictionary fingerprint with the graph and refuse to answer while not ready.

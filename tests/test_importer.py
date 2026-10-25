@@ -214,3 +214,46 @@ def test_missing_password_is_a_named_error(monkeypatch):
     monkeypatch.delenv("NEO4J_PASSWORD", raising=False)
     with pytest.raises(RuntimeError, match="NEO4J_PASSWORD must be set"):
         database.create_driver()
+
+
+# D35: partial outcomes name the full recovery: fix, re-run, restart the API, check /health.
+
+class CommittingSession(FailingSession):
+    def __init__(self, error=None):
+        self.error = error
+
+    def execute_write(self, *args):
+        if self.error:
+            raise self.error
+
+
+def run_importer(monkeypatch, tmp_path, session):
+    target = tmp_path / "entities.json"
+    target.write_text("previous", encoding="utf-8")
+    monkeypatch.setattr(builder, "ENTITIES_PATH", target)
+    monkeypatch.setattr(builder.stage_entities, "__defaults__", (target,))
+    monkeypatch.setattr(builder.publish_entities, "__defaults__", (target,))
+    driver = FailingDriver()
+    driver.session = lambda **kwargs: session
+    monkeypatch.setattr(database, "create_driver", lambda: driver)
+    return builder.main(), target
+
+
+def test_an_unknown_commit_outcome_says_how_to_recover(monkeypatch, tmp_path, capsys):
+    from neo4j.exceptions import IncompleteCommit
+    code, target = run_importer(monkeypatch, tmp_path, CommittingSession(IncompleteCommit("lost")))
+    err = capsys.readouterr().err
+    assert code == 1 and "commit outcome is unknown" in err and "restart the API" in err and "/health" in err
+    assert "no graph data was committed" not in err
+    assert target.read_text(encoding="utf-8") == "previous"
+
+
+def test_a_failed_publication_after_the_commit_says_how_to_recover(monkeypatch, tmp_path, capsys):
+    def broken_replace(src, dst):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(builder.os, "replace", broken_replace)
+    code, target = run_importer(monkeypatch, tmp_path, CommittingSession())
+    err = capsys.readouterr().err
+    assert code == 1 and "Graph committed, but dictionary publication failed" in err and "restart the API" in err
+    assert target.read_text(encoding="utf-8") == "previous" and list(tmp_path.glob("*.tmp")) == []
