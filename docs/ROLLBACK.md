@@ -23,6 +23,10 @@ How to undo a change that breaks something.
 
 Staging images named `sha-<commit>-<run>-<attempt>` from failed attempts are never published and may be deleted from the package settings.
 
+## A merge whose release keeps failing
+
+Releases go in merge order, so a merge whose release fails blocks the merges after it. A failure before publish creates no tag: start `autorelease.yml` again from the Actions tab once the cause is fixed (for example a flaky test or an outage). If the merge itself cannot pass, fixing forward does not help, because the old commit never changes. Publish a later commit by hand instead: run `release.yml` with `tag` set to the next unused version and `sha` set to a later commit on `main`. That deliberately skips separate releases for the merges in between, and automation continues after it.
+
 ## Running stack (Docker)
 
 1. Point the stack at the last good images: copy `API_IMAGE` and `WEB_IMAGE` from that release's `release.env` into `.env`, then `docker compose up -d`.

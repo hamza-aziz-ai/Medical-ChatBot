@@ -1,10 +1,11 @@
-"""Decide whether main needs a release, and which version it gets (D-019).
+"""Pick the next merge to release, and its version (D-019): one release per merge.
 
 Run by .github/workflows/autorelease.yml. Prints `release=true|false`, `tag` and `sha` lines for
 $GITHUB_OUTPUT, or exits non-zero with recovery steps when the last release is incomplete or a lookup failed.
 
-State-based on purpose: it releases origin/main HEAD when its shipped files differ from the last
-published release, so duplicate, replaced or no-op runs are harmless. Several merges can share a release.
+Each run releases the oldest first-parent commit on main, after the last published release, that changed
+shipped files; autorelease then starts the next run. Planning from the published state makes duplicate,
+replaced or no-op runs harmless, and the chain keeps releases in merge order.
 """
 import argparse
 import fnmatch
@@ -54,6 +55,15 @@ def shipped_changes(base, head):
     return [path for path in git("diff", "--name-only", base, head).split() if is_shipped(path)]
 
 
+def unreleased(baseline, head, released):
+    """First-parent commits after baseline, oldest first, that changed shipped files and are not in released.
+
+    Each pull request is one merge commit on main's first-parent line, so this is one entry per shippable merge.
+    """
+    commits = git("rev-list", "--first-parent", "--reverse", f"{baseline}..{head}").split()
+    return [sha for sha in commits if sha not in released and shipped_changes(f"{sha}^1", sha)]
+
+
 def release_state(tag, releases):
     """published, draft or absent, from the full release list (drafts are only listed, never found by tag)."""
     matches = [release for release in releases if release["tag_name"] == tag]
@@ -62,11 +72,12 @@ def release_state(tag, releases):
     return "draft" if any(release["draft"] for release in matches) else "published"
 
 
-def plan(head, tags, releases, image_state, bump_level, changes, all_tags=()):
+def plan(tags, releases, image_state, pending, level_of, all_tags=(), require_baseline=None):
     """The release to make, as (tag, sha), or None. Raises Stop when a human must act first.
 
     tags: version tags on main, newest first. releases: every release (None if the listing failed).
-    image_state(version) -> present, absent or error. changes(base_tag) -> shipped paths changed since it.
+    image_state(version) -> present, absent or error. pending(baseline_tag) -> commits still to release,
+    oldest first. level_of(sha) -> patch, minor or major.
     """
     if not tags:
         raise Stop("No vX.Y.Z tag on main; cut the first release by hand.")
@@ -92,13 +103,18 @@ def plan(head, tags, releases, image_state, bump_level, changes, all_tags=()):
         # No release and no images: an unused, abandoned tag. It stays reserved; keep looking for the baseline.
     if baseline is None:
         raise Stop("No published release on main to compare with; cut one by hand.")
+    if require_baseline and version(baseline) < version(require_baseline):
+        raise Stop(f"Publish {require_baseline} by hand first (see docs/ROLLBACK.md); merges before it are not released one by one.")
 
-    if not changes(baseline):
+    commits = pending(baseline)
+    if not commits:
         return None
-    tag = bump(tags[0], bump_level)
+    sha = commits[0]
+    # Versions follow the highest tag, so an abandoned tag's number is never reused, though its merge is released again.
+    tag = bump(tags[0], level_of(sha))
     if tag in all_tags:
         raise Stop(f"{tag} already exists outside main; choose the next version by hand.")
-    return tag, head
+    return tag, sha
 
 
 def image_lookup(prefix):
@@ -122,17 +138,16 @@ def list_releases(repo):
     return [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
 
 
-def label_bump(repo, base, head):
-    """The highest release:minor / release:major label on the pull requests merged in base..head, else patch."""
+def label_bump(repo, sha):
+    """The highest release:minor / release:major label on the pull request merged as sha, else patch."""
+    result = subprocess.run(["gh", "api", f"repos/{repo}/commits/{sha}/pulls", "--jq", ".[].labels[].name"],
+                            capture_output=True, text=True)
+    if result.returncode != 0:
+        raise Stop("Could not read pull request labels; nothing was changed. Re-run later.")
     level = "patch"
-    for sha in git("rev-list", "--first-parent", "--merges", f"{base}..{head}").split():
-        result = subprocess.run(["gh", "api", f"repos/{repo}/commits/{sha}/pulls", "--jq", ".[].labels[].name"],
-                                capture_output=True, text=True)
-        if result.returncode != 0:
-            raise Stop("Could not read pull request labels; nothing was changed. Re-run later.")
-        for label in result.stdout.split():
-            if label.startswith("release:") and label[8:] in BUMPS and BUMPS.index(label[8:]) > BUMPS.index(level):
-                level = label[8:]
+    for label in result.stdout.split():
+        if label.startswith("release:") and label[8:] in BUMPS and BUMPS.index(label[8:]) > BUMPS.index(level):
+            level = label[8:]
     return level
 
 
@@ -142,22 +157,25 @@ def main(argv=None):
     parser.add_argument("--image-prefix", required=True)
     parser.add_argument("--bump", choices=("auto", *BUMPS), default="auto")
     parser.add_argument("--ref", default="origin/main")
+    parser.add_argument("--require-baseline", help="Stop unless this version or a later one is published")
     args = parser.parse_args(argv)
 
     head = git("rev-parse", args.ref).strip()
     tags = tags_on(args.ref)
     releases = list_releases(args.repo)
+    # A merge counts as released only through a published release; an abandoned tag reserves just its number.
+    released = {git("rev-list", "-n", "1", t).strip() for t in tags if release_state(t, releases or []) == "published"}
     try:
-        published = next((t for t in tags if release_state(t, releases or []) == "published"), None)
-        level = args.bump if args.bump != "auto" else (label_bump(args.repo, published, head) if published else "patch")
-        result = plan(head, tags, releases, image_lookup(args.image_prefix), level,
-                      lambda base: shipped_changes(base, head), set(git("tag", "-l").split()))
+        result = plan(tags, releases, image_lookup(args.image_prefix),
+                      lambda baseline: unreleased(baseline, head, released),
+                      lambda sha: args.bump if args.bump != "auto" else label_bump(args.repo, sha),
+                      set(git("tag", "-l").split()), args.require_baseline)
     except Stop as stop:
         print(f"::error::{stop}", file=sys.stderr)
         return 1
     if result is None:
         print("release=false")
-        print("Nothing shipped has changed since the last release.", file=sys.stderr)
+        print("Every merge that changed shipped files is released.", file=sys.stderr)
         return 0
     tag, sha = result
     print("release=true")
