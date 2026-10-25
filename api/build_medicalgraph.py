@@ -11,6 +11,7 @@ from pathlib import Path
 
 from neo4j import RoutingControl, unit_of_work
 
+import app_logging
 import database
 from terms import clean_terms
 
@@ -238,13 +239,22 @@ def discard(staged):
         pass
 
 
+logger = logging.getLogger("build_medicalgraph")
+
+
+def report(message, level=logging.INFO):
+    """Show a message on the console and record it in the importer log."""
+    print(message, file=sys.stderr if level >= logging.WARNING else sys.stdout)
+    logger.log(level, message)
+
+
 def print_report(dataset, data):
     for name, info in sorted(dataset["quarantined_names"].items()):
-        print(f"Excluded disease '{name}' (rows {info['rows']}): conflicting fields {', '.join(info['fields'])}")
+        report(f"Excluded disease '{name}' (rows {info['rows']}): conflicting fields {', '.join(info['fields'])}")
     for row, column, reason in dataset["field_issues"]:
-        print(f"Excluded field: row {row}, column '{column}': {reason}")
-    print(f"Accompanying links with no matching disease: {len(data['unresolved'])}")
-    print(
+        report(f"Excluded field: row {row}, column '{column}': {reason}")
+    report(f"Accompanying links with no matching disease: {len(data['unresolved'])}")
+    report(
         f"Diseases: {len(data['diseases'])} imported, {len(dataset['quarantined_names'])} names excluded; "
         f"fields excluded: {len(dataset['field_issues'])}; symptoms: {len(data['symptoms'])}; "
         f"departments: {len(data['departments'])}"
@@ -254,8 +264,11 @@ def print_report(dataset, data):
 def main():
     # The pre-write checks query labels and properties that an empty database does not have yet;
     # Neo4j reports those as "does not exist" notifications, which are expected here.
+    loaded = database.load_env_file()
+    app_logging.setup_logging()
+    database.log_env_loaded(loaded)
     logging.getLogger("neo4j.notifications").setLevel(logging.ERROR)
-    database.load_env_file()
+    report("Import started")
     dataset = load_dataset()
     data = graph_data(dataset)
     print_report(dataset, data)
@@ -263,7 +276,7 @@ def main():
     try:
         staged = stage_entities(entities_document(dataset, data))
     except OSError as error:
-        print(f"Could not stage the entity dictionary ({type(error).__name__}); nothing was changed.", file=sys.stderr)
+        report(f"Could not stage the entity dictionary ({type(error).__name__}); nothing was changed.", logging.ERROR)
         return 1
 
     try:
@@ -271,8 +284,8 @@ def main():
             conflicts = existing_conflicts(driver, dataset, data)
             if conflicts:
                 for name, reason in conflicts:
-                    print(f"Refusing import: '{name}' has a {reason}", file=sys.stderr)
-                print("Reconcile these records manually or import into a fresh database. Nothing was changed.", file=sys.stderr)
+                    report(f"Refusing import: '{name}' has a {reason}", logging.WARNING)
+                report("Reconcile these records manually or import into a fresh database. Nothing was changed.", logging.WARNING)
                 discard(staged)
                 return 1
             create_constraints(driver)
@@ -280,21 +293,21 @@ def main():
                 session.execute_write(write_graph, data)
     except Exception as error:
         discard(staged)
-        print(f"Import failed ({type(error).__name__}); no graph data was committed.", file=sys.stderr)
+        report(f"Import failed ({type(error).__name__}); no graph data was committed.", logging.ERROR)
         return 1
 
     try:
         publish_entities(staged)
     except OSError as error:
         discard(staged)
-        print(
+        report(
             f"The graph was committed, but publishing the entity dictionary failed ({type(error).__name__}). "
             "The previous dictionary is unchanged; re-run the import to publish it.",
-            file=sys.stderr,
+            logging.ERROR,
         )
         return 1
 
-    print("Import committed and entity dictionary published.")
+    report("Import committed and entity dictionary published.")
     return 0
 
 

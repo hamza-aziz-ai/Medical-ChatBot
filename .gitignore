@@ -1042,3 +1042,6 @@ pnpm-debug.log*
 
 # Quora Question Pairs training data (download from Kaggle, see README)
 notebooks/data/train.csv
+
+# Application logs (see api/app_logging.py)
+logs/

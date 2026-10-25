@@ -38,3 +38,8 @@ def ignore_local_env_file(monkeypatch, tmp_path_factory):
     """Keep a developer's real .env out of the tests."""
     import database
     monkeypatch.setattr(database, "ENV_FILE", tmp_path_factory.getbasetemp() / "no-such.env")
+
+
+@pytest.fixture(autouse=True)
+def keep_logs_out_of_the_repo(monkeypatch, tmp_path_factory):
+    monkeypatch.setenv("LOG_DIR", str(tmp_path_factory.getbasetemp() / "logs"))

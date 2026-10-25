@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from pathlib import Path
 
@@ -6,13 +7,17 @@ import ahocorasick
 
 from terms import is_valid_term
 
+logger = logging.getLogger(__name__)
+
 ENTITIES_PATH = Path(__file__).resolve().parent / "dictionary" / "entities.json"
 
 
 def load_entities(path=ENTITIES_PATH):
     with open(path, encoding="utf-8") as file:
         data = json.load(file)
-    return {key: [term.strip() for term in data[key] if is_valid_term(term)] for key in ("diseases", "departments", "symptoms")}
+    entities = {key: [term.strip() for term in data[key] if is_valid_term(term)] for key in ("diseases", "departments", "symptoms")}
+    logger.info("Loaded %s from %s", ", ".join(f"{len(v)} {k}" for k, v in entities.items()), Path(path).name)
+    return entities
 
 
 def is_word_char(char):
@@ -191,6 +196,7 @@ class QuestionClassifier:
         medical_dictionary = self.check_medical(question_2)
 
         if not medical_dictionary:
+            logger.debug("No known entity found")
             return {}
 
         data['arguments'] = medical_dictionary
@@ -245,5 +251,6 @@ class QuestionClassifier:
             question_types = ["symptom_disease"]
 
         data["question_types"] = question_types
-
+        # Entity names come from the user's question, so log only counts and intent names.
+        logger.debug("Found %d entit(ies); intents %s", len(medical_dictionary), question_types)
         return data
