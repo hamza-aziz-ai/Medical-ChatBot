@@ -3,6 +3,7 @@ from itertools import groupby
 import json
 import logging
 import re
+import time
 from pathlib import Path
 
 import ahocorasick
@@ -16,6 +17,12 @@ ALIASES_PATH = Path(__file__).resolve().parent / "dictionary" / "aliases.json"
 # Typo suggestions: tuned on reviewed misspellings and unrelated words (see tests/test_matching.py).
 TYPO_CUTOFF = 0.8
 MAX_TYPO_SUGGESTIONS = 3
+TYPO_BUDGET_SECONDS = 0.15
+
+
+def monotonic():
+    """The clock for the spelling-suggestion budget; tests replace it to stay independent of machine speed."""
+    return time.monotonic()
 
 
 def load_entities(path=ENTITIES_PATH):
@@ -238,15 +245,22 @@ class QuestionClassifier:
 
         return final_dictionary
 
-    def close_matches(self, words, accept=lambda sequence, name: True):
+    def close_matches(self, words, accept=lambda sequence, name: True, clock=None):
         """Dictionary names close to the given word sequences, as (sequence, name) pairs in first-seen order.
 
         Each name keeps the sequence it matches best, scored as difflib does, so a longer window that merely
         contains the misspelling ("causes adbominal infection") never replaces the one that is the misspelling.
         """
+        # A-14: a cooperative time budget, checked before each window, so one long question of unknown words cannot
+        # hold the single API worker for a second. A window already started finishes, so this is not a hard ceiling.
+        clock = clock or monotonic
+        deadline = clock() + TYPO_BUDGET_SECONDS
         names = sorted(set(self.disease_words) | set(self.symptom_words) | set(self.aliases))
         best = {}
-        for sequence in words:
+        for done, sequence in enumerate(words):
+            if clock() >= deadline:
+                logger.info("Spelling suggestions stopped after %d of %d windows (time budget)", done, len(words))
+                break
             for name in difflib.get_close_matches(sequence, names, n=MAX_TYPO_SUGGESTIONS, cutoff=TYPO_CUTOFF):
                 if not accept(sequence, name):
                     continue
