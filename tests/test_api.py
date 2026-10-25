@@ -155,3 +155,26 @@ def test_topic_and_selections_never_reach_the_logs(caplog):
                                          ("selection", f"{sentinel}:symptom")])
     assert sentinel not in caplog.text
 
+
+
+# D-022: the readiness route.
+
+def health_client(ready):
+    return create_app(chatbot=SimpleNamespace(respond=None, ready=ready)).test_client()
+
+
+def test_health_says_ok_only_while_ready_and_never_more(caplog):
+    caplog.set_level(logging.DEBUG)
+    app = health_client(lambda: (True, None))
+    caplog.clear()  # the start-up line is not a health log
+    response = app.get("/health", query_string={"search": "what causes asthma"})
+    assert response.status_code == 200 and response.get_json() == {"status": "ok"}
+    assert caplog.text == ""
+    response = health_client(lambda: (False, "graph does not match the dictionary")).get("/health")
+    assert response.status_code == 503 and response.get_json() == {"status": "unavailable"}
+    assert "graph does not match the dictionary" in caplog.text and "asthma" not in caplog.text
+
+
+def test_health_is_get_only():
+    response = health_client(lambda: (True, None)).post("/health")
+    assert response.status_code == 405 and "GET" in response.headers["Allow"]

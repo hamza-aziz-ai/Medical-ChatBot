@@ -1,11 +1,17 @@
 import logging
 
-from neo4j import Query, RoutingControl
+from neo4j import READ_ACCESS, Query, RoutingControl
 
 import database
 from terms import is_valid_term
 
 logger = logging.getLogger(__name__)
+
+# D-022: how many importer-owned diseases exist, and how many carry the dictionary's CSV hash. count(CASE ...)
+# rather than collect(DISTINCT ...), because collect skips diseases with no hash at all.
+READINESS_QUERY = ("MATCH (d:Disease {owner: $owner}) RETURN count(d) AS diseases, "
+                   "count(CASE WHEN d.source_sha256 = $hash THEN 1 END) AS matching")
+READINESS_TIMEOUT = 1.0
 
 # (sentence template, separator, values are entity terms)
 FORMATS = {
@@ -27,6 +33,13 @@ class AnswerSearcher:
 
     def close(self):
         self.driver.close()
+
+    def readiness(self, owner, source_hash):
+        """(importer-owned diseases, those with source_hash): one read, no retries, a timeout of at most 1 s."""
+        query = Query(READINESS_QUERY, timeout=min(self.query_timeout, READINESS_TIMEOUT))
+        with self.driver.session(database=database.database_name(), default_access_mode=READ_ACCESS) as session:
+            record = session.run(query, {"owner": owner, "hash": source_hash}).single(strict=True)
+        return record["diseases"], record["matching"]
 
     def group_values(self, question_type, answers):
         """{subject: sorted usable values} for one intent, capped at num_limit values each."""

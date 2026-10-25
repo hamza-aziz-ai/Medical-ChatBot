@@ -195,3 +195,23 @@ def test_listed_intents_match_what_the_live_graph_answers(driver, tmp_path):
     driver.execute_query("MATCH (:Disease {name: 'a'})-[r:has_symptom]->() DELETE r")
     assert evaluate_kg.chip_consistency(searcher, dictionary)["mismatches"] == 1
 
+
+def test_readiness_matches_the_imported_dictionary_only(driver, tmp_path):
+    """D-022 on a real server: ready after an import; not ready when empty, resized or from another CSV."""
+    path = write_csv(tmp_path, "a.csv", [row(0, "a"), row(1, "b")])
+    searcher = AnswerSearcher(driver=driver)
+    dataset = builder.load_dataset(path)
+    expected = (len(dataset["diseases"]), dataset["source_sha256"])
+
+    assert searcher.readiness(builder.OWNER, expected[1]) == (0, 0)  # empty database
+    import_csv(driver, path)
+    assert searcher.readiness(builder.OWNER, expected[1]) == (expected[0], expected[0])
+    # Foreign, unmarked diseases are not counted.
+    driver.execute_query("CREATE (:Disease {name: 'foreign'})")
+    assert searcher.readiness(builder.OWNER, expected[1]) == (expected[0], expected[0])
+    # A dictionary from another CSV does not match.
+    assert searcher.readiness(builder.OWNER, "f" * 64) == (expected[0], 0)
+    # A disease that lost its hash is counted but does not match.
+    driver.execute_query("MATCH (d:Disease {name: 'a', owner: $owner}) REMOVE d.source_sha256", parameters_={"owner": builder.OWNER})
+    assert searcher.readiness(builder.OWNER, expected[1]) == (expected[0], expected[0] - 1)
+

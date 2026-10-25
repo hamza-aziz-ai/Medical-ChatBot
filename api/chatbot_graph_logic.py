@@ -3,7 +3,10 @@ import logging
 import re
 from pathlib import Path
 
+from neo4j.exceptions import DriverError, Neo4jError
+
 from answer_searcher import AnswerSearcher
+from build_medicalgraph import OWNER
 from question_classifier import ENTITIES_PATH, QuestionClassifier
 from question_parser import ENTITY_TYPES, QuestionParser
 
@@ -67,6 +70,7 @@ FILLER = frozenset("""
 a an the of for to is are was were be been what which how can could i do does did about and me my tell there any
 with in on should we you please get got have has had from or by up so more some
 """.split()) | REFERENCE_WORDS
+SHA256 = re.compile(r"[0-9a-f]{64}")
 PUNCTUATION = "?.!,;:'\"()"
 
 
@@ -91,8 +95,40 @@ class ChatBotGraph:
         self.parser = QuestionParser()
         self.searcher = AnswerSearcher()
         self.availability = self.load_availability()
+        self.source = self.load_source()
         logger.info("Chatbot ready: %d disease, %d symptom and %d department terms loaded",
                     len(self.classifier.disease_words), len(self.classifier.symptom_words), len(self.classifier.department_words))
+
+    @staticmethod
+    def load_source(path=ENTITIES_PATH):
+        """The dictionary's CSV hash and disease count, which the graph must match to be ready (D-022)."""
+        try:
+            with open(path, encoding="utf-8") as file:
+                data = json.load(file)
+        except (OSError, ValueError) as error:
+            logger.warning("Readiness unknown: cannot read %s (%s)", Path(path).name, type(error).__name__)
+            return None
+        source_hash, diseases = data.get("source_sha256"), data.get("diseases")
+        if not (isinstance(source_hash, str) and SHA256.fullmatch(source_hash) and isinstance(diseases, list) and diseases):
+            logger.warning("Readiness unknown: %s has no source hash or diseases", Path(path).name)
+            return None
+        return {"sha256": source_hash, "diseases": len(diseases)}
+
+    def ready(self):
+        """(ready, reason): the graph holds exactly the dictionary's diseases, all from the same CSV. Never raises.
+
+        It does not prove relationships, importer freshness or clinical accuracy; evaluation and the answer probe
+        cover more of those.
+        """
+        if not self.source:
+            return False, "dictionary has no source"
+        try:
+            diseases, matching = self.searcher.readiness(OWNER, self.source["sha256"])
+        except (Neo4jError, DriverError, OSError):
+            return False, "graph unreachable"
+        if diseases == matching == self.source["diseases"]:
+            return True, None
+        return False, "graph does not match the dictionary"
 
     @staticmethod
     def load_availability(path=ENTITIES_PATH):

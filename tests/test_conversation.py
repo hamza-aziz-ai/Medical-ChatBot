@@ -1,5 +1,6 @@
 """Guided conversation (D-015): follow-ups, clarification, explained abstentions and suggestion chips."""
 import json
+from types import SimpleNamespace
 
 import pytest
 
@@ -182,3 +183,76 @@ def test_list_answers_carry_bullet_items():
     assert answer["lead"] == "The symptoms of asthma include:"
     assert answer["items"] == ["cough", "wheeze"]
     assert answer["label"] == "Symptoms"
+
+
+# D-022: readiness against the dictionary the API loaded.
+
+SOURCE = {"sha256": "a" * 64, "diseases": 658}
+
+
+class ReadinessDriver:
+    """A driver whose single read returns fixed counts, or raises; records the query, parameters and access mode."""
+
+    def __init__(self, diseases=658, matching=658, error=None):
+        self.result = {"diseases": diseases, "matching": matching}
+        self.error = error
+        self.seen = {}
+
+    def session(self, **kwargs):
+        self.seen["session"] = kwargs
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def run(self, query, parameters):
+        if self.error:
+            raise self.error
+        self.seen.update(query=query, parameters=parameters)
+        return SimpleNamespace(single=lambda strict: self.result)
+
+
+def ready_bot(driver, source=SOURCE):
+    bot = cg.ChatBotGraph.__new__(cg.ChatBotGraph)
+    bot.searcher = AnswerSearcher(driver=driver)
+    bot.source = source
+    return bot
+
+
+@pytest.mark.parametrize("diseases, matching, ready", [
+    (658, 658, True),
+    (0, 0, False),        # empty graph
+    (657, 657, False),    # wrong size
+    (658, 0, False),      # another CSV
+    (658, 600, False),    # some diseases unstamped or from another CSV
+])
+def test_ready_only_when_every_disease_matches_the_dictionary(diseases, matching, ready):
+    assert ready_bot(ReadinessDriver(diseases, matching)).ready()[0] is ready
+
+
+def test_readiness_is_one_short_read_of_importer_owned_diseases():
+    import neo4j
+    from build_medicalgraph import OWNER
+    driver = ReadinessDriver()
+    ready_bot(driver).ready()
+    assert driver.seen["parameters"] == {"owner": OWNER, "hash": "a" * 64}
+    assert driver.seen["session"]["default_access_mode"] == neo4j.READ_ACCESS
+    assert driver.seen["query"].timeout <= 1.0
+    assert "count(CASE" in driver.seen["query"].text
+
+
+def test_driver_failures_and_a_missing_source_are_not_ready():
+    from neo4j.exceptions import ServiceUnavailable
+    assert ready_bot(ReadinessDriver(error=ServiceUnavailable("down"))).ready() == (False, "graph unreachable")
+    assert ready_bot(ReadinessDriver(), source=None).ready()[0] is False
+
+
+def test_the_source_is_read_from_the_dictionary(tmp_path):
+    assert cg.ChatBotGraph.load_source()["diseases"] == len(CLASSIFIER.disease_words)
+    (tmp_path / "entities.json").write_text(json.dumps({"diseases": ["asthma"]}), encoding="utf-8")
+    assert cg.ChatBotGraph.load_source(tmp_path / "entities.json") is None
+    (tmp_path / "entities.json").write_text(json.dumps({"diseases": [], "source_sha256": "a" * 64}), encoding="utf-8")
+    assert cg.ChatBotGraph.load_source(tmp_path / "entities.json") is None
