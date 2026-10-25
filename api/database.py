@@ -1,8 +1,12 @@
+import logging
 import math
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from neo4j import GraphDatabase
+
+logger = logging.getLogger(__name__)
 
 ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
 DEFAULT_QUERY_TIMEOUT = 5.0
@@ -10,10 +14,15 @@ BOLT_SCHEMES = frozenset({"bolt", "bolt+s", "bolt+ssc", "neo4j", "neo4j+s", "neo
 
 
 def load_env_file(path=None):
-    """Read KEY=VALUE lines from the repository's .env. Variables already set in the environment win."""
+    """Read KEY=VALUE lines from the repository's .env. Variables already set in the environment win.
+
+    Returns the names of the variables it set. This runs before logging is configured (the
+    file can hold the LOG_* settings), so callers pass the result to log_env_loaded() afterwards.
+    """
     path = path or ENV_FILE
+    loaded = []
     if not path.is_file():
-        return
+        return loaded
     for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
@@ -21,8 +30,15 @@ def load_env_file(path=None):
         key, value = (part.strip() for part in line.split("=", 1))
         if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
             value = value[1:-1]
-        if key and value:
-            os.environ.setdefault(key, value)
+        if key and value and key not in os.environ:
+            os.environ[key] = value
+            loaded.append(key)
+    return loaded
+
+
+def log_env_loaded(loaded):
+    # Variable names only, never values.
+    logger.info("Loaded %d setting(s) from .env: %s", len(loaded), ", ".join(sorted(loaded)) or "none")
 
 
 def database_name():
@@ -54,10 +70,14 @@ def database_uri():
 def create_driver():
     password = os.environ.get("NEO4J_PASSWORD")
     if not password:
+        logger.error("NEO4J_PASSWORD is not set")
         raise RuntimeError("NEO4J_PASSWORD must be set")
 
+    uri = database_uri()
+    parts = urlsplit(uri)
+    logger.info("Connecting to Neo4j at %s://%s (database %s)", parts.scheme, parts.hostname, database_name())
     return GraphDatabase.driver(
-        database_uri(),
+        uri,
         auth=(os.environ.get("NEO4J_USER", "neo4j"), password),
         connection_timeout=10,
         max_transaction_retry_time=15,

@@ -1,7 +1,11 @@
+import logging
+
 from neo4j import Query, RoutingControl
 
 import database
 from terms import is_valid_term
+
+logger = logging.getLogger(__name__)
 
 # (sentence template, separator, values are entity terms)
 FORMATS = {
@@ -56,6 +60,7 @@ class AnswerSearcher:
                     routing_=RoutingControl.READ,
                 )
                 answers += [record.data() for record in records]
+            logger.debug("Intent %s: %d query(ies) returned %d row(s)", _sql["question_type"], len(_sql["sql"]), len(answers))
             final_answers += self.answer_prettify(_sql["question_type"], answers)
 
         return final_answers

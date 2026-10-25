@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Known parsing artefacts in medical.csv that contain letters but are not medical terms.
 QUARANTINED_TERMS = frozenset({"living"})
 
@@ -11,4 +15,7 @@ def is_valid_term(term):
 
 
 def clean_terms(terms):
-    return [t.strip() for t in terms if is_valid_term(t)]
+    kept = [t.strip() for t in terms if is_valid_term(t)]
+    if len(kept) < len(terms):
+        logger.debug("Dropped %d artefact term(s): %s", len(terms) - len(kept), [t for t in terms if not is_valid_term(t)])
+    return kept

@@ -14,6 +14,8 @@ DEFAULT_ORIGINS = "http://localhost:8080,http://127.0.0.1:8080"
 ORIGIN_PATTERN = re.compile(r"https?://[A-Za-z0-9.-]+(:\d{1,5})?")
 GRAPH_UNAVAILABLE = "The knowledge graph is unavailable. Please try again later."
 
+logger = logging.getLogger(__name__)
+
 # The dev server's access log prints the full URL, which contains the question.
 logging.getLogger("werkzeug").setLevel(logging.WARNING)
 
@@ -29,8 +31,11 @@ def allowed_origins():
 
 def create_app(chatbot=None, api_token=None):
     if chatbot is None:
+        import app_logging
         import database
-        database.load_env_file()
+        loaded = database.load_env_file()
+        app_logging.setup_logging()
+        database.log_env_loaded(loaded)
 
     token = api_token or os.environ.get("CHATBOT_API_TOKEN")
     if not token:
@@ -46,19 +51,27 @@ def create_app(chatbot=None, api_token=None):
     app = Flask(__name__)
     CORS(app, origins=origins, allow_headers=["Authorization", "Content-Type"])
     expected_header = f"Bearer {token}".encode()
+    logger.info("API started; %d allowed CORS origin(s)", len(origins))
 
     @app.route("/", methods=["GET"])
     def home():
+        # Never log the question itself: only its length and the outcome.
         if not hmac.compare_digest(request.headers.get("Authorization", "").encode(), expected_header):
+            logger.warning("Rejected request: missing or invalid API token")
             return jsonify(error="Missing or invalid API token."), 401
 
         search_term = request.args.get("search", "").strip()
         if not search_term:
+            logger.info("Rejected request: empty question")
             return jsonify(error="Ask a question using the 'search' parameter."), 400
         if len(search_term) > MAX_QUESTION_LENGTH:
+            logger.info("Rejected request: question of %d characters is too long", len(search_term))
             return jsonify(error=f"Questions are limited to {MAX_QUESTION_LENGTH} characters."), 400
 
-        return jsonify(search=search_term, message=chatbot.chat_main(search_term))
+        logger.debug("Answering a question of %d characters", len(search_term))
+        message = chatbot.chat_main(search_term)
+        logger.info("Answered a question of %d characters", len(search_term))
+        return jsonify(search=search_term, message=message)
 
     @app.errorhandler(HTTPException)
     def http_error(error):

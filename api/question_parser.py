@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 LIMIT = 20
 
 # Labels, relationship types and property names are fixed here; entity names are always parameters.
@@ -57,5 +61,8 @@ class QuestionParser:
             sql = self.sql_transfer(question_type, entity_dictionary.get(entity_type))
             if sql:
                 sqls.append({"question_type": question_type, "sql": sql})
+            else:
+                logger.debug("No query template or entity for intent %s", question_type)
+        logger.debug("Built %d query(ies) for %d intent(s)", sum(len(group["sql"]) for group in sqls), len(sqls))
 
         return sqls
