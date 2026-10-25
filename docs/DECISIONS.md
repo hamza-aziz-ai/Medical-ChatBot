@@ -217,3 +217,16 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** Aliases from MedlinePlus "Also called" lists are exact equivalents, so they apply directly and are shown in "Why this answer?". A misspelling is only ever offered ("Did you mean asthma?"), because a near-miss can be a different disease.
 - **Trade-off:** The alias list is small and maintained by hand; the typo cutoff (0.8, stdlib `difflib`) was tuned on a small reviewed set.
 - **Revisit if:** a curated synonym source (for example the Disease Ontology) is adopted.
+
+## D-018: Words inside a matched name are not intent keywords
+
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5); design agreed with Codex in council
+- **Context:** BUG-002. Keywords were matched across the whole question, so "infection" inside "deep palm infection" added the unsupported "who gets it" intent and every question about three diseases abstained.
+- **Options:**
+  1. mask matched names before keyword matching, everywhere `classify_with` runs
+  2. filter keyword matches by position against entity spans
+  3. remove "infection" from the keyword list
+- **Chosen:** 1, except that a name that is itself a keyword ("phenomenon") stays readable as one
+- **Why:** One change in the shared classifier fixes answers, suggestion chips, the evaluator and the chip check together. Masking with `#` keeps `check_words` unchanged and stops a keyword phrase bridging a name. Option 2 gives the same result with more code; option 3 would stop "who gets infections?" style questions from being recognised as unsupported. The exception keeps today's answer for "what is the phenomenon of asthma", the only name equal to a keyword.
+- **Trade-off:** On the template grid (every disease and symptom times the 7 suggestion questions), exactly 21 classifications change, all for the 3 affected diseases; arbitrary questions were not measured exhaustively.
+- **Revisit if:** a name equal to a keyword is added, or keywords move to a learned intent model.

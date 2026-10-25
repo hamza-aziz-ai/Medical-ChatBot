@@ -17,7 +17,7 @@ frontend/src/components/ChatPanel.vue  submit() / ask(chip)   typed question, or
        is_follow_up()                  no entity + "it"/"and ..." and every other word is filler or an intent keyword -> reuse the topic
        close_matches()                 still no entity: offer up to 3 close names (difflib, cutoff 0.8) to confirm, never applied
        valid_selections()              clarification choices must name an entity in this question, with a type it really has
-       classifier.classify_with()      keyword intents for the (now typed) entities
+       classifier.classify_with()      keyword intents for the (now typed) entities, read with matched names masked (D-018)
        unsupported intent -> abstain   no database call
        department only    -> abstain   no database call
        disease and symptom -> clarify  options re-ask the original question with accumulated choices
