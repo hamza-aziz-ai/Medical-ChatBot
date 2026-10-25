@@ -5,6 +5,8 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 to 2026-10-26 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Per-client spelling-suggestion budget (D-025).
+- The owner's stack runs v1.1.6 with the plan fingerprint; the rollback drill also passed on v1.1.5 → v1.1.6.
 - D35 closed as far as detection goes (D-023 addendum): a plan fingerprint in the graph and the dictionary; questions refused with 503 while they do not match.
 - Rollback drill passed on a throwaway stack (FEATURE-007): restore after a failed step and after the updater process died.
 - The owner's stack is enrolled and updates itself: it moved from v1.1.1 to v1.1.5 overnight (backup, re-import, readiness check each time, about 40 s of downtime), and `/api/health` is ok.
@@ -33,7 +35,7 @@ In progress:
 Broken or risky:
 - `medical.csv` and `questions.json` have unknown redistribution rights (D30, ASSUMPTIONS.md A-01, A-02).
 - Graph and dictionary publication are still two steps (D35): any plan mismatch is now detected and refused (D-023 addendum), but the readiness check and the answer queries are separate, so imports must still run with serving stopped, one at a time.
-- One client near nginx's rate limit can still keep the single API worker busy with long nonsense questions (A-14, reduced to about 160 ms each).
+- Many client addresses together can still keep the single API worker busy; one address is bounded to about one second of suggestion work per minute (A-14, D-025).
 
 Next:
 - Optional: a reviewed mapping of the 451 unmatched names before any sourced dataset (D-011); rights and evaluation gates still apply.

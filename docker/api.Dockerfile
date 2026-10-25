@@ -4,6 +4,8 @@
 FROM python:3.14-slim@sha256:35caba83af2fe6da9a5d922f9b0156f21d1246a48278c58a08bd253303ba42e8
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+# Only nginx reaches the API in this image, and it overwrites X-Real-IP (D-025).
+ENV TRUST_PROXY_HEADER=1
 
 COPY requirements.txt requirements-deploy.txt /app/
 RUN pip install --no-cache-dir -r /app/requirements-deploy.txt \

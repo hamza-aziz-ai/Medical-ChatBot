@@ -7,7 +7,7 @@ from neo4j.exceptions import ServiceUnavailable
 from main import create_app
 
 def client(chat_main=lambda text: "answer", seen=None):
-    def respond(text, topic=None, selections=()):
+    def respond(text, topic=None, selections=(), client=None):
         if seen is not None:
             seen.append({"topic": topic, "selections": selections})
         return {"status": "answer", "reason": "answered", "message": chat_main(text), "answers": [],
