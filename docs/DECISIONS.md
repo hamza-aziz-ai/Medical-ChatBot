@@ -194,7 +194,7 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 ## D-016: Answerable intents are written by the importer, not looked up at runtime
 
-- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5); Codex council (disconnected before the last point), then the LLM council fallback
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5); Codex council (Codex failed before the last point; cause unknown), then the LLM council fallback
 - **Context:** Suggestion chips must only offer questions the graph can answer. A per-request lookup could delay an answer past the browser timeout (connect 10 s, acquisition 60 s, lazy reads are not bounded by a 1 s query timeout).
 - **Options:**
   1. a per-request Cypher lookup with bounded waits
