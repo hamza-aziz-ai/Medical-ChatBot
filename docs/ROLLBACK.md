@@ -4,8 +4,8 @@ How to undo a change that breaks something.
 
 ## Last known good
 
-- Release: `v1.0.0` (commit `6300fca`), images `ghcr.io/hamza-aziz-ai/medical-chatbot-api@sha256:8cfb7291…` and `ghcr.io/hamza-aziz-ai/medical-chatbot-web@sha256:414092e2…` (full digests in the release's `release.env`).
-- Current `main`: `b59b8ff` (integrity fixes and automerge). Update this line after each risky change.
+- Release: `v1.1.7` (commit `dc13ebe`), images `ghcr.io/hamza-aziz-ai/medical-chatbot-api@sha256:c286127b…` and `ghcr.io/hamza-aziz-ai/medical-chatbot-web@sha256:8666a1e6…` (full digests in the release's `release.env`). Running on the owner's stack since 2026-10-26 with `/api/health` ok. Its graph needs a re-import from the same release (plan fingerprint, D-023); `scripts/update_stack.py` does that, and restores a release's own graph backup on rollback.
+- Current `main`: `b3a8934`. Update this line after each risky change.
 
 ## Code
 
