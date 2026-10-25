@@ -187,7 +187,7 @@ def test_list_answers_carry_bullet_items():
 
 # D-022: readiness against the dictionary the API loaded.
 
-SOURCE = {"sha256": "a" * 64, "diseases": 658}
+SOURCE = {"plan": "a" * 64, "diseases": 658}
 
 
 class ReadinessDriver:
@@ -238,7 +238,7 @@ def test_readiness_is_one_short_read_of_importer_owned_diseases():
     from build_medicalgraph import OWNER
     driver = ReadinessDriver()
     ready_bot(driver).ready()
-    assert driver.seen["parameters"] == {"owner": OWNER, "hash": "a" * 64}
+    assert driver.seen["parameters"] == {"owner": OWNER, "plan": "a" * 64}
     assert driver.seen["session"]["default_access_mode"] == neo4j.READ_ACCESS
     assert driver.seen["query"].timeout <= 1.0
     assert "count(CASE" in driver.seen["query"].text
@@ -254,8 +254,12 @@ def test_the_source_is_read_from_the_dictionary(tmp_path):
     assert cg.ChatBotGraph.load_source()["diseases"] == len(CLASSIFIER.disease_words)
     (tmp_path / "entities.json").write_text(json.dumps({"diseases": ["asthma"]}), encoding="utf-8")
     assert cg.ChatBotGraph.load_source(tmp_path / "entities.json") is None
-    (tmp_path / "entities.json").write_text(json.dumps({"diseases": [], "source_sha256": "a" * 64}), encoding="utf-8")
+    (tmp_path / "entities.json").write_text(json.dumps({"diseases": [], "plan_sha256": "a" * 64}), encoding="utf-8")
+    assert cg.ChatBotGraph.load_source(tmp_path / "entities.json") is None  # zero diseases: never ready
+    (tmp_path / "entities.json").write_text(json.dumps({"diseases": ["asthma"], "plan_sha256": "not-a-hash"}), encoding="utf-8")
     assert cg.ChatBotGraph.load_source(tmp_path / "entities.json") is None
+    (tmp_path / "entities.json").write_text(json.dumps({"diseases": ["asthma"], "source_sha256": "a" * 64}), encoding="utf-8")
+    assert cg.ChatBotGraph.load_source(tmp_path / "entities.json") is None  # a pre-D-023 dictionary has no fingerprint
 
 
 def test_the_dictionary_is_read_once_at_start_so_two_versions_never_mix(monkeypatch):

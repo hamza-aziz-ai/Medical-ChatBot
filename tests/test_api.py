@@ -13,7 +13,7 @@ def client(chat_main=lambda text: "answer", seen=None):
         return {"status": "answer", "reason": "answered", "message": chat_main(text), "answers": [],
                 "topic": None, "interpretation": None, "options": []}
 
-    return create_app(chatbot=SimpleNamespace(respond=respond)).test_client()
+    return create_app(chatbot=SimpleNamespace(respond=respond, ready=lambda: (True, None))).test_client()
 
 
 def test_answer_is_json():
@@ -178,3 +178,17 @@ def test_health_says_ok_only_while_ready_and_never_more(caplog):
 def test_health_is_get_only():
     response = health_client(lambda: (True, None)).post("/health")
     assert response.status_code == 405 and "GET" in response.headers["Allow"]
+
+
+# D-023: questions are refused while the graph is not the one this API's dictionary was published with.
+
+def test_questions_are_refused_while_not_ready_and_nothing_is_answered(caplog):
+    answered = []
+    app = create_app(chatbot=SimpleNamespace(respond=lambda *args, **kwargs: answered.append(1),
+                                             ready=lambda: (False, "graph does not match the dictionary"))).test_client()
+    caplog.set_level(logging.DEBUG)
+    response = app.get("/", query_string={"search": "what causes asthma"})
+    assert response.status_code == 503 and response.get_json() == {"error": "The knowledge graph is unavailable. Please try again later."}
+    assert answered == [] and "asthma" not in caplog.text
+    # Invalid input is still rejected first, with its own message.
+    assert app.get("/", query_string={"search": ""}).status_code == 400
