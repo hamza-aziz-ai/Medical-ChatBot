@@ -26,3 +26,27 @@ def test_non_bolt_uris_are_refused(monkeypatch, uri):
 def test_bolt_uris_are_accepted(monkeypatch, uri):
     monkeypatch.setenv("NEO4J_URI", uri)
     assert database.database_uri() == uri
+
+
+def test_env_file_fills_missing_variables_only(monkeypatch, tmp_path):
+    env = tmp_path / ".env"
+    env.write_text(
+        "# comment\nNEO4J_PASSWORD='from file'\nNEO4J_USER=fileuser\nNEO4J_URI=\nCHATBOT_API_TOKEN=\"tok\"\nnot a line\n",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("NEO4J_PASSWORD", raising=False)
+    monkeypatch.delenv("CHATBOT_API_TOKEN", raising=False)
+    monkeypatch.delenv("NEO4J_URI", raising=False)
+    monkeypatch.setenv("NEO4J_USER", "shell")
+    database.load_env_file(env)
+    import os
+    assert os.environ["NEO4J_PASSWORD"] == "from file"
+    assert os.environ["CHATBOT_API_TOKEN"] == "tok"
+    assert os.environ["NEO4J_USER"] == "shell"
+    assert "NEO4J_URI" not in os.environ
+    for key in ("NEO4J_PASSWORD", "CHATBOT_API_TOKEN"):
+        monkeypatch.delenv(key)
+
+
+def test_missing_env_file_is_ignored(tmp_path):
+    database.load_env_file(tmp_path / "absent.env")

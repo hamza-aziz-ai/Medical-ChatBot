@@ -1,10 +1,28 @@
 import math
 import os
+from pathlib import Path
 
 from neo4j import GraphDatabase
 
+ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
 DEFAULT_QUERY_TIMEOUT = 5.0
 BOLT_SCHEMES = frozenset({"bolt", "bolt+s", "bolt+ssc", "neo4j", "neo4j+s", "neo4j+ssc"})
+
+
+def load_env_file(path=None):
+    """Read KEY=VALUE lines from the repository's .env. Variables already set in the environment win."""
+    path = path or ENV_FILE
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = (part.strip() for part in line.split("=", 1))
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+            value = value[1:-1]
+        if key and value:
+            os.environ.setdefault(key, value)
 
 
 def database_name():

@@ -11,7 +11,7 @@ python -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt      # Windows: .venv\Scripts\pip
 ```
 
-Configuration comes from the environment:
+Configuration comes from environment variables. For local use, copy `.env.example` to `.env` in the repository root and fill it in; the API and the importer read it at startup, and variables already set in your shell take precedence. `.env` is git-ignored, so keep real secrets only there.
 
 | Variable | Required | Default |
 |---|---|---|

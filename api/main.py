@@ -28,6 +28,10 @@ def allowed_origins():
 
 
 def create_app(chatbot=None, api_token=None):
+    if chatbot is None:
+        import database
+        database.load_env_file()
+
     token = api_token or os.environ.get("CHATBOT_API_TOKEN")
     if not token:
         raise RuntimeError("CHATBOT_API_TOKEN must be set")

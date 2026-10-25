@@ -3,6 +3,7 @@ import csv
 import hashlib
 import io
 import json
+import logging
 import os
 import sys
 import tempfile
@@ -251,6 +252,10 @@ def print_report(dataset, data):
 
 
 def main():
+    # The pre-write checks query labels and properties that an empty database does not have yet;
+    # Neo4j reports those as "does not exist" notifications, which are expected here.
+    logging.getLogger("neo4j.notifications").setLevel(logging.ERROR)
+    database.load_env_file()
     dataset = load_dataset()
     data = graph_data(dataset)
     print_report(dataset, data)
