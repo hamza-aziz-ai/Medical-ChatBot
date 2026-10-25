@@ -1,6 +1,7 @@
 """Rollback drill for scripts/update_stack.py on a throwaway stack (D-021). Run by hand; needs Docker and GitHub.
 
-    python scripts/rollback_drill.py
+    python scripts/rollback_drill.py                                  # v1.1.4 -> v1.1.5
+    DRILL_CURRENT=v1.1.5 DRILL_TARGET=v1.1.6 python scripts/rollback_drill.py
 
 Starts its own Compose project (medical-chatbot-drill-<nonce>) from the real v1.1.4 release, enrols it, and updates it
 to the real v1.1.5 release twice with a fault injected after a committed change to the graph:
@@ -24,12 +25,12 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-CURRENT, TARGET = "v1.1.4", "v1.1.5"
+CURRENT, TARGET = os.environ.get("DRILL_CURRENT", "v1.1.4"), os.environ.get("DRILL_TARGET", "v1.1.5")
 CRASH_EXIT = 97
 # Variables Compose or the stack would read; the drill builds its environment from a short allow-list instead.
 KEEP_ENV = ("PATH", "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP", "HOME", "USERPROFILE",
             "APPDATA", "LOCALAPPDATA", "PROGRAMDATA", "PROGRAMFILES", "PROGRAMFILES(X86)", "DOCKER_HOST", "DOCKER_CONTEXT",
-            "DOCKER_CONFIG")
+            "DOCKER_CONFIG", "DRILL_CURRENT", "DRILL_TARGET")
 
 
 class DrillError(Exception):

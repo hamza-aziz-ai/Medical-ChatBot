@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 to 2026-10-26 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- D35 closed as far as detection goes (D-023 addendum): a plan fingerprint in the graph and the dictionary; questions refused with 503 while they do not match.
 - Rollback drill passed on a throwaway stack (FEATURE-007): restore after a failed step and after the updater process died.
 - The owner's stack is enrolled and updates itself: it moved from v1.1.1 to v1.1.5 overnight (backup, re-import, readiness check each time, about 40 s of downtime), and `/api/health` is ok.
 - Dataset pilot, step 1 (FEATURE-009): exact name overlap with MedlinePlus and the Disease Ontology is 31.5% of 658 diseases; nothing imported.
@@ -31,11 +32,10 @@ In progress:
 
 Broken or risky:
 - `medical.csv` and `questions.json` have unknown redistribution rights (D30, ASSUMPTIONS.md A-01, A-02).
-- Graph and dictionary publication are still two steps (D35, partially mitigated by D-023): a dictionary from another CSV is detected by `GET /health`; a same-CSV, different-importer mismatch is not, and `/health` reporting unavailable does not stop `/` from answering.
+- Graph and dictionary publication are still two steps (D35): any plan mismatch is now detected and refused (D-023 addendum), but the readiness check and the answer queries are separate, so imports must still run with serving stopped, one at a time.
 - One client near nginx's rate limit can still keep the single API worker busy with long nonsense questions (A-14, reduced to about 160 ms each).
 
 Next:
-- Same-CSV, different-importer mismatches: consider storing a dictionary fingerprint with the graph and refusing to answer while not ready (D-023).
 - Optional: a reviewed mapping of the 451 unmatched names before any sourced dataset (D-011); rights and evaluation gates still apply.
 
 Do not touch:
