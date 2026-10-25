@@ -150,8 +150,9 @@ def test_every_suggestion_in_the_dictionary_round_trips_to_its_intent():
         for option in bot.suggestions({"name": name, "type": "disease"}):
             intent = next(i for i, text in cg.QUESTION_FOR.items() if text.format(name) == option["question"])
             assert CLASSIFIER.classify_with(option["question"], {name: ["disease"]})["question_types"] == [intent]
-    # "infection" in this name is also an intent keyword, so every chip would misclassify: none is offered.
-    assert bot.suggestions({"name": "deep palm infection", "type": "disease"}) == []
+    # BUG-002: "infection" inside these names is no longer read as an intent, so their chips are offered again.
+    for name in ["deep palm infection", "non-cholesteric infection", "retroperitoneal infection and abscess"]:
+        assert len(bot.suggestions({"name": name, "type": "disease"})) == cg.MAX_SUGGESTIONS
 
 
 def test_a_listed_intent_with_no_rows_still_gets_a_clean_answer():

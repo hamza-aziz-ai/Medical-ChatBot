@@ -19,3 +19,4 @@
 {"id": "clarified-as-disease", "question": "what are the symptoms of anemia", "selections": [{"name": "anemia", "type": "disease"}], "intents": ["disease_symptom"], "entities": {"anemia": ["disease"]}, "facts": [{"disease": "anemia", "field": "symptoms", "value": "tiredness"}]}
 {"id": "alias-whooping-cough", "question": "what are the symptoms of whooping cough", "intents": ["disease_symptom"], "entities": {"pertussis": ["disease"]}, "facts": [{"disease": "pertussis", "field": "symptoms", "value": "chest tightness"}]}
 {"id": "typo-offered-not-applied", "question": "what causes asthama", "status": "clarify"}
+{"id": "keyword-inside-name", "question": "what causes deep palm infection", "intents": ["disease_cause"], "entities": {"deep palm infection": ["disease"]}, "facts": [{"disease": "deep palm infection", "field": "causes", "value": "spread of tenosynovitis of the middle finger and ring finger"}]}
