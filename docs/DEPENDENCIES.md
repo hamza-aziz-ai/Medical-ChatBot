@@ -40,3 +40,10 @@ Dependabot watches all of these; open alerts were 0 after the Vue 3 migration.
 | `NEO4J_PASSWORD`                         | Git-ignored `.env`                                      | Old password rotated and not reused (D11)                       |
 | CI Neo4j password `ci-test-password`     | Workflow files                                          | Throwaway, for ephemeral CI containers only                     |
 | `GITHUB_TOKEN`                           | Provided by GitHub Actions                              | Write scopes only in the release publish and automerge jobs     |
+
+## External hosts (offline tools only)
+
+| Host and path | Used by | Why | Notes |
+|---|---|---|---|
+| `https://medlineplus.gov/xml.html` and `/xml/mplus_topics_YYYY-MM-DD.xml` | `scripts/dataset_pilot.py` | Dataset pilot (D-011): MedlinePlus health topics | Run by hand; never at runtime or in CI. Reuse invited with attribution; health-topic summaries stated as public domain |
+| `https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/main/src/ontology/releases/doid.obo` | `scripts/dataset_pilot.py` | Dataset pilot (D-011): Disease Ontology | Run by hand; never at runtime or in CI. CC0 1.0 |

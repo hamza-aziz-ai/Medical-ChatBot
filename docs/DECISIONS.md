@@ -138,6 +138,7 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** No reviewed candidate covers all seven intents with a redistributable licence.
 - **Trade-off:** The rights question stays open while the CSV remains.
 - **Revisit if:** the pilot passes both gates.
+- **Pilot, step 1 (2026-10-26, measurement only, agreed with Codex in council):** `scripts/dataset_pilot.py` measured exact name overlap: 207 of 658 diseases (31.5%) in either source, 451 in neither (docs/pilot/DATASET-PILOT.md). Most unmatched names are translations without a standard English form. Nothing was imported; the next step would be a reviewed mapping of the unmatched names, then the rights and evaluation gates.
 
 ## D-012: One shared instruction file and memory for all coding agents
 
