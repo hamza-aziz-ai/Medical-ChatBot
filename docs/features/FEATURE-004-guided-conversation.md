@@ -12,4 +12,4 @@
 
 ## Log
 
-- 2026-10-25: Design agreed with Codex; its connection dropped before the last point, which the LLM council settled (D-016). Backend 151 tests offline and 160 live passed; MLOps evaluation 19/19 with no integrity failures and 0 chip mismatches over 658 diseases; frontend 11 helper and 20 component tests passed; Compose smoke test passed; checked in a browser against the live stack (answer with bullets, follow-up, clarification, choice, chips, topic bar).
+- 2026-10-25: Design agreed with Codex; Codex failed before the last point (cause unknown), and the LLM council settled it (D-016). Backend 151 tests offline and 160 live passed; MLOps evaluation 19/19 with no integrity failures and 0 chip mismatches over 658 diseases; frontend 11 helper and 20 component tests passed; Compose smoke test passed; checked in a browser against the live stack (answer with bullets, follow-up, clarification, choice, chips, topic bar).
