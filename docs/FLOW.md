@@ -5,22 +5,26 @@ How execution travels. Update this when a path changes, and mark the functions a
 ## A question (runtime)
 
 ```
-frontend/src/components/ChatPanel.vue  submit()            Enter or Send; blocks empty, over-long and duplicate submits
-  -> frontend/src/App.vue              messageSendHandler()
-  -> frontend/src/chatApi.mjs          sendMessage() -> fetchHttp.get()   GET {base}/?search=..., no credentials, 10 s timeout
-  -> docker/nginx.conf                 location /api/  (Docker only; rate limit 10/s per client, strips /api, logs nothing)
-  -> api/main.py                       home()           empty and 500-char checks
-  -> api/chatbot_graph_logic.py        ChatBotGraph.chat_main()
-       -> api/question_classifier.py   QuestionClassifier.classify()
-            check_medical()            Aho-Corasick entity spans, whole words only
-            check_words()              keyword intents, whole words only
-          no entity, or an unsupported intent -> ABSTENTION
-       -> api/question_parser.py       QuestionParser.parser_main() -> sql_transfer()   template + {name, limit: 20}
-       -> api/answer_searcher.py       AnswerSearcher.search_main()   execute_query, READ routing, query timeout (5 s default)
-            answer_prettify()          group by subject, drop artefact terms, cap 20 values
-          no rows -> ABSTENTION
-  <- api/main.py                       jsonify({search, message})
-  <- frontend                          appends the reply as plain text; errors become fixed messages
+frontend/src/components/ChatPanel.vue  submit() / ask(chip)   typed question, or a chip's question + choices + topic
+  -> frontend/src/App.vue              messageSendHandler()   blocks duplicate submits; "New conversation" bumps the conversation id
+  -> frontend/src/chatApi.mjs          sendMessage()          GET {base}/?search=&topic=&topic_type=&selection=name:type, 10 s timeout
+  -> docker/nginx.conf                 location /api/         (Docker only; rate limit 10/s per client, strips /api, logs nothing)
+  -> api/main.py                       home()                 empty and 500-char checks; topic_from(), selections_from() bound the extras
+  -> api/chatbot_graph_logic.py        ChatBotGraph.respond()
+       valid_topic()                   topic must be a dictionary name of that type
+       classifier.check_medical()      Aho-Corasick entity spans, whole words only
+       is_follow_up()                  no entity + "it"/"and ..." and every other word is filler or an intent keyword -> reuse the topic
+       valid_selections()              clarification choices must name an entity in this question, with a type it really has
+       classifier.classify_with()      keyword intents for the (now typed) entities
+       unsupported intent -> abstain   no database call
+       department only    -> abstain   no database call
+       disease and symptom -> clarify  options re-ask the original question with accumulated choices
+  -> api/question_parser.py            parser_main() -> sql_transfer()   template + {name, limit: 20}
+  -> api/answer_searcher.py            search_structured()    execute_query, READ routing, query timeout (5 s default); lead, items, note per subject
+       no rows -> abstain (no_facts)
+       suggestions()                   from the intents table in entities.json (no query), only chips that classify back to their intent
+  <- api/main.py                       jsonify({search, status, reason, message, answers, topic, interpretation, options})
+  <- frontend                          bullets, chips for the latest reply, "Why this answer?", topic bar; a late reply after a reset is dropped
 ```
 
 Errors: Neo4j unavailable, session expired or transaction timeout give 503 with a fixed message; anything else gives a sanitized 500. Only the exception type is logged.

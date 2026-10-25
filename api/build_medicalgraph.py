@@ -13,7 +13,7 @@ from neo4j import RoutingControl, unit_of_work
 
 import app_logging
 import database
-from terms import clean_terms
+from terms import clean_terms, is_valid_term
 
 BASE_DIR = Path(__file__).resolve().parent
 CSV_PATH = BASE_DIR / "data" / "medical.csv"
@@ -268,7 +268,32 @@ def entities_document(dataset, data):
         "diseases": sorted(row["name"] for row in data["diseases"]),
         "departments": data["departments"],
         "symptoms": data["symptoms"],
+        "intents": disease_intents(data),
     }
+
+
+def disease_intents(data):
+    """{disease: intents that have an answer}, so suggestion chips never lead to "nothing recorded".
+
+    Written with the dictionary from the same import (D-015), so the API needs no database call to know it.
+    Mirrors what the answer templates return: text properties that are set, list values that are valid terms,
+    symptom links, and complication links in either direction.
+    """
+    with_symptoms = {disease for disease, _ in data["edges"]["has_symptom"]}
+    with_companions = {disease for pair in data["edges"]["accompany_with"] for disease in pair}
+    intents = {}
+    for row in sorted(data["diseases"], key=lambda row: row["name"]):
+        name, properties = row["name"], row["properties"]
+        available = {
+            "disease_symptom": name in with_symptoms,
+            "disease_cause": bool(properties.get("causes")),
+            "disease_prevention": bool(properties.get("prevention")),
+            "disease_cure_way": any(is_valid_term(value) for value in properties.get("cure_way") or []),
+            "disease_accompany": name in with_companions,
+            "disease_description": bool(properties.get("description")),
+        }
+        intents[name] = [intent for intent, present in available.items() if present]
+    return intents
 
 
 def stage_entities(document, path=ENTITIES_PATH):

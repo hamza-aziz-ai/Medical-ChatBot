@@ -12,3 +12,8 @@
 {"id": "abstain-unknown-disease", "question": "what are the symptoms of covid-19", "abstain": true}
 {"id": "abstain-quarantined-disease", "question": "what are the symptoms of pneumonia", "abstain": true}
 {"id": "abstain-no-entity", "question": "hello there", "abstain": true}
+{"id": "follow-up-cause-asthma", "question": "what causes it?", "topic": {"name": "asthma", "type": "disease"}, "intents": ["disease_cause"], "entities": {"asthma": ["disease"]}, "facts": [{"disease": "asthma", "field": "causes", "value": "asthma is a disease that occurs through the interaction of environmental factors"}]}
+{"id": "follow-up-continuation-prevention", "question": "and prevention?", "topic": {"name": "asthma", "type": "disease"}, "intents": ["disease_prevention"], "entities": {"asthma": ["disease"]}, "facts": [{"disease": "asthma", "field": "prevention", "value": "daily asthma prevention: 1. avoid re-contact with allergens"}]}
+{"id": "abstain-new-unknown-subject-after-topic", "question": "what about flu?", "topic": {"name": "asthma", "type": "disease"}, "abstain": true}
+{"id": "clarify-disease-or-symptom", "question": "what are the symptoms of anemia", "status": "clarify", "intents": ["disease_symptom", "symptom_disease"], "entities": {"anemia": ["disease", "symptom"]}}
+{"id": "clarified-as-disease", "question": "what are the symptoms of anemia", "selections": [{"name": "anemia", "type": "disease"}], "intents": ["disease_symptom"], "entities": {"anemia": ["disease"]}, "facts": [{"disease": "anemia", "field": "symptoms", "value": "tiredness"}]}

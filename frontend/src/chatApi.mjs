@@ -40,20 +40,39 @@ export function createFetchHttp(fetchImpl = (...args) => globalThis.fetch(...arg
 
 export const fetchHttp = createFetchHttp();
 
+// value: { text, label?, selections?, topic? }. text is what is asked; label is what the user's bubble shows
+// (a chip may show "anemia as a disease" while re-asking the original question with that choice).
 export async function sendMessage(state, http, baseUrl, value) {
-  state.messages.push({ agent: "user", type: "text", text: value.text });
+  const conversation = state.conversation;
+  state.messages.push({ agent: "user", type: "text", text: value.label || value.text });
   state.botTyping = true;
 
+  // Repeatable parameters, so they are sent as pairs. The topic and choices are held in page memory only.
+  const params = [["search", value.text]];
+  const topic = value.topic === undefined ? state.topic : value.topic;
+  if (topic) params.push(["topic", topic.name], ["topic_type", topic.type]);
+  for (const choice of value.selections || []) params.push(["selection", `${choice.name}:${choice.type}`]);
+
+  let reply;
   try {
-    const res = await http.get(baseUrl.replace(/\/+$/, "") + "/", {
-      params: { search: value.text },
-      timeout: REQUEST_TIMEOUT_MS,
-    });
-    state.messages.push({ agent: "bot", type: "text", text: res.data.message });
+    const res = await http.get(baseUrl.replace(/\/+$/, "") + "/", { params, timeout: REQUEST_TIMEOUT_MS });
+    reply = res.data;
   } catch (error) {
-    // type "error" lets the page style failures differently from answers.
-    state.messages.push({ agent: "bot", type: "error", text: errorText(error) });
-  } finally {
-    state.botTyping = false;
+    reply = { status: "error", message: errorText(error) };
   }
+  // A reply that arrives after "New conversation" belongs to the old conversation: drop it.
+  if (state.conversation !== conversation) return;
+  state.botTyping = false;
+
+  state.messages.push({
+    agent: "bot",
+    // type "error" lets the page style failures differently from answers.
+    type: reply.status || "text",
+    text: reply.message,
+    answers: reply.answers || [],
+    options: reply.options || [],
+    interpretation: reply.interpretation || null,
+  });
+  if (reply.topic) state.topic = reply.topic;
+  else if (reply.status === "answer") state.topic = null;
 }

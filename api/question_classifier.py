@@ -190,15 +190,25 @@ class QuestionClassifier:
 
         return False
 
+    def intent_keywords(self):
+        return [phrase for name, words in vars(self).items() if name.endswith("_question_words") for phrase in words]
+
+    def has_intent_keyword(self, question):
+        return self.check_words(self.intent_keywords(), question)
+
     def classify(self, question):
-        data = {}
-        question_2 = question.lower()
-        medical_dictionary = self.check_medical(question_2)
+        medical_dictionary = self.check_medical(question.lower())
 
         if not medical_dictionary:
             logger.debug("No known entity found")
             return {}
 
+        return self.classify_with(question, medical_dictionary)
+
+    def classify_with(self, question, medical_dictionary):
+        """Intents for a question whose entities (name -> types) are already known."""
+        data = {}
+        question_2 = question.lower()
         data['arguments'] = medical_dictionary
         types = []
 

@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Guided conversation (D-015, D-016, FEATURE-004): structured replies, follow-ups, clarification, explained abstentions, suggestion chips, "Why this answer?", topic bar, emergency guidance.
 - Professional UI redesign (D-014, FEATURE-003): clinical light and dark themes, example questions, typing indicator, styled errors, About card with graph counts.
 - Removed the API token (D-013): no token field or `CHATBOT_API_TOKEN`; nginx rate-limits the API in Docker (FEATURE-002).
 - Shared agent setup: `AGENTS.md` is the single instruction file for all coding agents (Codex reads it natively); `CLAUDE.md` imports it and the new shared `MEMORY.md` (D-012).
@@ -22,6 +23,8 @@ Broken or risky:
 - Graph and dictionary publication are not one unit (D35).
 
 Next:
+- Step 2: sourced aliases and confirmed typo suggestions.
+- BUG-002: ignore intent keywords inside matched disease names.
 - Optional: dataset pilot (MedlinePlus + DOID) behind a rights gate and the evaluation gate.
 
 Do not touch:

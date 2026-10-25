@@ -4,12 +4,21 @@
     aria-labelledby="chat-title"
   >
     <div class="panel-header">
-      <h2 id="chat-title">
-        Conversation
-      </h2>
-      <p class="panel-hint">
-        Symptoms, causes, prevention, treatments and complications of about 650 diseases
-      </p>
+      <div>
+        <h2 id="chat-title">
+          Conversation
+        </h2>
+        <p class="panel-hint">
+          Symptoms, causes, prevention, treatments and complications of about 650 diseases
+        </p>
+      </div>
+      <button
+        type="button"
+        class="ghost"
+        @click="$emit('reset')"
+      >
+        New conversation
+      </button>
     </div>
 
     <ol
@@ -22,7 +31,7 @@
       <li
         v-for="(message, index) in messages"
         :key="index"
-        :class="['message', message.agent === 'user' ? 'from-user' : 'from-bot', { 'is-error': message.type === 'error' }]"
+        :class="['message', message.agent === 'user' ? 'from-user' : 'from-bot', { 'is-error': message.type === 'error', 'is-abstain': message.type === 'abstain' }]"
       >
         <span
           v-if="message.agent !== 'user'"
@@ -31,9 +40,72 @@
         >MH</span>
         <div class="bubble">
           <span class="speaker">{{ message.agent === "user" ? "You" : "Mr. Healthcare" }}</span>
-          <p class="text">
+          <template v-if="message.answers && message.answers.length">
+            <div
+              v-for="(answer, answerIndex) in message.answers"
+              :key="answerIndex"
+              class="answer"
+            >
+              <template v-if="answer.items">
+                <p class="text">
+                  {{ answer.lead }}
+                </p>
+                <ul class="items">
+                  <li
+                    v-for="item in answer.items"
+                    :key="item"
+                  >
+                    {{ item }}
+                  </li>
+                </ul>
+                <p
+                  v-if="answer.note"
+                  class="note"
+                >
+                  {{ answer.note }}.
+                </p>
+              </template>
+              <p
+                v-else
+                class="text"
+              >
+                {{ answer.text }}
+              </p>
+            </div>
+          </template>
+          <p
+            v-else
+            class="text"
+          >
             {{ message.text }}
           </p>
+
+          <details
+            v-if="message.interpretation"
+            class="why"
+          >
+            <summary>Why this answer?</summary>
+            <ul>
+              <li v-if="message.interpretation.entities.length">
+                Understood topic: {{ describeEntities(message.interpretation.entities) }}
+              </li>
+              <li v-if="message.interpretation.intents.length">
+                Question type: {{ message.interpretation.intents.map((item) => item.label).join(", ") }}
+              </li>
+              <li v-if="message.interpretation.used_topic">
+                Your question referred back to the previous topic.
+              </li>
+              <li>Facts come from an unverified dataset in the knowledge graph. This is not medical advice.</li>
+            </ul>
+          </details>
+
+          <a
+            v-if="learnMore(message)"
+            class="external"
+            :href="learnMore(message).url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Learn more about {{ learnMore(message).name }} on MedlinePlus (external site)</a>
         </div>
       </li>
       <li
@@ -58,20 +130,20 @@
     </ol>
 
     <div
-      v-if="showSuggestions"
+      v-if="chips.length"
       class="suggestions"
-      aria-label="Example questions"
+      :aria-label="chipsLabel"
       role="group"
     >
       <button
-        v-for="suggestion in suggestions"
-        :key="suggestion"
+        v-for="chip in chips"
+        :key="chip.label"
         type="button"
         class="chip"
         :disabled="busy"
-        @click="ask(suggestion)"
+        @click="ask(chip)"
       >
-        {{ suggestion }}
+        {{ chip.label }}
       </button>
     </div>
 
@@ -79,6 +151,12 @@
       class="composer"
       @submit.prevent="submit"
     >
+      <p
+        v-if="topic"
+        class="topic"
+      >
+        Talking about <strong>{{ topic.name }}</strong> ({{ topic.type }}). Follow-ups such as "what causes it?" use this topic.
+      </p>
       <label
         for="question"
         class="visually-hidden"
@@ -122,15 +200,18 @@
 </template>
 
 <script>
+const MEDLINEPLUS_SEARCH = "https://vsearch.nlm.nih.gov/vivisimo/cgi-bin/query-meta?v%3Aproject=medlineplus&v%3Asources=medlineplus-bundle&query=";
+
 export default {
   name: "ChatPanel",
   props: {
     messages: { type: Array, required: true },
     busy: { type: Boolean, default: false },
     suggestions: { type: Array, default: () => [] },
+    topic: { type: Object, default: null },
     maxLength: { type: Number, default: 500 },
   },
-  emits: ["send"],
+  emits: ["send", "reset"],
   data() {
     return { draft: "" };
   },
@@ -138,9 +219,19 @@ export default {
     canSend() {
       return !this.busy && this.draft.trim().length > 0;
     },
-    // Examples help until the user has asked something of their own.
-    showSuggestions() {
-      return this.suggestions.length > 0 && !this.messages.some((message) => message.agent === "user");
+    lastBotMessage() {
+      const last = this.messages[this.messages.length - 1];
+      return last && last.agent === "bot" ? last : null;
+    },
+    // Chips belong to the latest reply only: examples before the first question, then that reply's options.
+    chips() {
+      if (!this.messages.some((message) => message.agent === "user")) {
+        return this.suggestions.map((question) => ({ label: question, question }));
+      }
+      return (this.lastBotMessage && this.lastBotMessage.options) || [];
+    },
+    chipsLabel() {
+      return this.lastBotMessage && this.lastBotMessage.type === "clarify" ? "Choose what you meant" : "Suggested questions";
     },
   },
   watch: {
@@ -161,12 +252,23 @@ export default {
     submit() {
       // The guard lives here so keyboard and button submissions are both protected.
       if (!this.canSend) return;
-      this.$emit("send", this.draft.trim());
+      this.$emit("send", { text: this.draft.trim() });
       this.draft = "";
     },
-    ask(question) {
+    ask(chip) {
       if (this.busy) return;
-      this.$emit("send", question);
+      this.$emit("send", { text: chip.question, label: chip.label, selections: chip.selections, topic: chip.topic });
+    },
+    describeEntities(entities) {
+      return entities.map((entity) => `${entity.name} (${entity.types.join(" or ")})`).join(", ");
+    },
+    // Only for an answer about one disease; the link is outside information, not a source for the answer.
+    learnMore(message) {
+      const answers = message.answers || [];
+      const subjects = new Set(answers.filter((answer) => answer.intent.startsWith("disease_")).map((answer) => answer.subject));
+      if (message.type !== "answer" || subjects.size !== 1) return null;
+      const [name] = subjects;
+      return { name, url: MEDLINEPLUS_SEARCH + encodeURIComponent(name) };
     },
   },
 };

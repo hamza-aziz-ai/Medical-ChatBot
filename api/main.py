@@ -9,6 +9,8 @@ from neo4j.exceptions import ClientError, ServiceUnavailable, SessionExpired
 from werkzeug.exceptions import HTTPException
 
 MAX_QUESTION_LENGTH = 500
+MAX_NAME_LENGTH = 200
+MAX_SELECTIONS = 10
 DEFAULT_ORIGINS = "http://localhost:8080,http://127.0.0.1:8080"
 ORIGIN_PATTERN = re.compile(r"https?://[A-Za-z0-9.-]+(:\d{1,5})?")
 GRAPH_UNAVAILABLE = "The knowledge graph is unavailable. Please try again later."
@@ -26,6 +28,23 @@ def allowed_origins():
             raise RuntimeError(f"CORS_ORIGINS must list exact http(s) origins such as http://localhost:8080, not {origin!r}")
     # Flask-Cors treats strings as patterns, so pass anchored literal patterns.
     return [re.compile("^" + re.escape(origin) + "$") for origin in origins]
+
+
+def topic_from(args):
+    name, entity_type = args.get("topic", ""), args.get("topic_type", "")
+    if not name or len(name) > MAX_NAME_LENGTH:
+        return None
+    return {"name": name, "type": entity_type}
+
+
+def selections_from(args):
+    """selection=<name>:<type>, repeatable; malformed or excess values are ignored."""
+    selections = []
+    for value in args.getlist("selection")[:MAX_SELECTIONS]:
+        name, _, entity_type = value.rpartition(":")
+        if name and len(name) <= MAX_NAME_LENGTH:
+            selections.append({"name": name, "type": entity_type})
+    return selections
 
 
 def create_app(chatbot=None):
@@ -60,9 +79,11 @@ def create_app(chatbot=None):
             return jsonify(error=f"Questions are limited to {MAX_QUESTION_LENGTH} characters."), 400
 
         logger.debug("Answering a question of %d characters", len(search_term))
-        message = chatbot.chat_main(search_term)
-        logger.info("Answered a question of %d characters", len(search_term))
-        return jsonify(search=search_term, message=message)
+        # The page sends back the confirmed topic and any clarification choices; the chatbot checks both
+        # against the dictionary and this question. Like the question, they are never logged.
+        reply = chatbot.respond(search_term, topic=topic_from(request.args), selections=selections_from(request.args))
+        logger.info("Replied (%s) to a question of %d characters", reply["status"], len(search_term))
+        return jsonify(search=search_term, **reply)
 
     @app.errorhandler(HTTPException)
     def http_error(error):

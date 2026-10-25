@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 
 import build_medicalgraph as builder
-from chatbot_graph_logic import ABSTENTION
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import evaluate_kg  # noqa: E402
@@ -14,28 +13,30 @@ LIST_FIELDS = {"symptoms", "cure_way"}
 TEXT_FIELDS = {"description", "causes", "prevention"}
 
 
-class FakeClassifier:
-    def __init__(self, result):
-        self.result = result
-
-    def classify(self, question):
-        return self.result
+def reply(message, intents=("disease_cause",), entities=None, status="answer"):
+    entities = {"a": ["disease"]} if entities is None else entities
+    return {
+        "status": status, "message": message,
+        "interpretation": {
+            "intents": [{"intent": intent} for intent in intents],
+            "entities": [{"name": name, "types": types} for name, types in entities.items()],
+        },
+    }
 
 
 class FakeChatbot:
-    def __init__(self, answer, classified):
-        self.answer = answer
-        self.classifier = FakeClassifier(classified)
+    def __init__(self, response):
+        self.response = response
 
-    def chat_main(self, question):
-        return self.answer
+    def respond(self, question, topic=None, selections=()):
+        return self.response
 
 
 def test_case_ids_are_unique_and_include_abstentions():
     ids = [case["id"] for case in CASES]
     assert len(ids) == len(set(ids))
     assert any(case.get("abstain") for case in CASES)
-    assert all(case.get("abstain") or case.get("facts") for case in CASES)
+    assert all(case.get("abstain") or case.get("facts") or case.get("status") == "clarify" for case in CASES)
 
 
 @pytest.mark.parametrize("case", [case for case in CASES if case.get("facts")], ids=lambda case: case["id"])
@@ -63,24 +64,25 @@ def test_baseline_counts_match_the_import_plan():
 
 CASE = {"id": "c", "question": "q", "intents": ["disease_cause"], "entities": {"a": ["disease"]},
         "facts": [{"disease": "a", "field": "causes", "value": "dust"}]}
-CLASSIFIED = {"question_types": ["disease_cause"], "arguments": {"a": ["disease"]}}
-
-
-@pytest.mark.parametrize("answer, classified, failures", [
-    ("The possible causes of a are: dust", CLASSIFIED, []),
-    ("The possible causes of a are: pollen", CLASSIFIED, ["fact_0"]),
-    (ABSTENTION, CLASSIFIED, ["unexpected_abstention"]),
-    ("The possible causes of a are: dust", {"question_types": ["disease_symptom"], "arguments": {"a": ["disease"]}}, ["intents"]),
-    ("The possible causes of a are: dust", {"question_types": ["disease_cause"], "arguments": {"b": ["disease"]}}, ["entities"]),
+@pytest.mark.parametrize("response, failures", [
+    (reply("The possible causes of a are: dust"), []),
+    (reply("The possible causes of a are: pollen"), ["fact_0"]),
+    (reply("I couldn't find...", status="abstain"), ["status_abstain"]),
+    (reply("The possible causes of a are: dust", intents=["disease_symptom"]), ["intents"]),
+    # A follow-up answered about the wrong subject fails on the returned interpretation.
+    (reply("The possible causes of a are: dust", entities={"b": ["disease"]}), ["entities"]),
 ])
-def test_check_case_names_each_failed_check(answer, classified, failures):
-    assert evaluate_kg.check_case(CASE, classified, answer) == failures
+def test_check_case_names_each_failed_check(response, failures):
+    assert evaluate_kg.check_case(CASE, response) == failures
 
 
-def test_abstention_cases_fail_when_the_bot_answers():
-    case = {"id": "x", "question": "q", "abstain": True}
-    assert evaluate_kg.check_case(case, {}, ABSTENTION) == []
-    assert evaluate_kg.check_case(case, {}, "Some answer") == ["abstention"]
+def test_abstention_and_clarification_cases_check_the_status():
+    abstain = {"id": "x", "question": "q", "abstain": True}
+    assert evaluate_kg.check_case(abstain, reply("No.", status="abstain")) == []
+    assert evaluate_kg.check_case(abstain, reply("Some answer")) == ["abstention"]
+    clarify = {"id": "y", "question": "q", "status": "clarify"}
+    assert evaluate_kg.check_case(clarify, reply("Which one?", status="clarify")) == []
+    assert evaluate_kg.check_case(clarify, reply("Some answer")) == ["status_answer"]
 
 
 def small_plan(tmp_path):
@@ -192,7 +194,7 @@ def test_stale_dictionary_fails(tmp_path):
 
 def test_report_carries_ids_and_counts_but_no_question_or_answer():
     counts = {"diseases": 1}
-    report = evaluate_kg.evaluate([CASE], FakeChatbot("secret answer about pollen", CLASSIFIED), counts, {"counts": {"diseases": 2}})
+    report = evaluate_kg.evaluate([CASE], FakeChatbot(reply("secret answer about pollen")), counts, {"counts": {"diseases": 2}})
     assert report["passed"] is False
     assert report["failures"] == [{"id": "c", "failed_checks": ["fact_0"]}]
     assert report["count_mismatches"] == ["diseases"]
