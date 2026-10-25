@@ -93,3 +93,43 @@ def test_post_is_not_allowed():
     ):
         assert response.status_code == 405
         assert response.is_json
+
+
+def test_405_keeps_the_allow_header():
+    response = client().post("/", headers=AUTH)
+    assert response.status_code == 405
+    assert response.is_json
+    assert {m.strip() for m in response.headers["Allow"].split(",")} >= {"GET"}
+    assert "POST" not in response.headers["Allow"]
+
+
+@pytest.mark.parametrize("origins", ["https://.*", "http://localhost:8080/path", "*", "localhost:8080", "http://local host"])
+def test_pattern_and_malformed_origins_are_refused(monkeypatch, origins):
+    monkeypatch.setenv("CORS_ORIGINS", origins)
+    with pytest.raises(RuntimeError, match="CORS_ORIGINS"):
+        create_app(chatbot=SimpleNamespace(chat_main=str), api_token=TOKEN)
+
+
+def test_origins_match_exactly(monkeypatch):
+    monkeypatch.setenv("CORS_ORIGINS", "http://127.0.0.1:8080")
+    app_client = client()
+
+    def allowed(origin):
+        response = app_client.options("/", headers={"Origin": origin, "Access-Control-Request-Method": "GET"})
+        return response.headers.get("Access-Control-Allow-Origin") == origin
+
+    assert allowed("http://127.0.0.1:8080")
+    for origin in ("http://127.0.0.1:80809", "http://127x0x0x1:8080", "http://127.0.0.1:8080.evil.example", "https://127.0.0.1:8080"):
+        assert not allowed(origin)
+
+
+def test_query_timeout_returns_503():
+    from neo4j.exceptions import Neo4jError
+
+    def fail(text):
+        # The driver's own factory builds the same ClientError a real timeout raises.
+        raise Neo4jError._hydrate_neo4j(code="Neo.ClientError.Transaction.TransactionTimedOutClientConfiguration", message="timed out")
+
+    response = client(fail).get("/", query_string={"search": "x"}, headers=AUTH)
+    assert response.status_code == 503
+    assert response.is_json

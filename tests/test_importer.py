@@ -58,19 +58,48 @@ def test_lineage_is_recorded(tmp_path):
     assert len(disease["properties"]["source_sha256"]) == 64
 
 
-def test_import_refuses_when_quarantined_name_exists(tmp_path):
-    path = write_csv(tmp_path, row(0, "b"), row(1, "b", description="other"))
+def plan(path):
     dataset = builder.load_dataset(path)
-    driver = FakeDriver(rows=[{"name": "b"}])
-    assert ("b", "conflicting duplicate name") in builder.existing_conflicts(driver, dataset)
+    return dataset, builder.graph_data(dataset)
 
 
-def test_import_refuses_stale_data_for_quarantined_field(tmp_path):
-    path = write_csv(tmp_path, row(0, "x", cure_way="['broken]"))
-    dataset = builder.load_dataset(path)
-    stale = {builder.STALE_FIELD_QUERIES["cure_way"]: [{"name": "x"}]}
-    driver = FakeDriver(results=stale)
-    assert builder.existing_conflicts(driver, dataset) == [("x", "quarantined field cure_way")]
+def test_import_refuses_foreign_node_collisions(tmp_path):
+    dataset, data = plan(write_csv(tmp_path, row(0, "a"), row(1, "b"), row(2, "b", description="other")))
+    disease_query = builder.COLLISION_QUERY.format(label="Disease")
+    driver = FakeDriver(results={disease_query: [{"name": "b"}]})
+    conflicts = builder.existing_conflicts(driver, dataset, data)
+    assert conflicts == [("b", "Disease node not created by this importer")]
+    planned = dict(driver.calls)[disease_query]
+    assert planned["names"] == ["a", "b"] and planned["owner"] == builder.OWNER
+
+
+def test_import_refuses_foreign_relationships_on_owned_nodes(tmp_path):
+    dataset, data = plan(write_csv(tmp_path, row(0, "a")))
+    driver = FakeDriver(results={builder.FOREIGN_RELATIONSHIP_QUERY: [{"name": "a"}]})
+    assert builder.existing_conflicts(driver, dataset, data) == [("a", "relationship not created by this importer")]
+
+
+class RecordingTx:
+    def __init__(self):
+        self.runs = []
+
+    def run(self, query, **params):
+        self.runs.append((query, params))
+        return self
+
+    def consume(self):
+        pass
+
+
+def test_write_replaces_only_the_owned_snapshot(tmp_path):
+    _, data = plan(write_csv(tmp_path, row(0, "a")))
+    tx = RecordingTx()
+    builder.write_graph(tx, data)
+    first_query, first_params = tx.runs[0]
+    assert first_query == "MATCH (n {owner: $owner}) DETACH DELETE n"
+    assert all(params.get("owner") == builder.OWNER for _, params in tx.runs)
+    assert all("{owner: $owner}" in q or "owner: $owner" in q or "d.owner = $owner" in q for q, _ in tx.runs)
+    assert builder.write_graph.timeout == builder.WRITE_TIMEOUT_SECONDS
 
 
 class FailingSession:
@@ -95,12 +124,41 @@ class FailingDriver(FakeDriver):
         return FailingSession()
 
 
-def test_failed_write_exits_non_zero_and_skips_export(monkeypatch):
-    exported = []
+def test_failed_write_keeps_the_previous_dictionary(monkeypatch, tmp_path):
+    target = tmp_path / "entities.json"
+    target.write_text("previous", encoding="utf-8")
+    monkeypatch.setattr(builder, "ENTITIES_PATH", target)
+    monkeypatch.setattr(builder.stage_entities, "__defaults__", (target,))
+    monkeypatch.setattr(builder.publish_entities, "__defaults__", (target,))
     monkeypatch.setattr(database, "create_driver", lambda: FailingDriver())
-    monkeypatch.setattr(builder, "export_dictionaries", lambda data: exported.append(data))
     assert builder.main() == 1
-    assert exported == []
+    assert target.read_text(encoding="utf-8") == "previous"
+    assert list(tmp_path.glob("*.tmp")) == []
+
+
+def test_failed_publication_keeps_the_previous_dictionary(monkeypatch, tmp_path):
+    target = tmp_path / "entities.json"
+    target.write_text("previous", encoding="utf-8")
+    staged = builder.stage_entities({"diseases": []}, target)
+
+    def broken_replace(src, dst):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(builder.os, "replace", broken_replace)
+    with pytest.raises(OSError):
+        builder.publish_entities(staged, target)
+    builder.discard(staged)
+    assert target.read_text(encoding="utf-8") == "previous"
+    assert list(tmp_path.glob("*.tmp")) == []
+
+
+def test_committed_dictionary_matches_the_import_plan():
+    import json
+
+    dataset = builder.load_dataset()
+    expected = builder.entities_document(dataset, builder.graph_data(dataset))
+    committed = json.loads(builder.ENTITIES_PATH.read_text(encoding="utf-8"))
+    assert committed == expected
 
 
 def test_missing_password_is_a_named_error(monkeypatch):

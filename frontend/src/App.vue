@@ -16,10 +16,9 @@
 </template>
 
 <script>
-import axios from "axios";
 import {VueBotUI} from "vue-bot-ui";
 import MedicalChatbot from "@/components/MedicalChatbot.vue";
-import { sendMessage } from "@/chatApi.mjs";
+import { fetchHttp, sendMessage } from "@/chatApi.mjs";
 
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || "http://localhost:5000";
 
@@ -53,7 +52,7 @@ export default {
   },
   methods: {
     messageSendHandler(value) {
-      return sendMessage(this, axios, API_BASE_URL, value);
+      return sendMessage(this, fetchHttp, API_BASE_URL, value);
     },
   },
 };
