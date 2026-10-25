@@ -174,3 +174,61 @@ def test_every_short_name_with_filler_or_keywords_survives_one_typo():
     assert checked >= 60
     assert missed == []
     assert len(punctuated) <= 5, punctuated
+
+
+# A-14: a time budget on spelling suggestions, with safe partial results.
+
+class StepClock:
+    """Returns 0 for the first `free` readings, then a time far past any deadline."""
+
+    def __init__(self, free):
+        self.readings = 0
+        self.free = free
+
+    def __call__(self):
+        self.readings += 1
+        return 0.0 if self.readings <= self.free else 1000.0
+
+
+def suggest(question, clock):
+    bot, _ = make_bot()
+    keywords = bot.keyword_words()
+    return bot.classifier.close_matches(bot.unexplained_phrases(question), clock=clock,
+                                        accept=lambda window, name: cg.edge_words_match(window, name, keywords))
+
+
+def test_an_expired_budget_stops_before_any_window(caplog):
+    caplog.set_level("INFO")
+    assert suggest("what causes asthama", StepClock(free=1)) == []
+    assert "stopped after 0 of" in caplog.text and "asthama" not in caplog.text
+
+
+def test_reaching_the_deadline_exactly_stops_the_scan():
+    deadline_hit = iter([0.0] + [qc.TYPO_BUDGET_SECONDS] * 50)
+    assert suggest("what causes asthama", lambda: next(deadline_hit)) == []
+
+
+def test_suggestions_found_before_the_budget_runs_out_are_kept():
+    nonsense = " ".join(f"zq{i}x" for i in range(60))
+    found = suggest(f"asthama {nonsense}", StepClock(free=5))
+    assert [name for _, name in found] == ["asthma"]
+
+
+def test_early_typos_of_one_two_or_three_words_are_reached_first():
+    nonsense = " ".join(f"zq{i}x" for i in range(60))
+    for typo, name in [("asthama", "asthma"), ("allergic asthama", "allergic asthma"), ("deep plam infection", "deep palm infection")]:
+        found = suggest(f"{typo} {nonsense}", StepClock(free=5))
+        assert name in [n for _, n in found], typo
+
+
+def test_a_cut_short_scan_never_drops_question_words():
+    # Only the first windows are tried: "causes adbominal infection" matches "abdominal infection" but would turn
+    # the question into "what abdominal infection"; the edge-keyword rule refuses it.
+    for free in range(1, 8):
+        for window, name in suggest("what causes adbominal infection", StepClock(free=free)):
+            assert cg.replace_phrase("what causes adbominal infection", window, name).startswith("what causes")
+
+
+def test_windows_run_position_first():
+    bot, _ = make_bot()
+    assert bot.unexplained_phrases("aaa bbb ccc") == ["aaa bbb ccc", "aaa bbb", "aaa", "bbb ccc", "bbb", "ccc"]

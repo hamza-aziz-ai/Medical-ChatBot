@@ -70,11 +70,13 @@ with in on should we you please get got have has had from or by up so more some
 PUNCTUATION = "?.!,;:'\"()"
 
 
-def edge_fillers_match(window, name):
-    """A filler word at either edge of the window must also be a word of the name: "of pneumonia" scores close to
-    "shock pneumonia" only because of "of", while "hepatitsi a" for "hepatitis a" keeps its "a"."""
+def edge_words_match(window, name, keywords):
+    """A filler word or intent keyword at either edge of the window must also be a word of the name. "of pneumonia"
+    scores close to "shock pneumonia" only because of "of", and "causes adbominal infection" would drop "causes"
+    from the corrected question; "hepatitsi a" for "hepatitis a" and "deep plam infection" keep their edge words."""
     words, name_words = window.split(), set(name.split())
-    return all(word.strip(PUNCTUATION) in name_words for word in {words[0], words[-1]} if word.strip(PUNCTUATION) in FILLER)
+    edges = {word.strip(PUNCTUATION) for word in (words[0], words[-1])}
+    return all(word in name_words for word in edges if word in FILLER or word in keywords)
 
 
 def replace_phrase(question, phrase, replacement):
@@ -132,7 +134,9 @@ class ChatBotGraph:
         if not arguments and topic and self.is_follow_up(question):
             arguments, used_topic = {topic["name"]: [topic["type"]]}, True
         if not arguments:
-            typos = self.classifier.close_matches(self.unexplained_phrases(question), accept=edge_fillers_match)
+            keywords = self.keyword_words()
+            typos = self.classifier.close_matches(self.unexplained_phrases(question),
+                                                  accept=lambda window, name: edge_words_match(window, name, keywords))
             if typos:
                 # Offered, never applied: the user confirms by choosing (step 2 of D-015).
                 logger.info("Clarifying: %d possible spelling(s) offered", len(typos))
@@ -202,18 +206,24 @@ class ChatBotGraph:
         """Every 1-3-word window holding a word that is neither filler nor an intent keyword: the candidates for a
         misspelled name. Windows may contain filler and keywords, so names such as "deep palm infection" or
         "face of bruises" stay whole (A-13), and keep their inner punctuation so replace_phrase can find them.
-        A filler word at a window's edge must also be in the suggested name (see edge_fillers_match)."""
-        keywords = {word for phrase in self.classifier.intent_keywords() for word in phrase.lower().split()}
+        Ordered by position, every size at a position before the next, so when the time budget in close_matches
+        cuts the scan short it drops the end of the question, not every single-word typo (A-14)."""
+        keywords = self.keyword_words()
         tokens = question.lower().split()
         phrases = {}
-        for size in (3, 2, 1):
-            for i in range(len(tokens) - size + 1):
+        for i in range(len(tokens)):
+            for size in (3, 2, 1):
                 window = tokens[i:i + size]
+                if len(window) < size:
+                    continue
                 phrase = " ".join(window).strip(PUNCTUATION)
                 bare = (token.strip(PUNCTUATION) for token in window)
                 if phrase and any(word and word not in FILLER and word not in keywords for word in bare):
                     phrases.setdefault(phrase)
         return list(phrases)
+
+    def keyword_words(self):
+        return {word for phrase in self.classifier.intent_keywords() for word in phrase.lower().split()}
 
     def clarify_typo(self, question, typos):
         names = " or ".join(f'"{name}"' for _, name in typos)
@@ -231,7 +241,7 @@ class ChatBotGraph:
         continues = tokens[:1] == ["and"] or tokens[:2] in (["what", "about"], ["how", "about"])
         if not (continues or REFERENCE_WORDS.intersection(tokens)):
             return False
-        keywords = {word for phrase in self.classifier.intent_keywords() for word in phrase.lower().split()}
+        keywords = self.keyword_words()
         return all(token in FILLER or token in keywords for token in tokens)
 
     @staticmethod

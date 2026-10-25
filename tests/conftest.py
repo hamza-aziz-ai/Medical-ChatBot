@@ -1,8 +1,19 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 API_DIR = Path(__file__).resolve().parents[1] / "api"
 sys.path.insert(0, str(API_DIR))
+
+import question_classifier  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def frozen_suggestion_clock(monkeypatch):
+    """The spelling-suggestion time budget (A-14) never expires in tests, so correctness does not depend on how fast
+    the machine is. Tests of the budget pass their own clock to close_matches."""
+    monkeypatch.setattr(question_classifier, "monotonic", lambda: 0.0)
 
 
 class FakeRecord(dict):
