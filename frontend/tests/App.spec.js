@@ -75,4 +75,24 @@ describe("App", () => {
     expect(wrapper.text()).toContain("Always consult a qualified medical professional.");
     expect(wrapper.findAll("img").filter((img) => /^https?:/.test(img.attributes("src") || ""))).toHaveLength(0);
   });
+
+  it("sends the confirmed topic with a follow-up and forgets it on a new conversation", async () => {
+    const fetch = vi.fn(async () => reply(200, { status: "answer", message: "m", answers: [], options: [],
+      topic: { name: "asthma", type: "disease" }, interpretation: null }));
+    vi.stubGlobal("fetch", fetch);
+    const wrapper = mount(App);
+
+    await ask(wrapper, "what causes asthma?");
+    await flushPromises();
+    await ask(wrapper, "and prevention?");
+    await flushPromises();
+    expect(fetch.mock.calls[1][0]).toContain("topic=asthma&topic_type=disease");
+
+    await wrapper.find("button.ghost").trigger("click");
+    expect(wrapper.find(".topic").exists()).toBe(false);
+    await ask(wrapper, "and prevention?");
+    await flushPromises();
+    expect(fetch.mock.calls[2][0]).not.toContain("topic=");
+  });
 });
+

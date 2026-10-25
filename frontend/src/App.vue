@@ -32,12 +32,21 @@
       </div>
     </header>
 
+    <p
+      class="emergency"
+      role="note"
+    >
+      If this may be an emergency, call your local emergency number now. This chatbot cannot help in an emergency.
+    </p>
+
     <main class="workspace">
       <ChatPanel
         :messages="messages"
         :busy="botTyping"
         :suggestions="suggestions"
+        :topic="topic"
         @send="messageSendHandler"
+        @reset="newConversation"
       />
       <MedicalChatbot />
     </main>
@@ -58,19 +67,25 @@ import { fetchHttp, sendMessage } from "@/chatApi.mjs";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
+function welcome() {
+  return {
+    agent: "bot",
+    type: "text",
+    text: "Hello! I'm Mr. Healthcare. Ask me about the symptoms, causes, prevention, treatments or complications of a disease. You can ask follow-ups such as \"what causes it?\".",
+  };
+}
+
 export default {
   name: "App",
   components: { ChatPanel, MedicalChatbot },
   data() {
     return {
-      messages: [
-        {
-          agent: "bot",
-          type: "text",
-          text: "Hello! I'm Mr. Healthcare. Ask me about the symptoms, causes, prevention, treatments or complications of a disease.",
-        },
-      ],
+      messages: [welcome()],
       botTyping: false,
+      // The confirmed subject for follow-ups ("what causes it?"). Held in page memory only, never stored.
+      topic: null,
+      // Bumped by "New conversation" so a late reply from the old conversation is dropped.
+      conversation: 0,
       // Each one is answered by the shipped graph (see eval/cases.jsonl).
       suggestions: [
         "What are the symptoms of asthma?",
@@ -81,9 +96,15 @@ export default {
     };
   },
   methods: {
-    messageSendHandler(text) {
+    messageSendHandler(value) {
       if (this.botTyping) return Promise.resolve();
-      return sendMessage(this, fetchHttp, API_BASE_URL, { text });
+      return sendMessage(this, fetchHttp, API_BASE_URL, typeof value === "string" ? { text: value } : value);
+    },
+    newConversation() {
+      this.conversation += 1;
+      this.messages = [welcome()];
+      this.topic = null;
+      this.botTyping = false;
     },
   },
 };

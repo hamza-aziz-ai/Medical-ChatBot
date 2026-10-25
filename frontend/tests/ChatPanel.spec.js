@@ -29,7 +29,7 @@ describe("ChatPanel", () => {
     await box.trigger("keydown", { key: "Enter" });
     await box.setValue("causes of asthma");
     await wrapper.find("form").trigger("submit");
-    expect(wrapper.emitted("send")).toEqual([["symptoms of asthma"], ["causes of asthma"]]);
+    expect(wrapper.emitted("send")).toEqual([[{ text: "symptoms of asthma" }], [{ text: "causes of asthma" }]]);
     expect(box.element.value).toBe("");
   });
 
@@ -65,7 +65,7 @@ describe("ChatPanel", () => {
     const chips = wrapper.findAll(".chip");
     expect(chips.map((c) => c.text())).toEqual(suggestions);
     await chips[0].trigger("click");
-    expect(wrapper.emitted("send")).toEqual([["What causes migraine?"]]);
+    expect(wrapper.emitted("send")[0][0]).toMatchObject({ text: "What causes migraine?", label: "What causes migraine?" });
     await wrapper.setProps({ messages: [{ agent: "bot", text: "Hello" }, { agent: "user", text: "q" }] });
     expect(wrapper.find(".chip").exists()).toBe(false);
   });
@@ -92,5 +92,49 @@ describe("ChatPanel", () => {
     expect(wrapper.find("b").exists()).toBe(false);
     expect(wrapper.text()).toContain("<b>bold?</b>");
     expect(wrapper.findAll(".speaker").map((s) => s.text())).toEqual(["You", "Mr. Healthcare"]);
+  });
+
+  it("renders list answers as bullets with their note", () => {
+    const wrapper = panel({ messages: [{ agent: "bot", type: "answer", text: "t", answers: [
+      { intent: "disease_cure_way", subject: "asthma", lead: "Treatments recorded for asthma:", items: ["rest", "inhaler"], note: "This is not medical advice" },
+    ] }] });
+    expect(wrapper.findAll(".items li").map((li) => li.text())).toEqual(["rest", "inhaler"]);
+    expect(wrapper.find(".note").text()).toBe("This is not medical advice.");
+  });
+
+  it("offers the latest reply's options and sends their question, choices and topic", async () => {
+    const options = [
+      { label: "anemia as a disease", question: "q", selections: [{ name: "anemia", type: "disease" }] },
+      { label: "anemia as a symptom", question: "q", selections: [{ name: "anemia", type: "symptom" }] },
+    ];
+    const wrapper = panel({ messages: [{ agent: "user", text: "q" }, { agent: "bot", type: "clarify", text: "Which?", options }] });
+    expect(wrapper.find(".suggestions").attributes("aria-label")).toBe("Choose what you meant");
+    await wrapper.findAll(".chip")[0].trigger("click");
+    expect(wrapper.emitted("send")[0][0]).toEqual({ text: "q", label: "anemia as a disease", selections: options[0].selections, topic: undefined });
+  });
+
+  it("explains how a question was understood", () => {
+    const wrapper = panel({ messages: [{ agent: "bot", type: "answer", text: "t", answers: [],
+      interpretation: { entities: [{ name: "asthma", types: ["disease"] }], intents: [{ intent: "disease_cause", label: "Causes" }], used_topic: true } }] });
+    const why = wrapper.find(".why").text();
+    expect(why).toContain("asthma (disease)");
+    expect(why).toContain("Causes");
+    expect(why).toContain("referred back");
+  });
+
+  it("links one-disease answers to MedlinePlus as an external site", () => {
+    const wrapper = panel({ messages: [{ agent: "bot", type: "answer", text: "t",
+      answers: [{ intent: "disease_cause", subject: "asthma", text: "The possible causes of asthma are: dust" }] }] });
+    const link = wrapper.find("a.external");
+    expect(link.attributes("rel")).toBe("noopener noreferrer");
+    expect(link.attributes("href")).toContain("query=asthma");
+    expect(link.text()).toContain("external site");
+  });
+
+  it("shows the current topic and asks the page to reset", async () => {
+    const wrapper = panel({ topic: { name: "asthma", type: "disease" } });
+    expect(wrapper.find(".topic").text()).toContain("asthma");
+    await wrapper.find("button.ghost").trigger("click");
+    expect(wrapper.emitted("reset")).toHaveLength(1);
   });
 });
