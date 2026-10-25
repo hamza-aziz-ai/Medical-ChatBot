@@ -57,9 +57,9 @@ def row(number, name, description="d", symptoms="['cough']", accompany="[]", cur
     return f'{number},{name},{description},p,c,"{symptoms}","{accompany}","{department}","{cure_way}"\n'
 
 
-def import_csv(driver, path):
+def import_csv(driver, path, stamped=True):
     dataset = builder.load_dataset(path)
-    data = builder.graph_data(dataset)
+    data = builder.plan(dataset)[0] if stamped else builder.graph_data(dataset)
     assert builder.existing_conflicts(driver, dataset, data) == []
     builder.create_constraints(driver)
     with driver.session(database=database.database_name()) as session:
@@ -88,7 +88,7 @@ def test_full_import_is_idempotent_and_constrained(driver, tmp_path, monkeypatch
     assert target.exists()
 
     dataset = builder.load_dataset()
-    integrity, failures = evaluate_kg.integrity_checks(driver, builder.graph_data(dataset), json.loads(target.read_text(encoding="utf-8")))
+    integrity, failures = evaluate_kg.integrity_checks(driver, builder.plan(dataset)[0], json.loads(target.read_text(encoding="utf-8")))
     assert failures == [], integrity
 
 
@@ -100,7 +100,7 @@ def test_integrity_check_passes_a_clean_import_and_catches_planted_damage(driver
     import_csv(driver, path)
     driver.execute_query("CREATE (:Note {name: 'unrelated'})")
     dataset = builder.load_dataset(path)
-    plan = builder.graph_data(dataset)
+    plan = builder.plan(dataset)[0]
     dictionary = builder.entities_document(dataset, plan)
 
     integrity, failures = evaluate_kg.integrity_checks(driver, plan, dictionary)
@@ -197,11 +197,11 @@ def test_listed_intents_match_what_the_live_graph_answers(driver, tmp_path):
 
 
 def test_readiness_matches_the_imported_dictionary_only(driver, tmp_path):
-    """D-022 on a real server: ready after an import; not ready when empty, resized or from another CSV."""
+    """D-022, D-023 on a real server: ready after an import; not ready when empty, resized or from another plan."""
     path = write_csv(tmp_path, "a.csv", [row(0, "a"), row(1, "b")])
     searcher = AnswerSearcher(driver=driver)
     dataset = builder.load_dataset(path)
-    expected = (len(dataset["diseases"]), dataset["source_sha256"])
+    expected = (len(dataset["diseases"]), builder.plan(dataset)[1]["plan_sha256"])
 
     assert searcher.readiness(builder.OWNER, expected[1]) == (0, 0)  # empty database
     import_csv(driver, path)
@@ -209,10 +209,10 @@ def test_readiness_matches_the_imported_dictionary_only(driver, tmp_path):
     # Foreign, unmarked diseases are not counted.
     driver.execute_query("CREATE (:Disease {name: 'foreign'})")
     assert searcher.readiness(builder.OWNER, expected[1]) == (expected[0], expected[0])
-    # A dictionary from another CSV does not match.
+    # A dictionary from another plan does not match.
     assert searcher.readiness(builder.OWNER, "f" * 64) == (expected[0], 0)
-    # A disease that lost its hash is counted but does not match.
-    driver.execute_query("MATCH (d:Disease {name: 'a', owner: $owner}) REMOVE d.source_sha256", parameters_={"owner": builder.OWNER})
+    # A disease that lost its stamp is counted but does not match.
+    driver.execute_query("MATCH (d:Disease {name: 'a', owner: $owner}) REMOVE d.plan_sha256", parameters_={"owner": builder.OWNER})
     assert searcher.readiness(builder.OWNER, expected[1]) == (expected[0], expected[0] - 1)
 
 
@@ -230,7 +230,7 @@ def test_a_failed_publication_is_repaired_by_rerunning_and_restarting(driver, tm
     searcher = AnswerSearcher(driver=driver)
 
     def ready(source):
-        return searcher.readiness(builder.OWNER, source["sha256"]) == (source["diseases"], source["diseases"])
+        return searcher.readiness(builder.OWNER, source["plan"]) == (source["diseases"], source["diseases"])
 
     monkeypatch.setattr(builder, "load_dataset", lambda *args: load(old))
     assert builder.main() == 0
@@ -247,3 +247,22 @@ def test_a_failed_publication_is_repaired_by_rerunning_and_restarting(driver, tm
     assert builder.main() == 0                       # the re-run publishes the file
     assert not ready(running)                        # but the running API still holds the old dictionary
     assert ready(cg.ChatBotGraph.load_source(target))  # a restart (a fresh read) is ready
+
+
+def test_the_same_csv_with_a_different_plan_or_an_unstamped_graph_is_not_ready(driver, tmp_path):
+    """D-023 on a real server: a graph imported from the same CSV by a different plan (here, one changed
+    description), or by an importer that did not stamp, is not ready until imported again."""
+    path = write_csv(tmp_path, "a.csv", [row(0, "a", description="first"), row(1, "b")])
+    searcher = AnswerSearcher(driver=driver)
+    dataset = builder.load_dataset(path)
+    _, document = builder.plan(dataset)
+    edited = {**dataset, "diseases": {**dataset["diseases"], "a": {**dataset["diseases"]["a"], "description": "second"}}}
+    _, other = builder.plan(edited)
+    assert {k: v for k, v in other.items() if k != "plan_sha256"} == {k: v for k, v in document.items() if k != "plan_sha256"}
+
+    import_csv(driver, path, stamped=False)                     # an importer from before the fingerprint
+    assert searcher.readiness(builder.OWNER, document["plan_sha256"]) == (2, 0)
+    import_csv(driver, path)                                     # re-imported with this plan
+    assert searcher.readiness(builder.OWNER, document["plan_sha256"]) == (2, 2)
+    assert searcher.readiness(builder.OWNER, other["plan_sha256"]) == (2, 0)   # an API holding the other plan
+

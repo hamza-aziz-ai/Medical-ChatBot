@@ -104,28 +104,29 @@ class ChatBotGraph:
 
     @staticmethod
     def load_source(path=ENTITIES_PATH, document=None):
-        """The dictionary's CSV hash and disease count, which the graph must match to be ready (D-022)."""
+        """The dictionary's plan fingerprint and disease count, which the graph must match to be ready (D-022, D-023)."""
         try:
             data = document if document is not None else read_dictionary(path)
         except (OSError, ValueError) as error:
             logger.warning("Readiness unknown: cannot read %s (%s)", Path(path).name, type(error).__name__)
             return None
-        source_hash, diseases = data.get("source_sha256"), data.get("diseases")
-        if not (isinstance(source_hash, str) and SHA256.fullmatch(source_hash) and isinstance(diseases, list) and diseases):
-            logger.warning("Readiness unknown: %s has no source hash or diseases", Path(path).name)
+        plan_hash, diseases = data.get("plan_sha256"), data.get("diseases")
+        if not (isinstance(plan_hash, str) and SHA256.fullmatch(plan_hash) and isinstance(diseases, list) and diseases):
+            logger.warning("Readiness unknown: %s has no plan fingerprint or diseases", Path(path).name)
             return None
-        return {"sha256": source_hash, "diseases": len(diseases)}
+        return {"plan": plan_hash, "diseases": len(diseases)}
 
     def ready(self):
-        """(ready, reason): the graph holds exactly the dictionary's diseases, all from the same CSV. Never raises.
+        """(ready, reason): every importer-owned disease carries the plan fingerprint of the dictionary this API
+        loaded, and their number is the dictionary's. Never raises.
 
-        It does not prove relationships, importer freshness or clinical accuracy; evaluation and the answer probe
-        cover more of those.
+        The fingerprint names the intended snapshot (graph, dictionary and write queries); it does not prove the live
+        graph was not damaged after the import, which the evaluator's structural checks cover.
         """
         if not self.source:
             return False, "dictionary has no source"
         try:
-            diseases, matching = self.searcher.readiness(OWNER, self.source["sha256"])
+            diseases, matching = self.searcher.readiness(OWNER, self.source["plan"])
         except (Neo4jError, DriverError, OSError):
             return False, "graph unreachable"
         if diseases == matching == self.source["diseases"]:

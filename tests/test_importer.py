@@ -205,7 +205,7 @@ def test_committed_dictionary_matches_the_import_plan():
     import json
 
     dataset = builder.load_dataset()
-    expected = builder.entities_document(dataset, builder.graph_data(dataset))
+    _, expected = builder.plan(dataset)
     committed = json.loads(builder.ENTITIES_PATH.read_text(encoding="utf-8"))
     assert committed == expected
 
@@ -257,3 +257,38 @@ def test_a_failed_publication_after_the_commit_says_how_to_recover(monkeypatch, 
     err = capsys.readouterr().err
     assert code == 1 and "Graph committed, but dictionary publication failed" in err and "restart the API" in err
     assert target.read_text(encoding="utf-8") == "previous" and list(tmp_path.glob("*.tmp")) == []
+
+
+# D-023: the plan fingerprint.
+
+def test_the_plan_fingerprint_is_stamped_on_every_disease_and_the_dictionary():
+    data, document = builder.plan(builder.load_dataset())
+    stamps = {row["properties"]["plan_sha256"] for row in data["diseases"]}
+    assert stamps == {document["plan_sha256"]} and len(document["plan_sha256"]) == 64
+
+
+def test_the_fingerprint_ignores_order_but_not_content(monkeypatch):
+    dataset = builder.load_dataset()
+    base = builder.plan(dataset)[1]["plan_sha256"]
+    # Same content, different collection and key order: same fingerprint.
+    reordered = dict(reversed(list(dataset.items())))
+    reordered["diseases"] = dict(reversed(list(dataset["diseases"].items())))
+    assert builder.plan(reordered)[1]["plan_sha256"] == base
+
+    def changed(mutate):
+        copy = {**dataset, "diseases": {name: dict(record) for name, record in dataset["diseases"].items()}}
+        mutate(copy)
+        return builder.plan(copy)
+
+    # Only a description changes: the dictionary (names, intents) is the same, the fingerprint is not.
+    name = next(n for n, r in dataset["diseases"].items() if r["description"])
+    data, document = changed(lambda d: d["diseases"][name].update(description=d["diseases"][name]["description"] + " (edited)"))
+    plain = {k: v for k, v in document.items() if k != "plan_sha256"}
+    original = {k: v for k, v in builder.plan(dataset)[1].items() if k != "plan_sha256"}
+    assert plain == original and document["plan_sha256"] != base
+
+    # Only how a relationship is written changes: the fingerprint changes too.
+    queries = dict(builder.RELATIONSHIP_QUERIES)
+    queries["has_symptom"] = queries["has_symptom"].replace("(a)-[:has_symptom", "(b)<-[:has_symptom")
+    monkeypatch.setattr(builder, "RELATIONSHIP_QUERIES", queries)
+    assert builder.plan(dataset)[1]["plan_sha256"] != base

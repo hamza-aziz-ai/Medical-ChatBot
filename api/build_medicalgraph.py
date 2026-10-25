@@ -51,6 +51,14 @@ FOREIGN_RELATIONSHIP_QUERY = (
     "RETURN DISTINCT n.name AS name LIMIT 100"
 )
 
+# Named so the plan fingerprint (D-023) covers how the graph is written, not only what is written.
+NODE_QUERIES = {
+    "delete": "MATCH (n {owner: $owner}) DETACH DELETE n",
+    "diseases": "UNWIND $rows AS row CREATE (d:Disease) SET d = row.properties, d.name = row.name, d.owner = $owner",
+    "symptoms": "UNWIND $names AS name CREATE (:Symptom {name: name, owner: $owner})",
+    "departments": "UNWIND $names AS name CREATE (:Department {name: name, owner: $owner})",
+}
+
 RELATIONSHIP_QUERIES = {
     "has_symptom": (
         "UNWIND $pairs AS p MATCH (a:Disease {name: p[0], owner: $owner}) MATCH (b:Symptom {name: p[1], owner: $owner}) "
@@ -257,15 +265,43 @@ def create_constraints(driver):
 @unit_of_work(timeout=WRITE_TIMEOUT_SECONDS)
 def write_graph(tx, data):
     # Replace the importer's own snapshot; guards have already confirmed nothing foreign is attached.
-    tx.run("MATCH (n {owner: $owner}) DETACH DELETE n", owner=OWNER).consume()
-    tx.run(
-        "UNWIND $rows AS row CREATE (d:Disease) SET d = row.properties, d.name = row.name, d.owner = $owner",
-        rows=data["diseases"], owner=OWNER,
-    ).consume()
-    tx.run("UNWIND $names AS name CREATE (:Symptom {name: name, owner: $owner})", names=data["symptoms"], owner=OWNER).consume()
-    tx.run("UNWIND $names AS name CREATE (:Department {name: name, owner: $owner})", names=data["departments"], owner=OWNER).consume()
+    tx.run(NODE_QUERIES["delete"], owner=OWNER).consume()
+    tx.run(NODE_QUERIES["diseases"], rows=data["diseases"], owner=OWNER).consume()
+    tx.run(NODE_QUERIES["symptoms"], names=data["symptoms"], owner=OWNER).consume()
+    tx.run(NODE_QUERIES["departments"], names=data["departments"], owner=OWNER).consume()
     for relationship, query in RELATIONSHIP_QUERIES.items():
         tx.run(query, pairs=[list(pair) for pair in data["edges"][relationship]], owner=OWNER).consume()
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
+
+def plan(dataset):
+    """The graph data and the dictionary for one import, both stamped with the same plan_sha256 (D-023).
+
+    The fingerprint covers the intended graph (unordered collections sorted, list order inside properties kept),
+    the dictionary and the write queries, so the API can tell whether the graph it reads is the one its dictionary
+    was published with. It is computed before the stamps are added, so it never hashes itself.
+    """
+    data = graph_data(dataset)
+    document = entities_document(dataset, data)
+    content = {
+        "graph": {
+            "diseases": sorted(({"name": row["name"], "properties": row["properties"]} for row in data["diseases"]),
+                               key=lambda row: row["name"]),
+            "symptoms": sorted(data["symptoms"]),
+            "departments": sorted(data["departments"]),
+            "edges": {kind: sorted(list(pair) for pair in pairs) for kind, pairs in sorted(data["edges"].items())},
+        },
+        "dictionary": document,
+        "writer": {"nodes": NODE_QUERIES, "relationships": RELATIONSHIP_QUERIES},
+    }
+    fingerprint = hashlib.sha256(canonical(content).encode("utf-8")).hexdigest()
+    for row in data["diseases"]:
+        row["properties"]["plan_sha256"] = fingerprint
+    document["plan_sha256"] = fingerprint
+    return data, document
 
 
 def entities_document(dataset, data):
@@ -356,14 +392,14 @@ def main():
     report("Import started")
     try:
         dataset = load_dataset()
-        data = graph_data(dataset)
+        data, document = plan(dataset)
     except ValueError as error:
         report(f"Refusing import: {error}. Nothing was changed.", logging.ERROR)
         return 1
     print_report(dataset, data)
 
     try:
-        staged = stage_entities(entities_document(dataset, data))
+        staged = stage_entities(document)
     except OSError as error:
         report(f"Could not stage the entity dictionary ({type(error).__name__}); nothing was changed.", logging.ERROR)
         return 1

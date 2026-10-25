@@ -59,6 +59,7 @@ health() { curl -s -o /dev/null -w '%{http_code}' "$BASE/api/health"; }
 [ "$(health)" = 200 ] || fail "readiness with the imported graph"
 compose stop neo4j >/dev/null
 [ "$(health)" = 503 ] || fail "readiness during a graph outage, expected 503"
+[ "$(ask what causes asthma "$SENTINEL" | tail -n1)" = 503 ] || fail "a question during a graph outage, expected 503"
 compose up -d --wait neo4j >/dev/null
 for _ in $(seq 1 30); do [ "$(health)" = 200 ] && break; sleep 2; done
 [ "$(health)" = 200 ] || fail "readiness did not recover after the graph came back"

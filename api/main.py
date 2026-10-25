@@ -78,6 +78,13 @@ def create_app(chatbot=None):
             logger.info("Rejected request: question of %d characters is too long", len(search_term))
             return jsonify(error=f"Questions are limited to {MAX_QUESTION_LENGTH} characters."), 400
 
+        # D-023: never answer from a graph that is not the one this API's dictionary was published with. The check
+        # and the answer queries are separate, so imports still run with serving stopped (see docs/ROLLBACK.md).
+        ready, reason = chatbot.ready()
+        if not ready:
+            logger.warning("Refused a question: %s", reason)
+            return jsonify(error=GRAPH_UNAVAILABLE), 503
+
         logger.debug("Answering a question of %d characters", len(search_term))
         # The page sends back the confirmed topic and any clarification choices; the chatbot checks both
         # against the dictionary and this question. Like the question, they are never logged.
