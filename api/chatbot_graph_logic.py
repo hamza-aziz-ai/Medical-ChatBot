@@ -192,22 +192,20 @@ class ChatBotGraph:
         return chosen
 
     def unexplained_phrases(self, question):
-        """Runs of 1-3 words that are neither filler nor intent keywords: the candidates for a misspelled name."""
+        """Every 1-3-word window holding a word that is neither filler nor an intent keyword: the candidates for a
+        misspelled name. Windows may contain filler and keywords, so names such as "deep palm infection" or
+        "face of bruises" stay whole (A-13), and keep their inner punctuation so replace_phrase can find them."""
         keywords = {word for phrase in self.classifier.intent_keywords() for word in phrase.lower().split()}
-        runs, run = [], []
-        for token in (token.strip(PUNCTUATION) for token in question.lower().split()):
-            if token and token not in FILLER and token not in keywords:
-                run.append(token)
-            elif run:
-                runs.append(run)
-                run = []
-        if run:
-            runs.append(run)
-        phrases = []
-        for run in runs:
-            for size in (3, 2, 1):
-                phrases += [" ".join(run[i:i + size]) for i in range(len(run) - size + 1)]
-        return phrases
+        tokens = question.lower().split()
+        phrases = {}
+        for size in (3, 2, 1):
+            for i in range(len(tokens) - size + 1):
+                window = tokens[i:i + size]
+                phrase = " ".join(window).strip(PUNCTUATION)
+                bare = (token.strip(PUNCTUATION) for token in window)
+                if phrase and any(word and word not in FILLER and word not in keywords for word in bare):
+                    phrases.setdefault(phrase)
+        return list(phrases)
 
     def clarify_typo(self, question, typos):
         names = " or ".join(f'"{name}"' for _, name in typos)

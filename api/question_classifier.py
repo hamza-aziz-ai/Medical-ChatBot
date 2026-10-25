@@ -239,14 +239,19 @@ class QuestionClassifier:
         return final_dictionary
 
     def close_matches(self, words):
-        """Dictionary names close to each of the given word sequences, as (sequence, name) pairs, best first."""
+        """Dictionary names close to the given word sequences, as (sequence, name) pairs in first-seen order.
+
+        Each name keeps the sequence it matches best, scored as difflib does, so a longer window that merely
+        contains the misspelling ("causes adbominal infection") never replaces the one that is the misspelling.
+        """
         names = sorted(set(self.disease_words) | set(self.symptom_words) | set(self.aliases))
-        suggestions = []
+        best = {}
         for sequence in words:
             for name in difflib.get_close_matches(sequence, names, n=MAX_TYPO_SUGGESTIONS, cutoff=TYPO_CUTOFF):
-                if all(name != existing for _, existing in suggestions):
-                    suggestions.append((sequence, name))
-        return suggestions[:MAX_TYPO_SUGGESTIONS]
+                score = difflib.SequenceMatcher(None, name, sequence).ratio()
+                if name not in best or score > best[name][0]:
+                    best[name] = (score, sequence)
+        return [(sequence, name) for name, (_, sequence) in best.items()][:MAX_TYPO_SUGGESTIONS]
 
     @staticmethod
     def check_words(words, sent):

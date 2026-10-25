@@ -98,3 +98,78 @@ def test_suggestions_keep_the_rest_of_the_question():
     bot, _ = make_bot()
     options = bot.respond("how do i prevent migrane at night?")["options"]
     assert options[0]["question"] == "how do i prevent migraine at night?"
+
+
+# A-13: names that contain filler words or intent keywords are suggested whole, from the window that is the typo.
+
+@pytest.mark.parametrize("question, expected", [
+    ("what causes deep plam infection?", "what causes deep palm infection?"),
+    ("what causes fcae of bruises?", "what causes face of bruises?"),
+    ("what causes adbominal infection", "what causes abdominal infection"),
+    ("could you please tell me what you know about the possible causes of deep plam infection?",
+     "could you please tell me what you know about the possible causes of deep palm infection?"),
+    ("what causes deep plam, infection?", "what causes deep palm infection?"),
+    ("WHAT CAUSES   Deep Plam Infection", "WHAT CAUSES   deep palm infection"),
+    ("(deep plam infection)", "(deep palm infection)"),
+])
+def test_names_with_filler_or_keywords_are_suggested_as_complete_questions(question, expected):
+    bot, driver = make_bot()
+    reply = bot.respond(question)
+    assert reply["status"] == "clarify" and reply["reason"] == "possible_typo"
+    assert expected in [o["question"] for o in reply["options"]]
+    assert all(o["question"] != question for o in reply["options"])
+    assert driver.calls == []
+
+
+@pytest.mark.parametrize("question", [
+    "what causes covid?", "who gets infections?", "what is the cure rate?", "how do i get better?",
+    "is it dangerous?", "how long does flu last?", "can you tell me more?", "what should i do about it?",
+])
+def test_ordinary_questions_without_a_name_get_no_suggestion(question):
+    bot, driver = make_bot()
+    reply = bot.respond(question)
+    assert reply["status"] == "abstain" and reply["options"] == [] and driver.calls == []
+
+
+def test_known_names_and_follow_ups_never_reach_spelling_suggestions(monkeypatch):
+    bot, _ = make_bot()
+    monkeypatch.setattr(bot.classifier, "close_matches", lambda phrases: pytest.fail("fuzzy matching ran"))
+    assert bot.respond("what causes deep palm infection?")["status"] == "answer"
+    assert bot.respond("and what causes it?", topic={"name": "pertussis", "type": "disease"})["status"] == "answer"
+
+
+def test_candidate_windows_are_deduplicated_in_order():
+    bot, _ = make_bot()
+    phrases = bot.unexplained_phrases("plam plam plam")
+    assert phrases == ["plam plam plam", "plam plam", "plam"]
+    assert "what causes" not in bot.unexplained_phrases("what causes plam")
+
+
+def test_every_short_name_with_filler_or_keywords_survives_one_typo():
+    """Grid: each name of up to 3 words that contains a filler word or an intent keyword, with two letters of its
+    longest word swapped. Names whose typo still contains another known name take the entity path, not this one.
+    Excluded: artefact names ending in punctuation ("hbv and hcv..."); the name is still offered, but the corrected
+    question repeats the trailing dots."""
+    bot, _ = make_bot()
+    keywords = {w for phrase in CLASSIFIER.intent_keywords() for w in phrase.lower().split()}
+    checked, missed, punctuated = 0, [], []
+    for name in sorted(set(CLASSIFIER.disease_words) | set(CLASSIFIER.symptom_words)):
+        words = name.split()
+        if len(words) > 3 or not any(w in keywords or w in cg.FILLER for w in words):
+            continue
+        if name != name.strip(cg.PUNCTUATION):
+            punctuated.append(name)
+            continue
+        longest = max(range(len(words)), key=lambda i: len(words[i]))
+        if len(words[longest]) < 4:
+            continue
+        words[longest] = words[longest][0] + words[longest][2] + words[longest][1] + words[longest][3:]
+        question = f"what causes {' '.join(words)}"
+        if CLASSIFIER.check_medical(question.lower()):
+            continue
+        checked += 1
+        if f"what causes {name}" not in [o["question"] for o in bot.respond(question)["options"]]:
+            missed.append(name)
+    assert checked >= 60
+    assert missed == []
+    assert len(punctuated) <= 5, punctuated
