@@ -70,6 +70,13 @@ with in on should we you please get got have has had from or by up so more some
 PUNCTUATION = "?.!,;:'\"()"
 
 
+def edge_fillers_match(window, name):
+    """A filler word at either edge of the window must also be a word of the name: "of pneumonia" scores close to
+    "shock pneumonia" only because of "of", while "hepatitsi a" for "hepatitis a" keeps its "a"."""
+    words, name_words = window.split(), set(name.split())
+    return all(word.strip(PUNCTUATION) in name_words for word in {words[0], words[-1]} if word.strip(PUNCTUATION) in FILLER)
+
+
 def replace_phrase(question, phrase, replacement):
     """The question with one whole-word phrase replaced, ignoring case."""
     pattern = r"(?<!\w)" + r"\s+".join(re.escape(part) for part in phrase.split()) + r"(?!\w)"
@@ -125,7 +132,7 @@ class ChatBotGraph:
         if not arguments and topic and self.is_follow_up(question):
             arguments, used_topic = {topic["name"]: [topic["type"]]}, True
         if not arguments:
-            typos = self.classifier.close_matches(self.unexplained_phrases(question))
+            typos = self.classifier.close_matches(self.unexplained_phrases(question), accept=edge_fillers_match)
             if typos:
                 # Offered, never applied: the user confirms by choosing (step 2 of D-015).
                 logger.info("Clarifying: %d possible spelling(s) offered", len(typos))
@@ -194,7 +201,8 @@ class ChatBotGraph:
     def unexplained_phrases(self, question):
         """Every 1-3-word window holding a word that is neither filler nor an intent keyword: the candidates for a
         misspelled name. Windows may contain filler and keywords, so names such as "deep palm infection" or
-        "face of bruises" stay whole (A-13), and keep their inner punctuation so replace_phrase can find them."""
+        "face of bruises" stay whole (A-13), and keep their inner punctuation so replace_phrase can find them.
+        A filler word at a window's edge must also be in the suggested name (see edge_fillers_match)."""
         keywords = {word for phrase in self.classifier.intent_keywords() for word in phrase.lower().split()}
         tokens = question.lower().split()
         phrases = {}

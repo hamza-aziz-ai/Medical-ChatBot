@@ -238,7 +238,7 @@ class QuestionClassifier:
 
         return final_dictionary
 
-    def close_matches(self, words):
+    def close_matches(self, words, accept=lambda sequence, name: True):
         """Dictionary names close to the given word sequences, as (sequence, name) pairs in first-seen order.
 
         Each name keeps the sequence it matches best, scored as difflib does, so a longer window that merely
@@ -248,6 +248,8 @@ class QuestionClassifier:
         best = {}
         for sequence in words:
             for name in difflib.get_close_matches(sequence, names, n=MAX_TYPO_SUGGESTIONS, cutoff=TYPO_CUTOFF):
+                if not accept(sequence, name):
+                    continue
                 score = difflib.SequenceMatcher(None, name, sequence).ratio()
                 if name not in best or score > best[name][0]:
                     best[name] = (score, sequence)

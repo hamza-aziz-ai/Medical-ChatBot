@@ -122,6 +122,7 @@ def test_names_with_filler_or_keywords_are_suggested_as_complete_questions(quest
 
 
 @pytest.mark.parametrize("question", [
+    "what are the symptoms of pneumonia",  # pneumonia is quarantined; "of pneumonia" must not suggest "shock pneumonia"
     "what causes covid?", "who gets infections?", "what is the cure rate?", "how do i get better?",
     "is it dangerous?", "how long does flu last?", "can you tell me more?", "what should i do about it?",
 ])
