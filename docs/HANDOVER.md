@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Shared agent setup: `AGENTS.md` is the single instruction file for all coding agents (Codex reads it natively); `CLAUDE.md` imports it and the new shared `MEMORY.md` (D-012).
 - Adopted the "Defend What You Ship" field guide: created this `docs/` set (decisions, alternatives, architecture, flow, constraints, threat, failure, data, testing, rollback, assumptions, dependencies, defense brief, one bug and one feature trace).
 - Automatic merging: `.github/workflows/automerge.yml` merges a same-repository PR into `main` once every check on its head commit passes (PR #15).
 - Knowledge-graph integrity fixes and a permanent integrity check in `scripts/evaluate_kg.py` (PR #14).
