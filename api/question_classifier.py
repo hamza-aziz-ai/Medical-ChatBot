@@ -1,19 +1,27 @@
-import os
+import re
+from pathlib import Path
+
 import ahocorasick
+
+from terms import is_valid_term
+
+DICTIONARY_DIR = Path(__file__).resolve().parent / "dictionary"
+
+
+def load_terms(file_name):
+    with open(DICTIONARY_DIR / file_name, encoding="utf-8") as file:
+        return [line.strip() for line in file if is_valid_term(line)]
+
+
+def is_word_char(char):
+    return char.isalnum() or char == "_"
 
 
 class QuestionClassifier:
     def __init__(self):
-        current_directory = '\\'.join(os.path.abspath(__file__).split('\\')[:-1])
-        print(current_directory)
-
-        self.diseases_path = os.path.join(current_directory, ".\\dictionary\\diseases.txt")
-        self.departments_path = os.path.join(current_directory, ".\\dictionary\\departments.txt")
-        self.symptoms_path = os.path.join(current_directory, ".\\dictionary\\symptoms.txt")
-
-        self.disease_words = [i.strip() for i in open(self.diseases_path, 'r', encoding="gbk") if i.strip()]
-        self.department_words = [i.strip() for i in open(self.departments_path, 'r', encoding="gbk") if i.strip()]
-        self.symptom_words = [i.strip() for i in open(self.symptoms_path, 'r', encoding="utf-8") if i.strip()]
+        self.disease_words = load_terms("diseases.txt")
+        self.department_words = load_terms("departments.txt")
+        self.symptom_words = load_terms("symptoms.txt")
 
         self.region_words = set(self.department_words + self.disease_words + self. symptom_words)
 
@@ -22,17 +30,23 @@ class QuestionClassifier:
 
         self.symptom_question_words = [
             'symptom',
+            'symptoms',
             'characterization',
-            'phenomenon'
+            'characterizations',
+            'phenomenon',
+            'phenomena'
         ]
 
         self.cause_question_words = [
             'reason',
-            'cause'
+            'reasons',
+            'cause',
+            'causes'
         ]
 
         self.accompany_question_words = [
             'complication',
+            'complications',
             'concurrent',
             'occur',
             'happen together',
@@ -47,12 +61,13 @@ class QuestionClassifier:
         self.prevent_question_words = [
             'prevention',
             'prevent',
+            'prevented',
             'resist',
             'guard',
             'against',
             'escape',
             'avoid',
-            'how can I not',
+            'how can i not',
             'how not to',
             'why not',
             'how to prevent'
@@ -79,13 +94,18 @@ class QuestionClassifier:
 
         self.cure_way_question_words = [
             'treat',
+            'treated',
             'heal',
+            'healing',
             'cure',
+            'cured',
             'how to treat',
             'how to heal',
             'how to cure',
             'treatment',
-            'therapy'
+            'treatments',
+            'therapy',
+            'therapies'
         ]
 
         self.cure_probability_question_words = [
@@ -106,23 +126,6 @@ class QuestionClassifier:
             'which people',
             'infection',
             'infect'
-        ]
-
-        self.belong_question_words = [
-            'what belongs to',
-            'belong',
-            'belongs',
-            'section',
-            'what section',
-            'department'
-        ]
-
-        self.cure_question_words = [
-            'what to treat',
-            'indication',
-            'what is the use',
-            'benefit',
-            'usefulness'
         ]
 
     @staticmethod
@@ -149,27 +152,32 @@ class QuestionClassifier:
         return word_dictionary
 
     def check_medical(self, question):
-        region_words = []
+        spans = []
+        for end, (_, word) in self.region_tree.iter(question):
+            start = end - len(word) + 1
+            before = question[start - 1] if start > 0 else ""
+            after = question[end + 1] if end + 1 < len(question) else ""
+            if not (is_word_char(before) or is_word_char(after)):
+                spans.append((start, end, word))
 
-        for i in self.region_tree.iter(question):
-            word = i[1][1]
-            region_words.append(word)
+        # Drop a match only when its own occurrence lies inside another match's occurrence.
+        kept = [
+            span for span in spans
+            if not any(other != span and other[0] <= span[0] and span[1] <= other[1] for other in spans)
+        ]
 
-        stop_words = []
-        for word_1 in region_words:
-            for word_2 in region_words:
-                if (word_1 in word_2) and (word_1 != word_2):
-                    stop_words.append(word_1)
-
-        final_words = [i for i in region_words if i not in stop_words]
-        final_dictionary = {i: self.word_type_dictionary.get(i) for i in final_words}
+        final_dictionary = {}
+        for _, _, word in sorted(kept):
+            final_dictionary.setdefault(word, self.word_type_dictionary.get(word))
 
         return final_dictionary
 
     @staticmethod
     def check_words(words, sent):
+        sent = sent.lower()
         for word in words:
-            if word in sent:
+            phrase = r"\s+".join(re.escape(part) for part in word.lower().split())
+            if re.search(r"(?<!\w)" + phrase + r"(?!\w)", sent):
                 return True
 
         return False

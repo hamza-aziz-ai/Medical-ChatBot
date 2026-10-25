@@ -41,13 +41,7 @@
           Our Neo4j database is queried, and the appropriate result is returned to the user.
         </li>
         <li style="margin-top: 0.5em">
-          In case a question isn't found in our knowledge graph, we make use of question-answer pairs derived from <a href="https://questiondoctors.com" target="_blank">https://questiondoctors.com</a> and use Question Similarity to see most probable question that matches the user query and return the answer corresponding to that question.
-        </li>
-        <li style="margin-top: 0.5em">
-          For Question Similarity, we initially tried Bidirectional LSTM + Attention model, but we were having problems trying to use it as a predictor function. So, we now use Siamese-LSTM to make our predictions for most probable question. Dataset used was Quora-Question-Similarity, hosted on <a href="https://www.kaggle.com/c/quora-question-pairs/data" target="_blank">Kaggle</a>.
-        </li>
-        <li style="margin-top: 0.5em">
-          The result fetched through question-similarity method may not always be most apt, since a completely unrelated question, still may match with some queries from our dataset, based on similarity score. We look forward to improve this segment of our chatbot in future.
+          If the knowledge graph cannot answer a question, the chatbot explicitly says so. Questions about treatment duration, cure probability or susceptibility are unsupported. Please consult a qualified medical professional.
         </li>
       </ul>
     </div>
