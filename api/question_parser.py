@@ -1,3 +1,32 @@
+LIMIT = 20
+
+# Labels, relationship types and property names are fixed here; entity names are always parameters.
+TEMPLATES = {
+    "disease_cause": "MATCH (m:Disease {name: $name}) RETURN m.name AS subject, m.causes AS value LIMIT $limit",
+    "disease_prevention": "MATCH (m:Disease {name: $name}) RETURN m.name AS subject, m.prevention AS value LIMIT $limit",
+    "disease_cure_way": (
+        "MATCH (m:Disease {name: $name}) UNWIND m.cure_way AS value "
+        "RETURN DISTINCT m.name AS subject, value ORDER BY subject, value LIMIT $limit"
+    ),
+    "disease_description": "MATCH (m:Disease {name: $name}) RETURN m.name AS subject, m.description AS value LIMIT $limit",
+    "disease_symptom": (
+        "MATCH (m:Disease {name: $name})-[:has_symptom]->(n:Symptom) "
+        "RETURN DISTINCT m.name AS subject, n.name AS value ORDER BY subject, value LIMIT $limit"
+    ),
+    "symptom_disease": (
+        "MATCH (m:Disease)-[:has_symptom]->(n:Symptom {name: $name}) "
+        "RETURN DISTINCT n.name AS subject, m.name AS value ORDER BY subject, value LIMIT $limit"
+    ),
+    "disease_accompany": (
+        "MATCH (m:Disease {name: $name})-[:accompany_with]-(n:Disease) WHERE n.name <> m.name "
+        "RETURN DISTINCT m.name AS subject, n.name AS value ORDER BY subject, value LIMIT $limit"
+    ),
+}
+
+ENTITY_TYPES = {question_type: "disease" for question_type in TEMPLATES}
+ENTITY_TYPES["symptom_disease"] = "symptom"
+
+
 class QuestionParser:
     @staticmethod
     def build_entity_dictionary(arguments):
@@ -13,88 +42,20 @@ class QuestionParser:
 
     @staticmethod
     def sql_transfer(question_type, entities):
-        if entities:
-            sql = []
+        template = TEMPLATES.get(question_type)
+        if not template or not entities:
+            return []
 
-            if question_type == "disease_cause":
-                sql = ["match (m:Disease) where m.name = '{0}' return m.name, m.causes".format(i) for i in entities]
-
-            elif question_type == 'disease_prevention':
-                sql = ["match (m:Disease) where m.name = '{0}' return m.name, m.prevention".format(i) for i in entities]
-
-            elif question_type == 'disease_last_time':
-                sql = ["match (m:Disease) where m.name = '{0}' return m.name, m.cure_last_time".format(i) for i in entities]
-
-            elif question_type == 'disease_cure_probability':
-                sql = ["match (m:Disease) where m.name = '{0}' return m.name, m.cured_prob".format(i) for i in entities]
-
-            elif question_type == 'disease_cure_way':
-                sql = ["match (m:Disease) where m.name = '{0}' return m.name, m.cure_way".format(i) for i in entities]
-
-            elif question_type == 'disease_easy_get':
-                sql = ["match (m:Disease) where m.name = '{0}' return m.name, m.easy_get".format(i) for i in entities]
-
-            elif question_type == 'disease_description':
-                sql = ["match (m:Disease) where m.name = '{0}' return m.name, m.description".format(i) for i in entities]
-
-            elif question_type == 'disease_symptom':
-                sql = ["match (m:Disease)-[r:has_symptom]->(n:Symptom) where m.name = '{0}' return m.name, r.name, n.name".format(i) for i in entities]
-
-            elif question_type == 'symptom_disease':
-                sql = ["match (m:Disease)-[r:has_symptom]->(n:Symptom) where n.name = '{0}' return m.name, r.name, n.name".format(i) for i in entities]
-
-            elif question_type == 'disease_accompany':
-                sql_1 = ["match (m:Disease)-[r:accompany_with]->(n:Disease) where m.name = '{0}' return m.name, r.name, n.name".format(i) for i in entities]
-                sql_2 = ["match (m:Disease)-[r:accompany_with]->(n:Disease) where n.name = '{0}' return m.name, r.name, n.name".format(i) for i in entities]
-                sql = sql_1 + sql_2
-
-            return sql
-
-        return []
+        return [(template, {"name": entity, "limit": LIMIT}) for entity in entities]
 
     def parser_main(self, result_classify):
-        arguments = result_classify["arguments"]
-        entity_dictionary = self.build_entity_dictionary(arguments)
-        question_types = result_classify["question_types"]
+        entity_dictionary = self.build_entity_dictionary(result_classify["arguments"])
         sqls = []
 
-        for question_type in question_types:
-            _sql = {"question_type": question_type}
-            sql = []
-
-            if question_type == "disease_symptom":
-                sql = self.sql_transfer(question_type, entity_dictionary.get("disease"))
-
-            elif question_type == 'symptom_disease':
-                sql = self.sql_transfer(question_type, entity_dictionary.get('symptom'))
-
-            elif question_type == 'disease_cause':
-                sql = self.sql_transfer(question_type, entity_dictionary.get('disease'))
-
-            elif question_type == 'disease_accompany':
-                sql = self.sql_transfer(question_type, entity_dictionary.get('disease'))
-
-            elif question_type == 'disease_prevention':
-                sql = self.sql_transfer(question_type, entity_dictionary.get('disease'))
-
-            elif question_type == 'disease_last_time':
-                sql = self.sql_transfer(question_type, entity_dictionary.get('disease'))
-
-            elif question_type == 'disease_cure_way':
-                sql = self.sql_transfer(question_type, entity_dictionary.get('disease'))
-
-            elif question_type == 'disease_cure_probability':
-                sql = self.sql_transfer(question_type, entity_dictionary.get('disease'))
-
-            elif question_type == 'disease_easy_get':
-                sql = self.sql_transfer(question_type, entity_dictionary.get('disease'))
-
-            elif question_type == 'disease_description':
-                sql = self.sql_transfer(question_type, entity_dictionary.get('disease'))
-
+        for question_type in result_classify["question_types"]:
+            entity_type = ENTITY_TYPES.get(question_type)
+            sql = self.sql_transfer(question_type, entity_dictionary.get(entity_type))
             if sql:
-                _sql['sql'] = sql
-
-                sqls.append(_sql)
+                sqls.append({"question_type": question_type, "sql": sql})
 
         return sqls

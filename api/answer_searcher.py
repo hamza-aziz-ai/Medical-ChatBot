@@ -1,74 +1,60 @@
-import os
+from neo4j import RoutingControl
 
-from py2neo import Graph
+import database
+from terms import is_valid_term
+
+# (sentence template, separator, values are entity terms)
+FORMATS = {
+    "disease_symptom": ("The symptoms of {0} include: {1}", ", ", True),
+    "symptom_disease": ("Diseases recorded as associated with symptom {0}: {1}. This is not a diagnosis.", ", ", True),
+    "disease_prevention": ("Precautions for {0} include: {1}", "; ", False),
+    "disease_cause": ("The possible causes of {0} are: {1}", "; ", False),
+    "disease_cure_way": ("For {0}, you can try the following treatments: {1}", "; ", True),
+    "disease_description": ("{0}, familiar with: {1}", "; ", False),
+    "disease_accompany": ("Accompanying conditions recorded for {0}: {1}", "; ", True),
+}
 
 
 class AnswerSearcher:
-    def __init__(self):
-        self.graph = Graph("neo4j://localhost:7687", auth=("neo4j", os.environ["NEO4J_PASSWORD"]))
+    def __init__(self, driver=None):
+        self.driver = driver if driver is not None else database.create_driver()
         self.num_limit = 20
 
+    def close(self):
+        self.driver.close()
+
     def answer_prettify(self, question_type, answers):
-        final_answer = []
+        if question_type not in FORMATS:
+            return []
 
-        if not answers:
-            return ''
+        template, separator, terms_only = FORMATS[question_type]
+        grouped = {}
+        for row in answers:
+            values = row.get("value")
+            values = values if isinstance(values, list) else [values]
+            usable = grouped.setdefault(row.get("subject"), set())
+            for value in values:
+                if isinstance(value, str) and value.strip() and (not terms_only or is_valid_term(value)):
+                    usable.add(value.strip())
 
-        if question_type == 'disease_symptom':
-            description = [i['n.name'] for i in answers]
-            subject = answers[0]['m.name']
-            final_answer = "The symptoms of {0} include: {1}".format(subject, ', '.join(list(set(description))[:self.num_limit]))
-
-        elif question_type == 'symptom_disease':
-            description = [i['m.name'] for i in answers]
-            subject = answers[0]['n.name']
-            final_answer = 'You entered symptoms as: {0}. You may be infected with: {1}'.format(subject, ', '.join(list(set(description))[:self.num_limit]))
-
-        elif question_type == 'disease_prevention':
-            description = [i['m.prevention'] for i in answers]
-            subject = answers[0]['m.name']
-            final_answer = "Precautions for {0} include: {1}".format(subject, '; '.join(list(set(description))[:self.num_limit]))
-
-        elif question_type == 'disease_cause':
-            description = [i['m.causes'] for i in answers]
-            subject = answers[0]['m.name']
-            final_answer = 'The possible causes of {0} are: {1}'.format(subject, '; '.join(list(set(description))[:self.num_limit]))
-
-        elif question_type == 'disease_last_time':
-            description = [i['m.cure_last_time'] for i in answers]
-            subject = answers[0]['m.name']
-            final_answer = 'The period in which {0} treatment may last is: {1}'.format(subject, '; '.join(list(set(description))[:self.num_limit]))
-
-        elif question_type == 'disease_cure_way':
-            description = ['; '.join(i['m.cure_way']) for i in answers]
-            subject = answers[0]['m.name']
-            final_answer = 'For {0}, you can try the following treatments: {1}'.format(subject, '; '.join(list(set(description))[:self.num_limit]))
-
-        elif question_type == 'disease_description':
-            description = [i['m.description'] for i in answers]
-            subject = answers[0]['m.name']
-            final_answer = '{0}, familiar with: {1}'.format(subject, '; '.join(list(set(description))[:self.num_limit]))
-
-        elif question_type == 'disease_accompany':
-            description_1 = [i['n.name'] for i in answers]
-            description_2 = [i['m.name'] for i in answers]
-            subject = answers[0]['m.name']
-            description = [i for i in description_1 + description_2 if i != subject]
-            final_answer = 'The symptoms of {0} include: {1}'.format(subject, '; '.join(list(set(description))[:self.num_limit]))
-
-        return final_answer
+        return [
+            template.format(subject, separator.join(sorted(values)[:self.num_limit]))
+            for subject, values in sorted(grouped.items(), key=lambda item: str(item[0]))
+            if subject and values
+        ]
 
     def search_main(self, sqls):
         final_answers = []
         for _sql in sqls:
-            question_type = _sql['question_type']
-            queries = _sql['sql']
             answers = []
-            for query in queries:
-                result = self.graph.run(query).data()
-                answers = answers + result
-            final_answer = self.answer_prettify(question_type, answers)
-            if final_answer:
-                final_answers.append(final_answer)
+            for query, params in _sql["sql"]:
+                records, _, _ = self.driver.execute_query(
+                    query,
+                    parameters_=params,
+                    database_=database.database_name(),
+                    routing_=RoutingControl.READ,
+                )
+                answers += [record.data() for record in records]
+            final_answers += self.answer_prettify(_sql["question_type"], answers)
 
         return final_answers
