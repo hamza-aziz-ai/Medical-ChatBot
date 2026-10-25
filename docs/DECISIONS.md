@@ -204,3 +204,16 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** The facts are fixed when the graph is built. No database call at start or per request, no new timeouts, and the existing dictionary check plus a live chip check in the MLOps gate keep it in step with the graph.
 - **Trade-off:** `entities.json` grows (about 4,800 lines); a missing table means no chips until the importer runs again.
 - **Revisit if:** the graph is updated without re-running the importer.
+
+## D-017: Sourced aliases and confirmed typo suggestions
+
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5); design agreed with Codex (job-17)
+- **Context:** Only exact dictionary names were recognised: "whooping cough" or "asthama" got "I couldn't find a disease or symptom".
+- **Options:**
+  1. silent fuzzy matching
+  2. a sourced alias list plus typo suggestions the user must confirm
+  3. leave matching exact
+- **Chosen:** 2
+- **Why:** Aliases from MedlinePlus "Also called" lists are exact equivalents, so they apply directly and are shown in "Why this answer?". A misspelling is only ever offered ("Did you mean asthma?"), because a near-miss can be a different disease.
+- **Trade-off:** The alias list is small and maintained by hand; the typo cutoff (0.8, stdlib `difflib`) was tuned on a small reviewed set.
+- **Revisit if:** a curated synonym source (for example the Disease Ontology) is adopted.
