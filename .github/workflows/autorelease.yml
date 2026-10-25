@@ -1,0 +1,67 @@
+name: autorelease
+
+# Releases main when its shipped files changed since the last published release (D-019).
+# scripts/next_release.py picks the version (patch, or the highest release:minor / release:major label
+# on the merged pull requests, or the `bump` input) and stops when a human must act first; release.yml
+# then runs every gate at that commit and creates the tag only after they pass.
+# Started by hand for now; the trigger after automerge is added once the owner accepts batching.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump; auto reads the release:minor / release:major labels
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+
+permissions:
+  contents: read
+
+# A running release is never cancelled. A newer waiting run may replace an older waiting one,
+# which is safe because every run releases the current state of main.
+concurrency:
+  group: autorelease
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      # Draft releases are listed only to tokens with write access.
+      contents: write
+      packages: read
+      pull-requests: read
+    outputs:
+      release: ${{ steps.plan.outputs.release }}
+      tag: ${{ steps.plan.outputs.tag }}
+      sha: ${{ steps.plan.outputs.sha }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: |
+          python3 scripts/next_release.py --repo "$GITHUB_REPOSITORY" \
+            --image-prefix "ghcr.io/${GITHUB_REPOSITORY_OWNER}/medical-chatbot" --bump "$BUMP" >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: plan
+    if: needs.plan.outputs.release == 'true'
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.plan.outputs.tag }}
+      sha: ${{ needs.plan.outputs.sha }}
+    permissions:
+      contents: write
+      packages: write
