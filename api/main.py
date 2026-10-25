@@ -1,4 +1,5 @@
 import atexit
+import ipaddress
 import logging
 import os
 import re
@@ -47,6 +48,21 @@ def selections_from(args):
     return selections
 
 
+def client_address(request):
+    """The client's address for the suggestion budget (D-025), never logged.
+
+    X-Real-IP is trusted only where TRUST_PROXY_HEADER=1, which the API image sets because only nginx can reach it
+    there and nginx overwrites the header. Direct development uses the socket address, so a sent header is ignored.
+    """
+    candidates = [request.headers.get("X-Real-IP", "")] if os.environ.get("TRUST_PROXY_HEADER") == "1" else []
+    for value in candidates + [request.remote_addr or ""]:
+        try:
+            return str(ipaddress.ip_address(value.strip()))
+        except ValueError:
+            continue
+    return "unknown"
+
+
 def create_app(chatbot=None):
     if chatbot is None:
         import app_logging
@@ -88,7 +104,8 @@ def create_app(chatbot=None):
         logger.debug("Answering a question of %d characters", len(search_term))
         # The page sends back the confirmed topic and any clarification choices; the chatbot checks both
         # against the dictionary and this question. Like the question, they are never logged.
-        reply = chatbot.respond(search_term, topic=topic_from(request.args), selections=selections_from(request.args))
+        reply = chatbot.respond(search_term, topic=topic_from(request.args), selections=selections_from(request.args),
+                                client=client_address(request))
         logger.info("Replied (%s) to a question of %d characters", reply["status"], len(search_term))
         return jsonify(search=search_term, **reply)
 

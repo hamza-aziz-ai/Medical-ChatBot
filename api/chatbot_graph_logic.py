@@ -1,13 +1,15 @@
 import json
 import logging
 import re
+import threading
 from pathlib import Path
 
 from neo4j.exceptions import DriverError, Neo4jError
 
 from answer_searcher import AnswerSearcher
 from build_medicalgraph import OWNER
-from question_classifier import ENTITIES_PATH, QuestionClassifier, read_dictionary
+import question_classifier
+from question_classifier import ENTITIES_PATH, TYPO_BUDGET_SECONDS, QuestionClassifier, read_dictionary
 from question_parser import ENTITY_TYPES, QuestionParser
 
 logger = logging.getLogger(__name__)
@@ -74,6 +76,68 @@ SHA256 = re.compile(r"[0-9a-f]{64}")
 PUNCTUATION = "?.!,;:'\"()"
 
 
+# D-025: each client address gets this much spelling-suggestion time: a one-second burst, refilled at one second
+# per minute. Starting values, not tuned ones.
+SUGGESTION_CAPACITY_SECONDS = 1.0
+SUGGESTION_REFILL_PER_SECOND = 1.0 / 60
+MAX_SUGGESTION_CLIENTS = 10_000
+
+
+class SuggestionBudget:
+    """Per-address allowance of elapsed fuzzy-matching time (A-14, D-025), so one client cannot keep the single
+    worker busy with long questions of unknown words. Addresses stay in this process's memory: never logged,
+    stored or returned.
+    """
+
+    def __init__(self, clock=None, capacity=SUGGESTION_CAPACITY_SECONDS, refill=SUGGESTION_REFILL_PER_SECOND,
+                 max_clients=MAX_SUGGESTION_CLIENTS):
+        # The same clock close_matches checks its deadline against.
+        self.clock = clock or (lambda: question_classifier.monotonic())
+        self.capacity, self.refill, self.max_clients = capacity, refill, max_clients
+        self.clients = {}  # address -> [credit, time of last update]; credit may be negative (debt)
+        self.lock = threading.Lock()
+        self.denying = False
+
+    def credit(self, entry, now):
+        return min(self.capacity, entry[0] + (now - entry[1]) * self.refill)
+
+    def entry_for(self, client, now):
+        """The client's entry with credit brought up to date, or None when the table is full of clients still owing."""
+        entry = self.clients.get(client)
+        if entry is None:
+            if len(self.clients) >= self.max_clients:
+                # Only idle, fully refilled clients are forgotten: forgetting a debtor would hand it fresh credit.
+                full = [key for key, value in self.clients.items() if self.credit(value, now) >= self.capacity]
+                for key in full:
+                    del self.clients[key]
+                if len(self.clients) >= self.max_clients:
+                    return None
+            entry = self.clients[client] = [self.capacity, now]
+        entry[0], entry[1] = self.credit(entry, now), now
+        return entry
+
+    def run(self, client, work):
+        """work(deadline) within the client's remaining credit, or None (no suggestions) when it has none.
+
+        The deadline is set before any preparation, and the whole section holds one lock, so two requests never
+        spend the same credit. Elapsed time is charged even if work fails; an overrun is carried as debt.
+        """
+        with self.lock:
+            start = self.clock()
+            entry = self.entry_for(client, start)
+            if entry is None or entry[0] <= 0:
+                if not self.denying:
+                    logger.info("Spelling suggestions skipped: a client is over its budget")
+                    self.denying = True
+                return None
+            self.denying = False
+            try:
+                return work(start + min(TYPO_BUDGET_SECONDS, entry[0]))
+            finally:
+                end = self.clock()
+                entry[0], entry[1] = self.credit(entry, end) - (end - start), end
+
+
 def edge_words_match(window, name, keywords):
     """A filler word or intent keyword at either edge of the window must also be a word of the name. "of pneumonia"
     scores close to "shock pneumonia" only because of "of", and "causes adbominal infection" would drop "causes"
@@ -99,6 +163,7 @@ class ChatBotGraph:
         self.searcher = AnswerSearcher()
         self.availability = self.load_availability(document=document)
         self.source = self.load_source(document=document)
+        self.suggestion_budget = SuggestionBudget()
         logger.info("Chatbot ready: %d disease, %d symptom and %d department terms loaded",
                     len(self.classifier.disease_words), len(self.classifier.symptom_words), len(self.classifier.department_words))
 
@@ -154,7 +219,7 @@ class ChatBotGraph:
     def chat_main(self, sent):
         return self.respond(sent)["message"]
 
-    def respond(self, question, topic=None, selections=()):
+    def respond(self, question, topic=None, selections=(), client=None):
         """Answer one question as a structured reply (D-015).
 
         topic is the confirmed {"name", "type"} from the previous answer, used for follow-ups and to read a name
@@ -173,8 +238,13 @@ class ChatBotGraph:
             arguments, used_topic = {topic["name"]: [topic["type"]]}, True
         if not arguments:
             keywords = self.keyword_words()
-            typos = self.classifier.close_matches(self.unexplained_phrases(question),
-                                                  accept=lambda window, name: edge_words_match(window, name, keywords))
+
+            def suggest(deadline):
+                return self.classifier.close_matches(self.unexplained_phrases(question), deadline=deadline,
+                                                     accept=lambda window, name: edge_words_match(window, name, keywords))
+
+            # Web requests spend their client's allowance (D-025); internal callers keep only the per-call deadline.
+            typos = suggest(None) if client is None else self.suggestion_budget.run(client, suggest) or []
             if typos:
                 # Offered, never applied: the user confirms by choosing (step 2 of D-015).
                 logger.info("Clarifying: %d possible spelling(s) offered", len(typos))

@@ -249,7 +249,7 @@ class QuestionClassifier:
 
         return final_dictionary
 
-    def close_matches(self, words, accept=lambda sequence, name: True, clock=None):
+    def close_matches(self, words, accept=lambda sequence, name: True, clock=None, deadline=None):
         """Dictionary names close to the given word sequences, as (sequence, name) pairs in first-seen order.
 
         Each name keeps the sequence it matches best, scored as difflib does, so a longer window that merely
@@ -257,8 +257,9 @@ class QuestionClassifier:
         """
         # A-14: a cooperative time budget, checked before each window, so one long question of unknown words cannot
         # hold the single API worker for a second. A window already started finishes, so this is not a hard ceiling.
+        # A caller may pass an absolute deadline set before it prepared the words (the per-client budget, D-025).
         clock = clock or monotonic
-        deadline = clock() + TYPO_BUDGET_SECONDS
+        deadline = clock() + TYPO_BUDGET_SECONDS if deadline is None else deadline
         names = sorted(set(self.disease_words) | set(self.symptom_words) | set(self.aliases))
         best = {}
         for done, sequence in enumerate(words):
