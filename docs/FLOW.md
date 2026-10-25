@@ -55,13 +55,15 @@ api/build_medicalgraph.py main()
 ## A release
 
 ```
-.github/workflows/autorelease.yml   (started by hand today; after automerge once enabled)
+.github/workflows/autorelease.yml   (after automerge finishes, by hand, or by its own previous successful run)
   -> scripts/next_release.py        last published release on main; stop on a draft, version images without a release, or a failed lookup
-                                    nothing shipped changed -> no release; else next version (patch, labels, or the bump input)
+                                    oldest first-parent commit after it that changed shipped files and has no published release
+                                    none -> stop the chain; else its version (patch, its pull request's label, or the bump input)
   -> release.yml (workflow_call, tag + sha)
        resolve   tag absent, sha on main, no release or version images
        backend, frontend, mlops at that sha
        images    pushed as sha-<sha>-<run_id>-<run_attempt>
        smoke     Compose smoke test of those digests
        publish   create the tag -> draft with assets -> version image tags -> publish
+  -> continue (only after success)   gh workflow run autorelease.yml -> the next merge
 ```

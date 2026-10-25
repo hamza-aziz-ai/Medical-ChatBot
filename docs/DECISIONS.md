@@ -244,3 +244,16 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Trade-off:** Releases are batched: one release covers every shippable merge since the last published one, and a merge that lands during a running release is included in the next. Patch by default; `release:minor` or `release:major` labels, or the manual `bump` input, choose more.
 - **Revisit if:** the owner wants exactly one release per merge, or a hosted deployment is added.
 - **Rollout:** this change adds manual starts only; v1.1.0 is cut through it; the trigger after automerge is enabled separately once the owner accepts batching. This is the owner's standing authorization for the publisher to create release tags.
+
+## D-020: One release per merge
+
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5); design agreed with Codex in council (2 exchanges)
+- **Context:** D-019 proposed batching (one release for every shippable merge since the last). The owner chose one release per merge instead.
+- **Options:**
+  1. one run releases several merges through a matrix of `release.yml` calls
+  2. one run releases the oldest unreleased merge, then starts the next run after a success
+- **Chosen:** 2. `next_release.py` picks the oldest first-parent commit after the last published release that changed shipped files; a merge counts as released only through a published release, so a merge under an abandoned tag is released again under the next version. A `continue` job, the only one allowed to start workflows, starts the next run after a successful release. Supersedes the batching in D-019; everything else in D-019 stands.
+- **Why:** GitHub does not guarantee matrix job order, and several `release.yml` calls in one run would collide on the `eval-report` artifact name. Chained runs keep releases in merge order: each is planned only after the previous one is published.
+- **Trade-off:** About 15 minutes per release, one after another. A merge whose release keeps failing blocks later releases until the owner publishes a later commit by hand (`release.yml` with `tag` and `sha`), which deliberately skips separate releases for the merges in between. A change and its revert are two releases.
+- **Bootstrap:** everything merged before this is released by the owner as one `v1.1.0`; automatic runs pass `--require-baseline v1.1.0` and refuse to drain the older backlog one by one.
+- **Revisit if:** releases queue up faster than they publish.

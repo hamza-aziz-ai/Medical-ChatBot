@@ -5,7 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
-- Automatic releases, part 1 (D-019, FEATURE-006): `autorelease.yml` plans and calls `release.yml`, which tags only after every gate; started by hand for now.
+- Automatic releases (D-019, D-020, FEATURE-006): one release per merge, in order; `release.yml` tags only after every gate.
 - BUG-002 fixed: words inside a matched name are no longer read as intent keywords (D-018).
 - Sourced aliases and confirmed typo suggestions (D-017, FEATURE-005).
 - Guided conversation (D-015, D-016, FEATURE-004): structured replies, follow-ups, clarification, explained abstentions, suggestion chips, "Why this answer?", topic bar, emergency guidance.
@@ -26,7 +26,7 @@ Broken or risky:
 - Graph and dictionary publication are not one unit (D35).
 
 Next:
-- Cut v1.1.0 through `autorelease.yml`, then enable its trigger after `automerge` once the owner accepts batching.
+- The owner publishes v1.1.0 (`release.yml` with `tag=v1.1.0` and `sha` = main), then the per-merge PR is marked ready; watch the first chained releases.
 - A-13: typo suggestions split at keywords; consider matching runs that include keywords.
 - Optional: dataset pilot (MedlinePlus + DOID) behind a rights gate and the evaluation gate.
 
