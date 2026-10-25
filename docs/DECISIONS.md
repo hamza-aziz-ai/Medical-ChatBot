@@ -111,3 +111,13 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** No reviewed candidate covers all seven intents with a redistributable licence.
 - **Trade-off:** The rights question stays open while the CSV remains.
 - **Revisit if:** the pilot passes both gates.
+
+## D-012: One shared instruction file and memory for all coding agents
+
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5)
+- **Context:** The owner wants Codex and other agents to follow the same rules as Claude Code, plus a shared project memory.
+- **Options:** 1) separate `AGENTS.md` and `CLAUDE.md` kept in sync by a CI check  2) `AGENTS.md` as the single source, with `CLAUDE.md` importing it  3) generate one from the other
+- **Chosen:** 2, plus a committed `MEMORY.md` imported the same way
+- **Why:** Claude Code's `@file` import means there is nothing to drift and nothing to check; Codex reads `AGENTS.md` natively.
+- **Trade-off:** Instructions must be written for every agent, not in Claude-specific terms.
+- **Revisit if:** an agent needs instructions the others must not follow.
