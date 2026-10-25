@@ -114,7 +114,8 @@ def load_dataset(path=CSV_PATH):
     field_issues = [issue for issue in issues if records[issue[0] - 1]["name"] in diseases]
     return {
         "source_file": Path(path).name,
-        "source_sha256": hashlib.sha256(raw).hexdigest(),
+        # Hash with normalized line endings so Windows and Linux checkouts agree.
+        "source_sha256": hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest(),
         "diseases": diseases,
         "quarantined_names": quarantined,
         "field_issues": field_issues,
