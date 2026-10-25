@@ -33,9 +33,9 @@ python build_medicalgraph.py
 flask --app main run
 ```
 
-Start the frontend from `frontend/` with `yarn install` and `yarn serve`, using Node 18 (see Known limitations). Set `VUE_APP_API_BASE_URL` if the API is not at `http://localhost:5000`. Enter the value of `CHATBOT_API_TOKEN` in the "API token" field; the page keeps it in memory only.
+The frontend is Vue 3 built with Vite and needs Node `^22.13.0 || ^24.0.0`. From `frontend/`, run `yarn install` and then `yarn dev` (development, http://localhost:8080) or `yarn build` and `yarn preview` (the built site on the same port, which the API's default CORS origins allow). Set `VITE_API_BASE_URL` in `frontend/.env` (template: `frontend/.env.example`) if the API is not at `http://localhost:5000`. Never put the API token in a `VITE_*` variable: Vite compiles those into the public bundle. Enter the value of `CHATBOT_API_TOKEN` in the page's "API token" field instead; the page keeps it in memory only.
 
-Run the checks with `python -m pytest tests` from the repository root and `yarn test` from `frontend/`. Neither needs a running Neo4j server. GitHub Actions runs both on every push and pull request.
+Run the checks with `python -m pytest tests` from the repository root, and `yarn lint` and `yarn test` from `frontend/` (`yarn test` runs the Node helper tests and the Vitest component tests). None of them needs a running Neo4j server. GitHub Actions runs them on every push and pull request, with the frontend on Node 22 and 24.
 
 The live tests in `tests/test_live_neo4j.py` run against a real server and **delete all data in it**, so they only run when `NEO4J_TEST_URI`, `NEO4J_PASSWORD` and `NEO4J_TEST_ALLOW_WIPE=1` are set. Use a disposable container, for example `docker run --rm -p 127.0.0.1:7687:7687 -e NEO4J_AUTH=neo4j/<test password> neo4j:5`. CI runs them against Neo4j 5 and 4.4.
 
@@ -90,5 +90,4 @@ Unzip the download so that `notebooks/data/train.csv` exists.
 ## Known limitations
 
 - **Training reproducibility.** The notebook fits its tokenizer before splitting the data, does not seed the split, and has no separate test set. Fixing this needs the training data, the GloVe embeddings and a new evaluation run, so it has not been done.
-- **Vue 2.** The frontend uses Vue 2, which reached end of life on 31 Dec 2023, and the `vue-bot-ui` chat widget, whose tooling is Vue 2 based. Moving to Vue 3 needs coordinated frontend work. The locked Vue CLI 5 toolchain refuses to install on Node 20 or later (`@achrinza/node-ipc` supports Node 8–19), so `package.json` declares Node 18; the build was verified with Node 18.20.8, which is itself past end of life. axios was replaced by the browser `fetch` API, but the remaining Vue and build-tool dependencies still carry known vulnerability alerts until this migration happens.
 - **Access control.** The API uses one shared token. It has no user accounts.

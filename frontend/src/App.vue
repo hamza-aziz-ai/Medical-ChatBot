@@ -1,83 +1,60 @@
 <template>
-  <div id="app">
-    <MedicalChatbot />
-    <label class="api-token" for="api-token">
-      API token
-      <input id="api-token" v-model="apiToken" type="password" autocomplete="off" />
-    </label>
-    <VueBotUI
+  <div class="layout">
+    <header class="site-header">
+      <h1>Mr. Healthcare</h1>
+      <p class="subtitle">
+        B.Tech final-year project by Hamza Aziz and Mahak Agrawal
+      </p>
+      <p
+        class="notice"
+        role="note"
+      >
+        <strong>Not medical advice.</strong> Answers come from a dataset whose source and clinical accuracy are unverified.
+        Always consult a qualified medical professional.
+      </p>
+    </header>
+
+    <main class="workspace">
+      <ChatPanel
+        v-model:token="apiToken"
         :messages="messages"
-        :options="botOptions"
-        :bot-typing="botTyping"
-        :input-disable="botTyping || !apiToken"
-        @msg-send="messageSendHandler"
-    />
+        :busy="botTyping"
+        @send="messageSendHandler"
+      />
+      <MedicalChatbot />
+    </main>
   </div>
 </template>
 
 <script>
-import {VueBotUI} from "vue-bot-ui";
+import ChatPanel from "@/components/ChatPanel.vue";
 import MedicalChatbot from "@/components/MedicalChatbot.vue";
 import { fetchHttp, sendMessage } from "@/chatApi.mjs";
 
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export default {
-  name: 'App',
-  components: {
-    MedicalChatbot,
-    VueBotUI,
-  },
+  name: "App",
+  components: { ChatPanel, MedicalChatbot },
   data() {
     return {
-      messages: [],
+      messages: [
+        {
+          agent: "bot",
+          type: "text",
+          text: "Hello! I'm Mr. Healthcare. Enter the API token, then ask about the symptoms, causes, prevention or treatments of a disease.",
+        },
+      ],
       botTyping: false,
       // Held in memory only: never stored or compiled into the bundle.
       apiToken: "",
-      botOptions: {
-        botTitle: "Mr. Healthcare",
-        botAvatarImg: "https://www.shareicon.net/data/512x512/2016/07/05/791221_man_512x512.png",
-        msgBubbleBgUser: "#892cdc",
-        boardContentBg: "#151515",
-        colorScheme: "#892cdc",
-      },
     };
   },
-  mounted() {
-    this.messages.push({
-      agent: "bot",
-      type: "text",
-      text: "Hello! I'm Mr. Healthcare. How can I help you?",
-    });
-  },
   methods: {
-    messageSendHandler(value) {
-      return sendMessage(this, fetchHttp, API_BASE_URL, value);
+    messageSendHandler(text) {
+      if (this.botTyping) return Promise.resolve();
+      return sendMessage(this, fetchHttp, API_BASE_URL, { text });
     },
   },
 };
 </script>
-
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-#app {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-}
-.api-token {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: #151515;
-  color: #fff;
-  font-size: 13px;
-}
-</style>
