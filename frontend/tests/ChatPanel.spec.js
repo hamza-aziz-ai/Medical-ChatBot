@@ -55,8 +55,31 @@ describe("ChatPanel", () => {
     await box.trigger("keydown", { key: "Enter" });
     await wrapper.find("form").trigger("submit");
     expect(wrapper.emitted("send")).toBeUndefined();
-    expect(wrapper.find("button").element.disabled).toBe(true);
+    expect(wrapper.find('button[type="submit"]').element.disabled).toBe(true);
     expect(wrapper.text()).toContain("Looking that up");
+  });
+
+  it("offers example questions until the user asks one", async () => {
+    const suggestions = ["What causes migraine?", "How can I prevent anemia?"];
+    const wrapper = panel({ suggestions, messages: [{ agent: "bot", text: "Hello" }] });
+    const chips = wrapper.findAll(".chip");
+    expect(chips.map((c) => c.text())).toEqual(suggestions);
+    await chips[0].trigger("click");
+    expect(wrapper.emitted("send")).toEqual([["What causes migraine?"]]);
+    await wrapper.setProps({ messages: [{ agent: "bot", text: "Hello" }, { agent: "user", text: "q" }] });
+    expect(wrapper.find(".chip").exists()).toBe(false);
+  });
+
+  it("does not send an example question while a reply is pending", async () => {
+    const wrapper = panel({ busy: true, suggestions: ["What causes migraine?"], messages: [] });
+    await wrapper.find(".chip").trigger("click");
+    expect(wrapper.emitted("send")).toBeUndefined();
+  });
+
+  it("shows how many characters are used", async () => {
+    const wrapper = panel();
+    await wrapper.find("textarea").setValue("abc");
+    expect(wrapper.find(".count").text()).toBe("3/500");
   });
 
   it("renders message text literally, with speaker labels", () => {

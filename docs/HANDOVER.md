@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Professional UI redesign (D-014, FEATURE-003): clinical light and dark themes, example questions, typing indicator, styled errors, About card with graph counts.
 - Removed the API token (D-013): no token field or `CHATBOT_API_TOKEN`; nginx rate-limits the API in Docker (FEATURE-002).
 - Shared agent setup: `AGENTS.md` is the single instruction file for all coding agents (Codex reads it natively); `CLAUDE.md` imports it and the new shared `MEMORY.md` (D-012).
 - Adopted the "Defend What You Ship" field guide: created this `docs/` set (decisions, alternatives, architecture, flow, constraints, threat, failure, data, testing, rollback, assumptions, dependencies, defense brief, one bug and one feature trace).
@@ -18,7 +19,6 @@ In progress:
 
 Broken or risky:
 - `medical.csv` and `questions.json` have unknown redistribution rights (D30, ASSUMPTIONS.md A-01, A-02).
-- The automerge path triggered by finished CI runs has not run on a real PR yet (A-07).
 - Graph and dictionary publication are not one unit (D35).
 
 Next:

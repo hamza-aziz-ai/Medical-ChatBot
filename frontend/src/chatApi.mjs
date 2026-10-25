@@ -51,7 +51,8 @@ export async function sendMessage(state, http, baseUrl, value) {
     });
     state.messages.push({ agent: "bot", type: "text", text: res.data.message });
   } catch (error) {
-    state.messages.push({ agent: "bot", type: "text", text: errorText(error) });
+    // type "error" lets the page style failures differently from answers.
+    state.messages.push({ agent: "bot", type: "error", text: errorText(error) });
   } finally {
     state.botTyping = false;
   }

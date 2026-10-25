@@ -164,3 +164,17 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** The real risks (flooding, abuse of a public endpoint) are not addressed by a shared secret every user must know; a rate limit addresses flooding, and the API is not public.
 - **Trade-off:** Anyone on this machine can query the API. Exposing it beyond the machine now requires adding real authentication and HTTPS first (CONSTRAINTS.md).
 - **Revisit if:** the bot is hosted for other people.
+
+## D-014: A clinical, self-contained UI design
+
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5)
+- **Context:** The owner asked for a more professional UI.
+- **Options:**
+  1. hand-written CSS with design tokens and system fonts
+  2. a UI framework or component library
+  3. web fonts and icon packs from a CDN
+- **Chosen:** 1
+- **Why:** No new dependency and no external request (privacy, and the CSP only allows the page's own origin); the chat page is small enough that a library adds more than it saves.
+- **Trade-off:** We maintain the styles ourselves; the look depends on the user's system font.
+- **Revisit if:** the UI grows into several pages or needs complex components.
+

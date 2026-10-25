@@ -8,8 +8,9 @@
 
 **Status.** Shipped in PR #15 (`b59b8ff`).
 
-**Open questions.** The CI-triggered path has not run on a real pull request yet (ASSUMPTIONS.md A-07). Merges made with the workflow token do not re-run the `main` push workflows.
+**Open questions.** None open. Merges made with the workflow token do not re-run the `main` push workflows.
 
 ## Log
 
 - 2026-10-25: Built and merged; PR #15 merged itself through the no-CI path about a minute after opening.
+- 2026-10-25: The CI-triggered path verified on PR #21: the pull_request run waited out, and the run triggered by the finished smoke test merged it.
