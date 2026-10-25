@@ -13,6 +13,16 @@ How to undo a change that breaks something.
 2. Revert it on a branch: `git revert -m 1 <merge-commit>`, push, and open a PR. CI runs, and `automerge` merges the revert when it passes.
 3. Never force-push `main` or delete a tag.
 
+## A release that stopped part-way
+
+`autorelease.yml` stops, and changes nothing, when the newest version tag on `main` is not fully published. Each case names its fix in the run log.
+
+1. **A draft release exists.** Check that the draft's `manifest.json` names the tag's commit and the image digests from the run's smoke test. If they match, add any missing version image tag (`docker buildx imagetools create -t ghcr.io/hamza-aziz-ai/medical-chatbot-<api|web>:<version> <image>@<digest>`) and publish the draft (`gh release edit <tag> --draft=false`). If they do not match, delete the draft; the tag stays and its version is never reused.
+2. **Version images but no release.** Leave the tag and the images untouched. Publish the next unused version by hand: run `release.yml` from the Actions tab with `tag` set to that version and `sha` set to a commit on `main`. Every gate runs, and automation resumes once it is published.
+3. **A tag with no release and no version images** (a run died between creating the tag and drafting) needs nothing: the next run skips that version.
+
+Staging images named `sha-<commit>-<run>-<attempt>` from failed attempts are never published and may be deleted from the package settings.
+
 ## Running stack (Docker)
 
 1. Point the stack at the last good images: copy `API_IMAGE` and `WEB_IMAGE` from that release's `release.env` into `.env`, then `docker compose up -d`.

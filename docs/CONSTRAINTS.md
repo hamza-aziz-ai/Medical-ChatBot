@@ -17,7 +17,7 @@ Lane A today: a local student prototype with no real users. The owner asked for 
 - Never delete, skip or loosen a test, the evaluation baseline or an integrity check to make CI pass. Change `eval/baseline.json` or `eval/cases.jsonl` only in a reviewed, explained commit.
 - Never hand-edit `api/data/medical.csv` to fix data; the importer quarantines bad fields and records why.
 - Never run the live tests or the importer against a database that is not disposable or backed up; the live tests delete all data.
-- Never force-push `main`, rewrite published history, overwrite a published release or image tag, or push a release tag unless the owner asks.
+- Never force-push `main`, rewrite published history, overwrite a published release or image tag, or push a release tag by hand unless the owner asks. Release tags come only from `release.yml` after every gate passes (D-019).
 - Never touch the GitHub profile repository `hamza-aziz-ai/hamza-aziz-ai` or LinkedIn from this project.
 
 ## Always
@@ -34,7 +34,7 @@ Lane A today: a local student prototype with no real users. The owner asked for 
 - `api/main.py`: authentication, CORS, error handling, logging of requests.
 - `api/build_medicalgraph.py`: ownership marker, refusal guards, snapshot replacement, quarantine rules.
 - `scripts/evaluate_kg.py`, `eval/`: the MLOps gate.
-- `.github/workflows/release.yml` and `automerge.yml`: publication and merging.
+- `.github/workflows/release.yml`, `autorelease.yml` and `automerge.yml`: publication, release planning and merging.
 - `docker/nginx.conf`: request logging.
 
 ## AI allow policy (habit 22)

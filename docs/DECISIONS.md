@@ -230,3 +230,17 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** One change in the shared classifier fixes answers, suggestion chips, the evaluator and the chip check together. Masking with `#` keeps `check_words` unchanged and stops a keyword phrase bridging a name. Option 2 gives the same result with more code; option 3 would stop "who gets infections?" style questions from being recognised as unsupported. The exception keeps today's answer for "what is the phenomenon of asthma", the only name equal to a keyword.
 - **Trade-off:** On the template grid (every disease and symptom times the 7 suggestion questions), exactly 21 classifications change, all for the 3 affected diseases; arbitrary questions were not measured exhaustively.
 - **Revisit if:** a name equal to a keyword is added, or keywords move to a learned intent model.
+
+## D-019: Release automatically once every gate passes
+
+- **Date:** 2026-10-25; **Model:** Claude Opus 5.5 (claude-opus-5-5); design agreed with Codex in council (7 exchanges)
+- **Context:** The owner asked for releases without pushing tags by hand. Merges by `automerge.yml` and tags pushed with the workflow token start no other workflows (GitHub runs only `workflow_dispatch` and `repository_dispatch` from that token).
+- **Options:**
+  1. tag on every merge, then dispatch `release.yml`
+  2. a planner that releases the current state of `main`, calling `release.yml`, which tags only after its gates pass
+  3. keep manual tags
+- **Chosen:** 2. `autorelease.yml` runs `scripts/next_release.py` and calls `release.yml` with a new `tag` and `sha`; the tag is created in `publish`, after the gates and the smoke test.
+- **Why:** A failed release consumes no version and leaves nothing half-tagged. The planner is state-based (main versus the last published release), so duplicate or replaced runs are harmless. Images are pushed under tags unique to each attempt, so retries never overwrite (CONSTRAINTS.md). An incomplete publication stops automation until the owner acts (ROLLBACK.md).
+- **Trade-off:** Releases are batched: one release covers every shippable merge since the last published one, and a merge that lands during a running release is included in the next. Patch by default; `release:minor` or `release:major` labels, or the manual `bump` input, choose more.
+- **Revisit if:** the owner wants exactly one release per merge, or a hosted deployment is added.
+- **Rollout:** this change adds manual starts only; v1.1.0 is cut through it; the trigger after automerge is enabled separately once the owner accepts batching. This is the owner's standing authorization for the publisher to create release tags.

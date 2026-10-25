@@ -1,14 +1,28 @@
 name: release
 
-# Continuous delivery: runs only when the owner pushes a stable version tag (vX.Y.Z) that is on main,
-# or re-runs one by hand for an existing tag. Nothing is deployed to a host.
+# Continuous delivery: publishes a stable version (vX.Y.Z) of a commit on main. Nothing is deployed to a host.
+# - An existing tag: pushed by the owner, or re-run by hand with `tag` only.
+# - A new version: `tag` plus `sha`, called by autorelease.yml or run by hand (D-019). The tag is
+#   created in publish, only after every gate and the smoke test have passed.
 on:
   push:
     tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing stable version tag on main, for example v1.0.0
+        description: Stable version tag, for example v1.0.0 (an existing tag, or a new one with sha)
+        required: true
+      sha:
+        description: For a new version only, the commit on main to release
+        required: false
+        default: ""
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+      sha:
+        type: string
         required: true
 
 permissions:
@@ -32,6 +46,7 @@ jobs:
       tag: ${{ steps.tag.outputs.tag }}
       version: ${{ steps.tag.outputs.version }}
       sha: ${{ steps.tag.outputs.sha }}
+      new: ${{ steps.tag.outputs.new }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
@@ -39,11 +54,20 @@ jobs:
       - id: tag
         env:
           TAG: ${{ inputs.tag || github.ref_name }}
+          NEW_SHA: ${{ inputs.sha }}
           GH_TOKEN: ${{ github.token }}
         run: |
           [[ "$TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || { echo "::error::$TAG is not a stable version tag (vX.Y.Z)"; exit 1; }
-          git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || { echo "::error::Tag $TAG does not exist"; exit 1; }
-          sha=$(git rev-list -n 1 "$TAG")
+          if [ -n "$NEW_SHA" ]; then
+            # A new version: the tag must not exist yet; publish creates it.
+            [[ "$NEW_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::sha must be a full commit id"; exit 1; }
+            if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then echo "::error::Tag $TAG already exists"; exit 1; fi
+            git cat-file -e "$NEW_SHA^{commit}" || { echo "::error::$NEW_SHA is not a commit"; exit 1; }
+            sha=$NEW_SHA; new=true
+          else
+            git rev-parse -q --verify "refs/tags/$TAG" >/dev/null || { echo "::error::Tag $TAG does not exist"; exit 1; }
+            sha=$(git rev-list -n 1 "$TAG"); new=false
+          fi
           git merge-base --is-ancestor "$sha" origin/main || { echo "::error::$TAG ($sha) is not on main"; exit 1; }
           if gh release view "$TAG" >/dev/null 2>&1; then echo "::error::Release $TAG already exists"; exit 1; fi
           echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin >/dev/null
@@ -52,7 +76,7 @@ jobs:
               echo "::error::$IMAGE_PREFIX-$image:${TAG#v} is already published"; exit 1
             fi
           done
-          { echo "tag=$TAG"; echo "version=${TAG#v}"; echo "sha=$sha"; } >> "$GITHUB_OUTPUT"
+          { echo "tag=$TAG"; echo "version=${TAG#v}"; echo "sha=$sha"; echo "new=$new"; } >> "$GITHUB_OUTPUT"
 
   backend:
     needs: resolve
@@ -92,14 +116,15 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
-      # Pushed under the commit tag only; the version tag is added after the smoke test passes.
+      # Pushed under a tag unique to this attempt, so a retry never overwrites an earlier push;
+      # the version tag is added after the smoke test passes.
       - id: api
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: docker/api.Dockerfile
           push: true
-          tags: ${{ env.IMAGE_PREFIX }}-api:sha-${{ needs.resolve.outputs.sha }}
+          tags: ${{ env.IMAGE_PREFIX }}-api:sha-${{ needs.resolve.outputs.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           provenance: mode=max
           sbom: true
       - id: web
@@ -108,7 +133,7 @@ jobs:
           context: .
           file: docker/web.Dockerfile
           push: true
-          tags: ${{ env.IMAGE_PREFIX }}-web:sha-${{ needs.resolve.outputs.sha }}
+          tags: ${{ env.IMAGE_PREFIX }}-web:sha-${{ needs.resolve.outputs.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           provenance: mode=max
           sbom: true
 
@@ -177,6 +202,9 @@ jobs:
             --slurpfile report dist/eval-report.json \
             '{tag: $tag, commit: $sha, images: {api: $api, web: $web}, source_sha256: $report[0].source_sha256, evaluation_passed: $report[0].passed}' \
             > dist/manifest.json
+      - name: Create the version tag
+        if: needs.resolve.outputs.new == 'true'
+        run: gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$TAG" -f sha="$SHA" >/dev/null
       - name: Draft the release
         run: gh release create "$TAG" --draft --verify-tag --generate-notes --title "$TAG" dist/*
       - name: Add the version tag to the tested images
