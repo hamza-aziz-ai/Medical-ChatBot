@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 to 2026-10-26 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- The owner's stack runs v1.1.9 with the language model on: deployed by hand (the compose change), re-enrolled for automatic updates, `/api/health` ok, and a paraphrase routed by the model in 1.08 s.
 - Step 4, by the owner's decision (D-027, FEATURE-011): the language model now reads questions at runtime (on by default in compose), with the rules as fallback, local confirmations first, refusals final, budgets and a breaker. Checked on a throwaway stack with the real model.
 - Step 3 run on `gpt-oss:120b-cloud`: +36 points of understanding, but it failed the safety, reliability and latency gates, so no runtime change (D-026 outcome).
 - Step 3 set (150 scenarios, frozen) and rule baseline: 68.9% complete frames held out, 12 wrong-subject answers.
@@ -45,7 +46,6 @@ Broken or risky:
 
 Next:
 - Language model: meet the D-026 bar for the runtime configuration with a fresh holdout (the owner's plan), and check whether the attempt budgets (6 per minute per address) are too tight in use.
-- Deploy: the compose change means the updater waits; the owner updates the stack by hand once and re-enrols (D-021).
 - Optional: review `pilot-data/candidates.json` (local, unreviewed) and record evidence-backed decisions per candidate (equivalent, broader, narrower, related, rejected, uncertain) before any sourced dataset (D-011); rights and evaluation gates still apply. 389 names have no lexical lead and need another approach, likely manual.
 
 Do not touch:
