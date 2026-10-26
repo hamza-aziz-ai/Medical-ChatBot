@@ -21,6 +21,10 @@ frontend/src/components/ChatPanel.vue  submit() / ask(chip)   typed question, or
        unsupported intent -> abstain   no database call
        department only    -> abstain   no database call
        disease and symptom -> clarify  options re-ask the original question with accumulated choices
+       understanding.route()           D-027, when on: the typed names (or the topic, after is_follow_up) as candidates;
+                                       budget and breaker allow -> Ollama /api/chat (2 s total); a valid answer -> one fixed
+                                       query per (intent, subject) pair; a valid refusal or clarification is final;
+                                       anything else -> the rules below, unchanged
   -> api/question_parser.py            parser_main() -> sql_transfer()   template + {name, limit: 20}
   -> api/answer_searcher.py            search_structured()    execute_query, READ routing, query timeout (5 s default); lead, items, note per subject
        no rows -> abstain (no_facts)

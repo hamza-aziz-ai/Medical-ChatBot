@@ -4,7 +4,7 @@ Instructions for every coding agent working in this repository (Codex, Claude Co
 
 ## Project
 
-Mr. Healthcare: a rule-based medical question-answering chatbot (B.Tech project). Vue 3 + Vite frontend (`frontend/`), Flask API (`api/`), Neo4j knowledge graph built from `api/data/medical.csv` by `api/build_medicalgraph.py`. No machine-learning model at runtime; unanswerable questions get an explicit abstention. Map: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Setup and commands: [README.md](README.md). Checks and expected output: [docs/TESTING.md](docs/TESTING.md).
+Mr. Healthcare: a rule-based medical question-answering chatbot (B.Tech project). Vue 3 + Vite frontend (`frontend/`), Flask API (`api/`), Neo4j knowledge graph built from `api/data/medical.csv` by `api/build_medicalgraph.py`. A language model (`gpt-oss:120b-cloud` through Ollama) may read questions at runtime but never answers them; answers come only from the graph, and unanswerable questions get an explicit abstention (D-027). Map: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Setup and commands: [README.md](README.md). Checks and expected output: [docs/TESTING.md](docs/TESTING.md).
 
 ## Defend What You Ship
 

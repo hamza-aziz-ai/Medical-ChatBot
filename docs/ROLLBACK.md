@@ -32,6 +32,11 @@ Releases go in merge order, so a merge whose release fails blocks the merges aft
 1. Point the stack at the last good images: copy `API_IMAGE` and `WEB_IMAGE` from that release's `release.env` into `.env`, then `docker compose up -d`.
 2. Check the page and one question (see TESTING.md, manual path).
 
+## The language model (D-027)
+
+1. Set `LLM_UNDERSTANDING=off` in `.env` (or `OLLAMA_URL`/`LLM_MODEL` to change where it goes), then recreate the API: `docker compose up -d api`. Questions are then answered by the rules alone; nothing else changes.
+2. Check one paraphrase: "Why this answer?" no longer says a language model read it.
+
 ## The stack updater
 
 Verified by a drill on 2026-10-26 (`python scripts/rollback_drill.py`, a throwaway stack): a failure after the graph changed, and the updater process dying mid-update, both ended with the backup and the previous release restored. Run the drill again after changing `update_stack.py`.

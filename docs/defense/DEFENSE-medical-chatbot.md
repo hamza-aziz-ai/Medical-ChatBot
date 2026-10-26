@@ -11,6 +11,7 @@
 - No authentication over a shared token or accounts: the API is read-only over public data and only listens on this machine, so a token protected nothing and added friction; nginx rate-limits floods instead.
 - Native path filters over a CI orchestrator: nothing runs for docs-only changes.
 - Guided conversation without a language model over LLM-written answers: every answer stays a graph fact, and the API stays stateless because the page sends the topic back (D-015).
+- A language model that only routes over one that answers (D-026, D-027): it chooses among names the rules found, so every answer is still a graph fact; it reads paraphrases and negation far better, and any failure falls back to the rules. The owner integrated it before it met the pre-registered bar, accepting that questions go to Ollama's cloud.
 - Suggestions from a table the importer writes over a database lookup per request: no extra query or timeout on the answer path (D-016).
 - Sourced aliases and confirmed spelling suggestions over silent fuzzy matching: a near-miss can be a different disease (D-017).
 - One release per merge, tagged only after every gate, over manual tags or tag-then-test: a failed release uses up no version, and releases stay in merge order (D-019, D-020).
