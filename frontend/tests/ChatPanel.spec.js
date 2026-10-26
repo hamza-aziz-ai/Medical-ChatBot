@@ -102,6 +102,16 @@ describe("ChatPanel", () => {
     expect(wrapper.find(".note").text()).toBe("This is not medical advice.");
   });
 
+  it("renders long answers as headed sections with numbered points", () => {
+    const wrapper = panel({ messages: [{ agent: "bot", type: "answer", text: "t", answers: [{ intent: "disease_prevention", subject: "asthma", text: "t",
+      lead: "Precautions for asthma include:", sections: [
+        { heading: "Daily prevention", paragraph: null, items: ["Avoid allergens.", "No pets indoors."] },
+        { heading: null, paragraph: "See a doctor.", items: [] }] }] }] });
+    expect(wrapper.find(".section-heading").text()).toBe("Daily prevention");
+    expect(wrapper.findAll("ol.items li").map((li) => li.text())).toEqual(["Avoid allergens.", "No pets indoors."]);
+    expect(wrapper.text()).toContain("See a doctor.");
+  });
+
   it("offers the latest reply's options and sends their question, choices and topic", async () => {
     const options = [
       { label: "anemia as a disease", question: "q", selections: [{ name: "anemia", type: "disease" }] },

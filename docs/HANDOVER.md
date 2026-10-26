@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 to 2026-10-26 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Long answers show their own sections and numbered points, every word kept (D-028, FEATURE-012).
 - The owner's stack runs v1.1.9 with the language model on: deployed by hand (the compose change), re-enrolled for automatic updates, `/api/health` ok, and a paraphrase routed by the model in 1.08 s.
 - Step 4, by the owner's decision (D-027, FEATURE-011): the language model now reads questions at runtime (on by default in compose), with the rules as fallback, local confirmations first, refusals final, budgets and a breaker. Checked on a throwaway stack with the real model.
 - Step 3 run on `gpt-oss:120b-cloud`: +36 points of understanding, but it failed the safety, reliability and latency gates, so no runtime change (D-026 outcome).
@@ -45,6 +46,7 @@ Broken or risky:
 - The language model runs before it met its pre-registered bar (D-027, the owner's decision): real questions go to Ollama's cloud, wrong interpretations remain possible, and other requests wait behind a model call of up to 2 s.
 
 Next:
+- Answers: design language-model rewording (owner's choice: after the formatter, with safeguards; council first).
 - Language model: meet the D-026 bar for the runtime configuration with a fresh holdout (the owner's plan), and check whether the attempt budgets (6 per minute per address) are too tight in use.
 - Optional: review `pilot-data/candidates.json` (local, unreviewed) and record evidence-backed decisions per candidate (equivalent, broader, narrower, related, rejected, uncertain) before any sourced dataset (D-011); rights and evaluation gates still apply. 389 names have no lexical lead and need another approach, likely manual.
 

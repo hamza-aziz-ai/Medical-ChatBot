@@ -22,6 +22,7 @@ logger = logging.getLogger("app_logging")
 MODULES = frozenset({
     "main", "chatbot_graph_logic", "question_classifier", "question_parser",
     "answer_searcher", "database", "terms", "build_medicalgraph", "app_logging", "update_stack", "understanding",
+    "text_format",
 })
 
 DEFAULT_LOG_DIR = Path(__file__).resolve().parents[1] / "logs"
