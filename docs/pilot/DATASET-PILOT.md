@@ -6,15 +6,15 @@ Measured 2026-10-25 20:06 UTC at commit `1a8a2112bc3a` by `scripts/dataset_pilot
 
 **What it does not show.** A matched name is lexical overlap, not proof of the same condition. Neither source is shown to answer our seven question types, and MedlinePlus summaries are not established as clinically reviewed (A-08). "Unmatched" means this method found no match. The CSV's own rights (A-01) are unaffected.
 
-| Source | Diseases matched |
-|---|---|
-| MedlinePlus | 83 (12.6%) |
-| Disease Ontology | 188 (28.6%) |
-| Either | 207 (31.5%) |
-| Both | 64 (9.7%) |
-| Neither | 451 (68.5%) |
-| Matched more than one MedlinePlus topic | 0 |
-| Matched more than one DOID term | 1 |
+| Source                                  | Diseases matched |
+|-----------------------------------------|------------------|
+| MedlinePlus                             | 83 (12.6%)       |
+| Disease Ontology                        | 188 (28.6%)      |
+| Either                                  | 207 (31.5%)      |
+| Both                                    | 64 (9.7%)        |
+| Neither                                 | 451 (68.5%)      |
+| Matched more than one MedlinePlus topic | 0                |
+| Matched more than one DOID term         | 1                |
 
 **Sources.**
 
@@ -29,19 +29,19 @@ Retrieved 2026-10-25 21:37 UTC at commit `dc13ebe909c1` by `scripts/dataset_pilo
 
 **What this is.** Leads for the 451 names with no exact match, for the owner to review. Every candidate is unreviewed lexical retrieval: it may name a different condition, and a mistranslated name may get none. Nothing here is added to the matches above or counted as coverage. The methods' order only sorts each list; it is not clinical confidence. The per-name candidates are in `pilot-data/candidates.json`, which is not committed.
 
-| Names | Count |
-|---|---|
-| Searched (no exact match above) | 451 |
-| With at least one candidate | 62 |
-| With none | 389 |
-| With candidates for more than one concept | 17 |
+| Names                                     | Count |
+|-------------------------------------------|-------|
+| Searched (no exact match above)           | 451   |
+| With at least one candidate               | 62    |
+| With none                                 | 389   |
+| With candidates for more than one concept | 17    |
 
-| Method | What it relaxes | Names with a candidate from it (a name can count more than once) | Names whose first-listed candidate comes from it |
-|---|---|---|---|
-| `punctuation_relaxed` | punctuation and hyphens read as spaces | 1 | 1 |
-| `token_order_ignored` | also ignores word order, which can change the condition | 0 | 0 |
-| `doid_scoped` | DOID RELATED, BROAD or NARROW synonyms; the scope is DOID's annotation, not a relation to our name | 0 | 0 |
-| `qualifier_removed` | one leading qualifier (acute, chronic, idiopathic, infantile, neonatal, pediatric, primary, secondary, simple) removed; no relationship asserted | 27 | 27 |
-| `similar` | difflib ratio of at least 0.88, at most 3 concepts, only when nothing else matched | 34 | 34 |
+| Method                | What it relaxes                                                                                                                                  | Names with a candidate from it (a name can count more than once) | Names whose first-listed candidate comes from it |
+|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|--------------------------------------------------|
+| `punctuation_relaxed` | punctuation and hyphens read as spaces                                                                                                           | 1                                                                | 1                                                |
+| `token_order_ignored` | also ignores word order, which can change the condition                                                                                          | 0                                                                | 0                                                |
+| `doid_scoped`         | DOID RELATED, BROAD or NARROW synonyms; the scope is DOID's annotation, not a relation to our name                                               | 0                                                                | 0                                                |
+| `qualifier_removed`   | one leading qualifier (acute, chronic, idiopathic, infantile, neonatal, pediatric, primary, secondary, simple) removed; no relationship asserted | 27                                                               | 27                                               |
+| `similar`             | difflib ratio of at least 0.88, at most 3 concepts, only when nothing else matched                                                               | 34                                                               | 34                                               |
 
 At a ratio of at least 0.93, 16 names have a `similar` candidate; 4 names had more than 3 similar concepts, and the rest are not listed. These thresholds are uncalibrated, so the counts are candidate volumes, not precision.
