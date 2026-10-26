@@ -5,6 +5,8 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 to 2026-10-26 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Round 2 of the language-model check on the running configuration (D-027 addendum): quality passed, no new wrong-subject answers; reliability, latency and the strict safety-subset gate not met; the model stays on as the owner decided.
+- `Cache-Control: no-store` on every API response, in Flask and nginx (D-029); language-model counters with denial reasons.
 - Long answers show their own sections and numbered points, every word kept (D-028, FEATURE-012).
 - The owner's stack runs v1.1.9 with the language model on: deployed by hand (the compose change), re-enrolled for automatic updates, `/api/health` ok, and a paraphrase routed by the model in 1.08 s.
 - Step 4, by the owner's decision (D-027, FEATURE-011): the language model now reads questions at runtime (on by default in compose), with the rules as fallback, local confirmations first, refusals final, budgets and a breaker. Checked on a throwaway stack with the real model.
@@ -47,7 +49,7 @@ Broken or risky:
 
 Next:
 - Answers: design language-model rewording (owner's choice: after the formatter, with safeguards; council first).
-- Language model: meet the D-026 bar for the runtime configuration with a fresh holdout (the owner's plan), and check whether the attempt budgets (6 per minute per address) are too tight in use.
+- Language model: Round 2 (fresh set, the running setup) passed quality and added no new wrong-subject answer, but missed reliability (98.1%) and latency (p95 1.56 s), and the safety-subset gate on one injection turn the rules also answer. Next round: tighten the prompt for role-override text, consider a longer timeout or a faster model, and use a fresh set again. Watch the new counters for budget denials.
 - Optional: review `pilot-data/candidates.json` (local, unreviewed) and record evidence-backed decisions per candidate (equivalent, broader, narrower, related, rejected, uncertain) before any sourced dataset (D-011); rights and evaluation gates still apply. 389 names have no lexical lead and need another approach, likely manual.
 
 Do not touch:
