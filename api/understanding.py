@@ -6,6 +6,7 @@ reaches the user: answers still come only from the fixed graph queries. Any unus
 admission denial or open breaker means the caller uses the unchanged rules. Questions, names and model replies are
 never logged.
 """
+import atexit
 import hashlib
 import http.client
 import json
@@ -36,6 +37,7 @@ CLIENT_BURST, CLIENT_PER_MINUTE = 2, 6
 GLOBAL_BURST, GLOBAL_PER_MINUTE = 2, 12
 MAX_CLIENTS = 10_000
 BREAKER_FAILURES, BREAKER_COOLDOWN_SECONDS = 3, 60
+SUMMARY_SECONDS = 300  # a cumulative counts line at most this often, and only when there is activity
 
 SYSTEM_PROMPT = """You route questions for a medical question-answering bot. You never answer medical questions and you never invent subjects.
 
@@ -177,6 +179,7 @@ class Admission:
         entry[0], entry[1] = min(burst, entry[0] + (now - entry[1]) * per_minute / 60), now
 
     def admit(self, client):
+        """None when admitted (and charged), else why not: "table_full", "client" or "global"."""
         with self.lock:
             now = self.clock()
             self.refill(self.overall, now, GLOBAL_BURST, GLOBAL_PER_MINUTE)
@@ -188,14 +191,16 @@ class Admission:
                         if value[0] >= CLIENT_BURST:
                             del self.clients[key]
                     if len(self.clients) >= MAX_CLIENTS:
-                        return False
+                        return "table_full"
                 entry = self.clients[client] = [float(CLIENT_BURST), now]
             self.refill(entry, now, CLIENT_BURST, CLIENT_PER_MINUTE)
-            if entry[0] < 1 or self.overall[0] < 1:
-                return False
+            if entry[0] < 1:
+                return "client"
+            if self.overall[0] < 1:
+                return "global"
             entry[0] -= 1
             self.overall[0] -= 1
-            return True
+            return None
 
 
 class Breaker:
@@ -235,25 +240,77 @@ class Breaker:
                     logger.warning("Language model breaker opened after %d failures", self.failures)
 
 
+class Counters:
+    """Process-local outcome counts (no questions, names or addresses), reset on restart. A cumulative summary goes
+    to the log at most every SUMMARY_SECONDS when something happened, plus once at shutdown, best effort."""
+
+    KEYS = ("attempts", "routed", "unusable", "failed_timeout", "failed_http", "failed_transport", "failed_other",
+            "denied_client", "denied_global", "denied_table_full", "breaker_skips")
+
+    def __init__(self, clock=time.monotonic):
+        self.clock, self.lock = clock, threading.Lock()
+        self.counts = dict.fromkeys(self.KEYS, 0)
+        self.last_summary, self.dirty = clock(), False
+
+    def add(self, key):
+        with self.lock:
+            self.counts[key] += 1
+            self.dirty = True
+            due = self.clock() - self.last_summary >= SUMMARY_SECONDS
+            if due:
+                self.last_summary, self.dirty = self.clock(), False
+                line = self.line()
+        if due:
+            logger.info("Language model counts since start: %s", line)
+
+    def line(self):
+        return ", ".join(f"{key} {value}" for key, value in self.counts.items())
+
+    def snapshot(self):
+        with self.lock:
+            return dict(self.counts)
+
+    def final(self):
+        with self.lock:
+            if self.dirty:
+                logger.info("Language model counts at shutdown: %s", self.line())
+
+
+def failure_key(error):
+    """A fixed category for a transport-side failure; never the exception's own text."""
+    text = str(error)
+    if isinstance(error, ModelError):
+        return "failed_timeout" if text == "timeout" else "failed_http" if text.startswith("HTTP ") else "failed_other"
+    return "failed_transport"
+
+
 class Understanding:
-    def __init__(self, enabled=None, url=None, model=None, transport=None, clock=time.monotonic):
+    def __init__(self, enabled=None, url=None, model=None, transport=None, clock=time.monotonic, admission=None, breaker=None):
         self.enabled = os.environ.get("LLM_UNDERSTANDING", "off") == "on" if enabled is None else enabled
         self.url = url or os.environ.get("OLLAMA_URL", DEFAULT_URL)
         self.model = model or os.environ.get("LLM_MODEL", DEFAULT_MODEL)
         self.transport, self.clock = transport or chat, clock
-        self.admission, self.breaker = Admission(clock), Breaker(clock)
+        # Production always builds its own budgets and breaker; only the offline harness passes others (D-029 round 2).
+        self.admission, self.breaker = admission or Admission(clock), breaker or Breaker(clock)
+        self.counters = Counters(clock)
+        if self.enabled:
+            atexit.register(self.counters.final)
 
     def route(self, question, candidates, client=None, ambiguous_alias=False):
         """(decision, [(intent, candidate)]) from a valid reply, or None: the caller then uses the rules."""
         if not self.enabled or not candidates:
             return None
         if not self.breaker.allow():
+            self.counters.add("breaker_skips")
             logger.info("Language model skipped: breaker open")
             return None
-        if not self.admission.admit(client or "internal"):
+        denied = self.admission.admit(client or "internal")
+        if denied:
             self.breaker.cancel()
-            logger.info("Language model skipped: over the attempt budget")
+            self.counters.add(f"denied_{denied}")
+            logger.info("Language model skipped: over the %s attempt budget", denied)
             return None
+        self.counters.add("attempts")
         message = json.dumps({"question": question, "candidates": candidates}, ensure_ascii=False)
         started = self.clock()
         try:
@@ -261,17 +318,21 @@ class Understanding:
                                         self.url, self.model)
         except ModelError as error:
             self.breaker.record(False)
+            self.counters.add(failure_key(error))
             logger.info("Language model failed: %s after %d ms", error, 1000 * (self.clock() - started))
             return None
         except (OSError, http.client.HTTPException) as error:
             self.breaker.record(False)
+            self.counters.add(failure_key(error))
             logger.info("Language model failed: %s after %d ms", type(error).__name__, 1000 * (self.clock() - started))
             return None
         self.breaker.record(True)
         try:
             routed = validate(content, candidates, ambiguous_alias)
         except ModelError as error:
+            self.counters.add("unusable")
             logger.info("Language model reply unusable: %s after %d ms", error, 1000 * (self.clock() - started))
             return None
+        self.counters.add("routed")
         logger.info("Language model routed: %s with %d pair(s) in %d ms", routed[0], len(routed[1]), 1000 * (self.clock() - started))
         return routed

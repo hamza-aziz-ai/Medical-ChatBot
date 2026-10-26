@@ -137,15 +137,15 @@ def test_nothing_from_the_question_or_the_model_reaches_the_logs(caplog):
 def test_attempts_are_budgeted_per_client_and_overall_and_debtors_are_not_forgotten(monkeypatch):
     clock = Clock()
     admission = un.Admission(clock)
-    assert [admission.admit("a") for _ in range(3)] == [True, True, False]       # a burst of two
-    assert not admission.admit("b")                                              # b is new, but the overall burst is spent
+    assert [admission.admit("a") for _ in range(3)] == [None, None, "client"]    # a burst of two
+    assert admission.admit("b") == "global"                                      # b is new, but the overall burst is spent
     clock.now += 10                                                              # six per minute: one more for a
-    assert admission.admit("a") and not admission.admit("a")
+    assert admission.admit("a") is None and admission.admit("a") == "client"
     clock.now += 60
     monkeypatch.setattr(un, "MAX_CLIENTS", 1)
     full = un.Admission(clock)
     full.admit("a")                                                              # a now owes
-    assert not full.admit("b") and "a" in full.clients                           # no slot: b uses the rules
+    assert full.admit("b") == "table_full" and "a" in full.clients               # no slot: b uses the rules
 
 
 def test_the_breaker_opens_after_three_failures_and_lets_one_probe_through():
@@ -225,3 +225,63 @@ def test_compose_turns_it_on_and_every_offline_entry_point_turns_it_off():
     assert "LLM_UNDERSTANDING: ${LLM_UNDERSTANDING:-on}" in (root / "compose.yaml").read_text(encoding="utf-8")
     assert "export LLM_UNDERSTANDING=off" in (root / "scripts" / "compose_smoke.sh").read_text(encoding="utf-8")
     assert 'os.environ["LLM_UNDERSTANDING"] = "off"' in (root / "scripts" / "evaluate_kg.py").read_text(encoding="utf-8")
+
+
+class PermitAll:
+    def admit(self, client):
+        return None
+
+
+class NeverOpen:
+    def allow(self):
+        return True
+
+    def cancel(self):
+        pass
+
+    def record(self, ok):
+        pass
+
+
+CANDIDATES = [{"id": "e1", "name": "asthma", "type": "disease", "source": "mention"}]
+
+
+def test_outcomes_are_counted_in_fixed_categories_and_summarised_without_user_data(caplog):
+    clock = Clock()
+    caplog.set_level("INFO")
+    understanding = un.Understanding(enabled=True, clock=clock, admission=PermitAll(), breaker=NeverOpen(),
+                                     transport=Transport('{"decision": "answer", "intents": [["disease_cause", "e1"]]}'))
+    understanding.route("zzquestion", CANDIDATES, client="203.0.113.9")
+    for transport in (Transport("not json"), Transport(error=un.ModelError("timeout")), Transport(error=un.ModelError("HTTP 500")),
+                      Transport(error=OSError("refused: zzdetail"))):
+        understanding.transport = transport
+        understanding.route("zzquestion", CANDIDATES, client="a")
+    counts = understanding.counters.snapshot()
+    assert {k: counts[k] for k in ("attempts", "routed", "unusable", "failed_timeout", "failed_http", "failed_transport")} == {
+        "attempts": 5, "routed": 1, "unusable": 1, "failed_timeout": 1, "failed_http": 1, "failed_transport": 1}
+    assert "counts since start" not in caplog.text                              # not due yet
+    clock.now += un.SUMMARY_SECONDS
+    understanding.route("zzquestion", CANDIDATES, client="a")
+    assert caplog.text.count("counts since start") == 1
+    assert "zzquestion" not in caplog.text and "203.0.113.9" not in caplog.text and "zzdetail" not in caplog.text
+
+
+def test_denials_are_counted_where_they_happen():
+    understanding = un.Understanding(enabled=True, clock=Clock(), transport=Transport('{"decision": "unsupported", "intents": []}'))
+    for client in ("a", "a", "a", "b"):
+        understanding.route("q", CANDIDATES, client=client)
+    counts = understanding.counters.snapshot()
+    assert counts["attempts"] == 2 and counts["denied_client"] == 1 and counts["denied_global"] == 1
+    broken = un.Understanding(enabled=True, clock=Clock(), admission=PermitAll(), transport=Transport(error=OSError("down")))
+    for _ in range(5):
+        broken.route("q", CANDIDATES, client="a")
+    assert broken.counters.snapshot()["breaker_skips"] == 2                     # open after three failures
+
+
+def test_the_harness_alone_can_replace_the_budget_and_breaker():
+    understanding = un.Understanding(enabled=True, transport=Transport(error=OSError("down")), admission=PermitAll(), breaker=NeverOpen())
+    for _ in range(10):
+        understanding.route("q", CANDIDATES, client="a")
+    assert understanding.counters.snapshot()["attempts"] == 10                  # no budget, no breaker in the way
+    production = un.Understanding(enabled=True)
+    assert isinstance(production.admission, un.Admission) and isinstance(production.breaker, un.Breaker)
