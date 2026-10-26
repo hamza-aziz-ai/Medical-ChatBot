@@ -636,7 +636,7 @@ def append_round2(section):
 def ollama_get(path):
     try:
         with urllib.request.urlopen(OLLAMA_URL + path, timeout=5) as response:
-            return json.loads(response.read(MAX_REPLY_BYTES))
+            return json.loads(response.read(understanding.MAX_REPLY_BYTES))
     except (OSError, ValueError):
         return {}
 
@@ -727,13 +727,15 @@ def round2_main(dry_run):
     print(f"Round 2: {len(cases)} scenarios, {turns} question turns, at most {6 * turns} turn executions")
     if dry_run:
         return 0
+    # Everything optional happens before the runs, and the frames are saved before anything else can fail: a late
+    # error must never throw away the cloud calls a run has spent.
     probe = ollama_chat([{"role": "user", "content": "Reply with the single word: ok"}])
-    rule_rows, runtime_runs, calls, respond_seconds, inputs = run_round2(cases)
     meta = {"measured_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), "commit": commit(),
             "reported_model": probe[1], "ollama_version": ollama_get("/api/version").get("version", "unknown")}
+    rule_rows, runtime_runs, calls, respond_seconds, inputs = run_round2(cases)
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "round2-frames.json").write_text(json.dumps({"meta": meta, "rules": rule_rows, "runtime": runtime_runs,
-                                                         "calls": calls, "inputs": inputs}, indent=1), encoding="utf-8")
+    (OUT / "round2-frames.json").write_text(json.dumps({"meta": meta, "rules": rule_rows, "runtime": runtime_runs, "calls": calls,
+                                                         "inputs": inputs, "respond_seconds": respond_seconds}, indent=1), encoding="utf-8")
     section, gates = round2_section(meta, rule_rows, runtime_runs, calls, respond_seconds, inputs)
     append_round2(section)
     print("Round 2 gates:", gates, "model calls:", len(calls))
