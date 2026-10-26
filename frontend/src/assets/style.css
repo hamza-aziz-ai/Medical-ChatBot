@@ -360,6 +360,16 @@ h3 {
   gap: 2px;
 }
 
+/* Sections found in long graph text (D-028). */
+.section {
+  margin-top: 8px;
+}
+
+.section-heading {
+  margin: 0;
+  font-weight: 600;
+}
+
 .note {
   margin: 6px 0 0;
   font-size: 0.82rem;

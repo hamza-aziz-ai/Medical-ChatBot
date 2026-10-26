@@ -65,6 +65,40 @@
                   {{ answer.note }}.
                 </p>
               </template>
+              <template v-else-if="answer.sections">
+                <p class="text">
+                  {{ answer.lead }}
+                </p>
+                <div
+                  v-for="(section, sectionIndex) in answer.sections"
+                  :key="sectionIndex"
+                  class="section"
+                >
+                  <p
+                    v-if="section.heading"
+                    class="section-heading"
+                  >
+                    {{ section.heading }}
+                  </p>
+                  <p
+                    v-if="section.paragraph"
+                    class="text"
+                  >
+                    {{ section.paragraph }}
+                  </p>
+                  <ol
+                    v-if="section.items.length"
+                    class="items"
+                  >
+                    <li
+                      v-for="(item, itemIndex) in section.items"
+                      :key="itemIndex"
+                    >
+                      {{ item }}
+                    </li>
+                  </ol>
+                </div>
+              </template>
               <p
                 v-else
                 class="text"
