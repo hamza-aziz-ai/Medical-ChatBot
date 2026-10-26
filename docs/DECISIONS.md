@@ -191,7 +191,7 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Chosen:** 2
 - **Why:** Keeps the API stateless and the questions unlogged, keeps every answer a template over graph facts, and lets the page offer follow-ups, clarifications and "Why this answer?".
 - **Trade-off:** A larger reply contract to maintain; the evaluator and safety tests now check `status` instead of one fixed sentence.
-- **Revisit if:** a language model takes over understanding questions (step 3).
+- **Revisit if:** a language model takes over understanding questions (step 3; the experiment is D-026).
 
 ## D-016: Answerable intents are written by the importer, not looked up at runtime
 
@@ -311,3 +311,17 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** It targets the expensive work without slowing normal users, and bounds one client's sustained fuzzy work to about one second per minute.
 - **Trade-off:** Identity comes from `X-Real-IP`, which nginx overwrites and which the API trusts only where the image sets `TRUST_PROXY_HEADER=1`; anything inside the Compose network is trusted. Requests resolving to the same address share credit. Observed on a throwaway v1.1.7 stack on 2026-10-26: after host requests used up their credit, the host got plain replies while a second client on another container address still got "Did you mean...?", and the host's suggestions returned after about a minute. So the budget follows the address nginx forwards; every browser on this machine arrives through the same Docker port forwarding and presumably shares one budget (not separately observed). Many addresses, restarts, several workers and non-fuzzy request cost are outside this budget.
 - **Revisit if:** the API is exposed beyond this machine, or real users report missing suggestions.
+
+## D-026: Test a language model for understanding questions offline, on a hosted model
+
+- **Date:** 2026-10-26; **Model:** Claude Opus 5.5 (claude-opus-5-5); design agreed with Codex in council (2 exchanges); the owner chose the model and accepted cloud hosting. There is no D-024: that number was skipped by mistake.
+- **Context:** The plan agreed on 2026-10-25 had four steps: (1) guided conversation without a language model (D-015, D-016), (2) sourced aliases and confirmed spelling suggestions (D-017), (3) a language model for understanding questions, tested offline first, and (4) using it at runtime behind a switch only if step 3 shows a clear win. Steps 1 and 2 are done; this records the plan and step 3.
+- **Options:**
+  1. an offline experiment with a pre-registered protocol and bar, on the owner's chosen hosted model
+  2. the same experiment on a small local model (this machine has a 6 GB RTX 4050 laptop GPU)
+  3. go straight to runtime behind a switch
+  4. stop at the rules
+- **Chosen:** 1. `gpt-oss:120b-cloud` through the owner's signed-in local Ollama, on synthetic questions only. The model routes (decision, typed entities from locally built candidates, intents tied to entities, topic afterwards) and never answers. The protocol, the set's split and the bar are fixed in [pilot/LLM-UNDERSTANDING.md](pilot/LLM-UNDERSTANDING.md) before any model run: no newly unsafe answer decision in any of three runs, at least 10 points better complete-frame accuracy on held-out paraphrase and multi-turn cases, at least 99% valid responses and 99% identical frames across runs, and a model p95 of at most 1 s with a 2 s timeout.
+- **Why:** It measures whether a model helps before any runtime risk, and fixing the bar first stops a result being argued into a win. The owner preferred a large hosted model to a small local one.
+- **Trade-off:** The set's questions go to Ollama's cloud (synthetic only; the owner accepted this). A hosted model can change under the same name, so a pass is valid only for the run it came from, and step 4 would need a fresh run. Ollama's cloud ignores JSON schemas, so validation is entirely local. A synthetic set of 150 scenarios cannot show real-world safety.
+- **Revisit if:** the bar is passed (then decide step 4 separately), the model is retired or changes, or the owner wants to try a local model.
