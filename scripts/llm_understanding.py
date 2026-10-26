@@ -29,6 +29,9 @@ import understanding  # noqa: E402
 from question_classifier import read_dictionary  # noqa: E402
 
 SET_PATH = ROOT / "eval" / "understanding.jsonl"
+SET2_PATH = ROOT / "eval" / "understanding-2.jsonl"
+ROUND2_PROTOCOL = "## Round 2 protocol"
+ROUND2_RESULTS = "## Round 2 results"
 REPORT = ROOT / "docs" / "pilot" / "LLM-UNDERSTANDING.md"
 OUT = ROOT / "pilot-data" / "understanding"
 RESULTS_HEADING = "## Results"
@@ -455,7 +458,10 @@ def results_section(runs):
 
 
 def write_report(name, run):
-    """Replace one configuration's results, keep the others and the pre-registered protocol above them."""
+    """Round 1: replace one configuration's results, keep the others and the protocol above them. Round 1 is closed
+    once Round 2 is registered: its section is history and is never rebuilt."""
+    if ROUND2_PROTOCOL in REPORT.read_text(encoding="utf-8"):
+        raise SetError("Round 1 results are closed; Round 2 is registered, so they are not rewritten")
     OUT.mkdir(parents=True, exist_ok=True)
     stored = OUT / "summaries.json"
     runs = json.loads(stored.read_text(encoding="utf-8")) if stored.exists() else {}
@@ -472,6 +478,161 @@ def commit():
         return "unknown"
 
 
+# Round 2 (D-027): the running configuration on a fresh set.
+
+class PermitAll:
+    """Harness only: no attempt budget, so routing quality is measured without the operational limits."""
+
+    def admit(self, client):
+        return None
+
+
+class NeverOpen:
+    """Harness only: no breaker; transport failures still count as failures."""
+
+    def allow(self):
+        return True
+
+    def cancel(self):
+        pass
+
+    def record(self, ok):
+        pass
+
+
+def normalised_digest(path):
+    return hashlib.sha256(Path(path).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def round2_bots(transport):
+    """(rules, runtime): the same code, the model explicitly off and explicitly on, whatever the environment."""
+    with mock.patch.object(chatbot_graph_logic, "AnswerSearcher", RecordingSearcher):
+        rules, runtime = chatbot_graph_logic.ChatBotGraph(), chatbot_graph_logic.ChatBotGraph()
+    rules.understanding = understanding.Understanding(enabled=False)
+    runtime.understanding = understanding.Understanding(enabled=True, transport=transport, admission=PermitAll(), breaker=NeverOpen())
+    return rules, runtime
+
+
+OUTCOMES = ("routed", "unusable", "failed_timeout", "failed_http", "failed_transport", "failed_other")
+
+
+def runtime_frames(bot, timings):
+    """frame_of for score(): one respond() per distinct input within a run, recording whether it reached the model,
+    the call's outcome from the counters, and its timings."""
+    cache, calls = {}, []
+
+    def frame_of(question, topic, selections):
+        key = (question, json.dumps(topic, sort_keys=True), json.dumps(selections, sort_keys=True))
+        if key not in cache:
+            before = bot.understanding.counters.snapshot()
+            timings.clear()
+            started = time.perf_counter()
+            frame = rules_frame(bot, question, topic, selections)
+            elapsed = time.perf_counter() - started
+            after = bot.understanding.counters.snapshot()
+            outcome = next((k for k in OUTCOMES if after[k] > before[k]), None)
+            frame["model_called"] = after["attempts"] > before["attempts"]
+            if frame["model_called"]:
+                calls.append({"error": None if outcome == "routed" else outcome, "seconds": sum(timings), "no_entity": False})
+            frame["respond_seconds"] = elapsed
+            cache[key] = frame
+        return dict(cache[key])
+    return frame_of, calls, cache
+
+
+def run_round2(cases, transport=None, runs=RUNS):
+    """Rules rows once (deterministic), then per run the runtime rows, its model calls and its distinct inputs."""
+    timings = []
+
+    def timed(messages, url, model):
+        started = time.perf_counter()
+        try:
+            return (transport or understanding.chat)(messages, url, model)
+        finally:
+            timings.append(time.perf_counter() - started)
+
+    rules_bot_, runtime_bot = round2_bots(timed)
+    rule_rows = score(cases, lambda q, t, s: rules_frame(rules_bot_, q, t, s))
+    runtime_runs, calls, respond_seconds, inputs = [], [], [], []
+    for _ in range(runs):
+        frame_of, run_calls, cache = runtime_frames(runtime_bot, timings)
+        runtime_runs.append(score(cases, frame_of))
+        calls += run_calls
+        respond_seconds += [f["respond_seconds"] for f in cache.values()]
+        inputs.append(len(cache))
+    return rule_rows, runtime_runs, calls, respond_seconds, inputs
+
+
+def eligible_agreement(runtime_runs):
+    """(same, eligible): held-out isolated turns that reached the model in every run, and how many kept one frame."""
+    frames = {}
+    for rows in runtime_runs:
+        for r in rows:
+            if r["mode"] == "isolated" and r["split"] == "test":
+                frames.setdefault((r["id"], r["turn"]), []).append(r["got"])
+    eligible = [v for v in frames.values() if all(f.get("model_called") for f in v)]
+    return sum(len({json.dumps(normalise(f)) for f in v}) == 1 for v in eligible), len(eligible)
+
+
+def round2_section(meta, rule_rows, runtime_runs, calls, respond_seconds, inputs):
+    result, reliability = evaluate(rule_rows, {"runtime": runtime_runs}, calls)
+    r = result["runtime"]
+    rules_s = summary(rule_rows)
+    same, eligible = eligible_agreement(runtime_runs)
+    held = [[x for x in rows if x["split"] == "test" and x["mode"] == "isolated"] for rows in runtime_runs]
+    coverage = [sum(x["got"].get("model_called", False) for x in rows) for rows in held]
+
+    def each(summaries, key, mode="isolated"):
+        return ", ".join(pct(s[mode][key]["correct"], s[mode][key]["turns"]) for s in summaries)
+
+    def mark(ok):
+        return "pass" if ok else "fail"
+
+    errors = ", ".join(f"{k} {v}" for k, v in sorted(reliability["errors"].items())) or "none"
+    unsafe = "; ".join(f"{s['isolated']['held_out']['unsafe']}, {s['rollout']['held_out']['unsafe']}" for s in r["summaries"])
+    lines = [
+        ROUND2_RESULTS, "",
+        f"Scored {meta['measured_at']} at commit `{meta['commit'][:12]}` with the frozen inputs above (verified at run time); "
+        f"{len(runtime_runs)} runs; Ollama {meta['ollama_version']}, which reported the model as `{meta['reported_model']}`. "
+        "Runtime routing, operational limits bypassed. A cloud model can change under the same name, so these numbers hold only for this run.", "",
+        "| Measure | Rules | Runtime (each run) |", "|---|---|---|",
+        f"| Complete frames, held out, isolated turns | {each([rules_s], 'held_out')} | {each(r['summaries'], 'held_out')} |",
+        f"| Complete frames, held out, full conversations | {each([rules_s], 'held_out', 'rollout')} | {each(r['summaries'], 'held_out', 'rollout')} |",
+        f"| Complete frames, paraphrase and multi-turn | {each([rules_s], 'win_categories')} | {each(r['summaries'], 'win_categories')} |",
+        f"| Wrong-subject answers, held out (isolated, conversations) | {rules_s['isolated']['held_out']['unsafe']}, "
+        f"{rules_s['rollout']['held_out']['unsafe']} | {unsafe} |", "",
+        f"Change against the rules on paraphrase and multi-turn, worst run: {r['gain_points']:+.1f} points. New wrong-subject answers against "
+        f"the rules, all runs and modes: {r['new_unsafe']}; wrong-subject answers on the safety subset, all runs and modes: {r['subset_unsafe']}.", "",
+        f"Model-call coverage: {', '.join(pct(c, len(rows)) for c, rows in zip(coverage, held))} of held-out isolated turns reached the model. "
+        f"Distinct inputs per run: {', '.join(map(str, inputs))}. Model calls: {reliability['calls']}, usable {pct(reliability['valid'], reliability['calls'])}; "
+        f"failures and unusable replies: {errors}. Identical frames across runs: {pct(r['agreement'][0], r['agreement'][1])} of held-out turns, "
+        f"{pct(same, eligible)} of those that reached the model in every run. Model-call latency (failures included): p50 {reliability['p50']:.2f} s, "
+        f"p95 {reliability['p95']:.2f} s; whole respond() with the fake graph: p50 {percentile(respond_seconds, 0.5):.2f} s, "
+        f"p95 {percentile(respond_seconds, 0.95):.2f} s.", "",
+        "| Gate | Result |", "|---|---|",
+        f"| Safety | {mark(r['gates']['safety'])} |",
+        f"| Quality (at least 10 points) | {mark(r['gates']['quality'])} |",
+        f"| Reliability (at least 99% usable and identical) | {mark(r['gates']['reliability'])} |",
+        f"| Latency (p95 at most 1 s) | {mark(r['gates']['latency'])} |", "",
+        "| Category (held out, isolated) | Rules | Runtime (each run) |", "|---|---|---|",
+    ]
+    for category in CATEGORIES:
+        rc = rules_s["isolated"]["by_category"][category]
+        lines.append(f"| {category} | {pct(rc['correct'], rc['turns'])} | " + ", ".join(
+            pct(s["isolated"]["by_category"][category]["correct"], s["isolated"]["by_category"][category]["turns"]) for s in r["summaries"]) + " |")
+    return "\n".join(lines) + "\n", r["gates"]
+
+
+def append_round2(section):
+    """Append-only: Round 2 results go after everything already in the report, once."""
+    text = REPORT.read_text(encoding="utf-8")
+    if ROUND2_PROTOCOL not in text:
+        raise SetError("register the Round 2 protocol before publishing its results")
+    if ROUND2_RESULTS in text:
+        raise SetError("Round 2 results are already published; they are not rewritten")
+    REPORT.write_text(text.rstrip("\n") + "\n\n" + section, encoding="utf-8")
+
+
 def ollama_get(path):
     try:
         with urllib.request.urlopen(OLLAMA_URL + path, timeout=5) as response:
@@ -485,9 +646,13 @@ def main(argv=None):
     parser.add_argument("--rules", action="store_true", help="score the current rules")
     parser.add_argument("--model", action="store_true", help=f"score {MODEL} through the local Ollama")
     parser.add_argument("--dev", action="store_true", help="with --model: one run on the dev split only, not reported")
+    parser.add_argument("--round2", action="store_true", help="Round 2: the running configuration on the fresh set (D-027)")
+    parser.add_argument("--dry-run", action="store_true", help="with --round2: check the freeze and count turns; no model calls")
     args = parser.parse_args(argv)
+    if args.round2:
+        return round2_main(args.dry_run)
     if args.rules == args.model:
-        parser.error("choose one: --rules or --model")
+        parser.error("choose one: --rules, --model or --round2")
     try:
         cases = load_set()
         check_set(cases, read_dictionary())
@@ -526,6 +691,52 @@ def main(argv=None):
     write_report(f"Model: {MODEL}", run)
     for name in CONFIGURATIONS:
         print(name, run["configurations"][name]["gates"])
+    return 0
+
+
+FROZEN = {"api/understanding.py": ROOT / "api" / "understanding.py",
+          "api/chatbot_graph_logic.py": ROOT / "api" / "chatbot_graph_logic.py",
+          "api/question_classifier.py": ROOT / "api" / "question_classifier.py",
+          "api/dictionary/entities.json": ROOT / "api" / "dictionary" / "entities.json",
+          "api/dictionary/aliases.json": ROOT / "api" / "dictionary" / "aliases.json"}
+
+
+def check_freeze():
+    """Every frozen input must match the hash the Round 2 protocol recorded before any run."""
+    protocol = REPORT.read_text(encoding="utf-8")
+    if ROUND2_PROTOCOL not in protocol:
+        raise SetError("the Round 2 protocol is not registered")
+    if f"set: `{normalised_digest(SET2_PATH)}`" not in protocol:
+        raise SetError("the Round 2 set differs from its frozen hash")
+    for label, path in FROZEN.items():
+        if f"`{label}`: `{normalised_digest(path)}`" not in protocol:
+            raise SetError(f"{label} differs from its frozen hash")
+    if f"prompt: `{prompt_digest()}`" not in protocol:
+        raise SetError("the prompt differs from its frozen hash")
+
+
+def round2_main(dry_run):
+    try:
+        check_freeze()
+        cases = load_set(SET2_PATH)
+        check_set(cases, read_dictionary())
+    except (OSError, ValueError, KeyError, SetError) as error:
+        print(f"Round 2 refused: {error}", file=sys.stderr)
+        return 1
+    turns = sum(1 for case in cases for turn in case["turns"] if "question" in turn)
+    print(f"Round 2: {len(cases)} scenarios, {turns} question turns, at most {6 * turns} turn executions")
+    if dry_run:
+        return 0
+    probe = ollama_chat([{"role": "user", "content": "Reply with the single word: ok"}])
+    rule_rows, runtime_runs, calls, respond_seconds, inputs = run_round2(cases)
+    meta = {"measured_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), "commit": commit(),
+            "reported_model": probe[1], "ollama_version": ollama_get("/api/version").get("version", "unknown")}
+    OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / "round2-frames.json").write_text(json.dumps({"meta": meta, "rules": rule_rows, "runtime": runtime_runs,
+                                                         "calls": calls, "inputs": inputs}, indent=1), encoding="utf-8")
+    section, gates = round2_section(meta, rule_rows, runtime_runs, calls, respond_seconds, inputs)
+    append_round2(section)
+    print("Round 2 gates:", gates, "model calls:", len(calls))
     return 0
 
 
