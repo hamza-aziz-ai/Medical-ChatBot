@@ -3,6 +3,7 @@ import logging
 from neo4j import READ_ACCESS, Query, RoutingControl
 
 import database
+import text_format
 from terms import is_valid_term
 
 logger = logging.getLogger(__name__)
@@ -76,6 +77,11 @@ class AnswerSearcher:
             if terms_only:
                 # Lists render as bullets: "The symptoms of asthma include:" + items + an optional note.
                 entry.update(lead=prefix.format(subject).strip(), items=values, note=suffix.strip(". ").strip() or None)
+            else:
+                # Long text keeps every word but shows its own sections and numbered points when it has them (D-028).
+                found = [section for value in values for section in (text_format.sections(value) or [])]
+                if found:
+                    entry.update(lead=prefix.format(subject).strip(), sections=found)
             results.append(entry)
         return results
 
