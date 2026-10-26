@@ -119,3 +119,29 @@ Model calls: 632, valid 598/632 (94.6%); failures: HTTPError 1, not a JSON objec
 | injection | 6/10 (60.0%), 9/10 (90.0%), 9/10 (90.0%) | 9/10 (90.0%), 9/10 (90.0%), 9/10 (90.0%) | 7/10 (70.0%), 7/10 (70.0%), 7/10 (70.0%) |
 | typo | 5/10 (50.0%), 5/10 (50.0%), 5/10 (50.0%) | 6/10 (60.0%), 5/10 (50.0%), 5/10 (50.0%) | 10/10 (100.0%), 10/10 (100.0%), 10/10 (100.0%) |
 | reset | 11/12 (91.7%), 12/12 (100.0%), 12/12 (100.0%) | 12/12 (100.0%), 12/12 (100.0%), 12/12 (100.0%) | 12/12 (100.0%), 12/12 (100.0%), 12/12 (100.0%) |
+
+## Round 2 protocol: the running configuration (D-027)
+
+Pre-registered on 2026-10-26, before any Round-2 run, by Claude Opus 5.5 and Codex in council. Round-1 sections above are never changed; Round-2 results are appended below this protocol.
+
+**What is measured.** "Runtime routing, operational limits bypassed": the real `ChatBotGraph.respond()` with the language model explicitly on (the D-027 configuration: the topic only after the full follow-up check, local confirmations and vetoes first, one query per pair, model refusals and clarifications final, the rules on any failure), against the same code with the model explicitly off. The attempt budgets and the breaker are replaced inside the harness only, so routing quality is measured without them; in real use they add more fallbacks to the rules, which this does not measure. HTTP readiness, real graph latency and queueing are not measured either.
+
+**The set.** `eval/understanding-2.jsonl`: 120 held-out scenarios, 187 question turns, Claude 60 and Codex 60 written independently, cross-reviewed (Codex corrected two of Claude's labels and Claude one of Codex's), with conversations and paraphrase families kept apart from set 1 (now development evidence). There is no development split: the prompt is frozen and may not change.
+
+**Frozen 2026-10-26 (SHA-256, line endings normalised to LF):**
+
+- set: `48439177a809cd2bf60358947cefb0321d0cd831df0ba7d215f831cd5b85d968`
+- prompt: `fa904c55abf294286ed06fe5d0960463ef9615d413fdf7c75cf6cd0707acab1e`
+- `api/understanding.py`: `069faf864c0e3e48246eeea202a04da65f2833ff3dfcdca53a8915e78c183ae9`
+- `api/chatbot_graph_logic.py`: `f9fe99037edd60f1ea10e2438de6a48d9888503810c99276cb84361a372c6b21`
+- `api/question_classifier.py`: `22a1ea0efb0f7a53c2268d4ed4440cee9070b483667c286a55106a0ad03e39f2`
+- `api/dictionary/entities.json`: `f9fe2a79692f72c27b68cb4a202b2afb2779686778760ec64b9d6e68d00fb389`
+- `api/dictionary/aliases.json`: `9a6dd2f36d1fe1c3b3b90aa2ee5bb474213e686723858f874f4c20acd7ac481b`
+- model `gpt-oss:120b-cloud`, options `{"temperature": 0, "seed": 7, "num_predict": 1024}`, think `low`, a 2 s total deadline
+
+**Runs.** Three independent runs, each scoring isolated turns and full conversations; within one run an identical input (question, topic, selections) is asked once and shared by both modes, and nothing is reused across runs. At most 6 × 187 = 1,122 turn executions; local checks and that reuse lower the actual cloud calls, which are counted against the owner's allowance.
+
+**The bar.** D-026's, unchanged, applied to the runtime configuration and paired with the rules on the same turns: no wrong-subject answer the rules did not also give, in any run, and none on the safety subset; at least 10 points better complete frames on held-out paraphrase and multi-turn turns (worst run); at least 99% usable replies among model calls actually made and at least 99% identical frames across runs; model-call p95 at most 1 s.
+
+**Reported.** Model-call coverage (turns that reached the model), usable replies per call made with transport and validation failures apart, local checks and fallbacks, frame agreement overall and for turns that reached the model in every run, model-call latency with failures included, and total `respond()` latency with the fake graph apart. Zero model calls means "not measured", not a pass. If the bar is not met, the model stays on and the result is reported (the owner's decision). Set 1 is re-scored with this configuration once, as diagnostic evidence outside the bar, only if the call allowance remains.
+
