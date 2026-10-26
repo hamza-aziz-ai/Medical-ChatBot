@@ -13,3 +13,4 @@
 ## Log
 
 - 2026-10-26: Built. Throwaway stack with the real model: a paraphrase ("what does asthma feel like") and a negation were read correctly by the model, the cousin case made no call and abstained, an unreachable Ollama fell back to the rules in 217 ms, and the off switch restored the rules (a description for the paraphrase). `/health` took 1.64 s while a 1.88 s model call held the worker. Logs held outcomes and timings only.
+- 2026-10-26: By the owner's choice, the page names no vendor: a generic note in the About card only, and a generic provenance line. Frontend 11 helper and 22 component tests passed.

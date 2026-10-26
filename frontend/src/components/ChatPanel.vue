@@ -102,7 +102,7 @@
                 Your question referred back to the previous topic.
               </li>
               <li v-if="message.interpretation.understood_by === 'model'">
-                A language model, through Ollama's cloud, read your question. The facts still come only from the knowledge graph.
+                A language model helped read your question. The facts still come only from the knowledge graph.
               </li>
               <li>Facts come from an unverified dataset in the knowledge graph. This is not medical advice.</li>
             </ul>
@@ -202,7 +202,6 @@
         class="hint"
       >
         <span>Enter to send · Shift+Enter for a new line</span>
-        <span class="disclosure">Questions and relevant topic context may be sent to Ollama's cloud to understand them; answers come only from the knowledge graph.</span>
         <span class="count">{{ draft.length }}/{{ maxLength }}</span>
       </p>
     </form>
