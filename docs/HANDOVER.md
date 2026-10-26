@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-25 to 2026-10-26 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
+- Step 3 of the language-model plan pre-registered (D-026, FEATURE-010): an offline experiment on `gpt-oss:120b-cloud`, with the protocol and bar fixed before any run.
 - Dataset pilot, step 2 (FEATURE-009): an unreviewed local candidate list; 62 of the 451 unmatched names have a lexical lead, 389 none; nothing applied.
 - Per-client spelling-suggestion budget (D-025), released in v1.1.7 and running on the owner's stack; checked end to end on a throwaway stack (the budget follows the forwarded client address).
 - The owner's stack runs v1.1.6 with the plan fingerprint; the rollback drill also passed on v1.1.5 → v1.1.6.
@@ -39,6 +40,7 @@ Broken or risky:
 - Many client addresses together can still keep the single API worker busy; one address is bounded to about one second of suggestion work per minute (A-14, D-025).
 
 Next:
+- Step 3: write the 150-scenario set with Codex, score the rules, then build the harness and run it (docs/pilot/LLM-UNDERSTANDING.md).
 - Optional: review `pilot-data/candidates.json` (local, unreviewed) and record evidence-backed decisions per candidate (equivalent, broader, narrower, related, rejected, uncertain) before any sourced dataset (D-011); rights and evaluation gates still apply. 389 names have no lexical lead and need another approach, likely manual.
 
 Do not touch:
