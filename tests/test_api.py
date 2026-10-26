@@ -192,3 +192,25 @@ def test_questions_are_refused_while_not_ready_and_nothing_is_answered(caplog):
     assert answered == [] and "asthma" not in caplog.text
     # Invalid input is still rejected first, with its own message.
     assert app.get("/", query_string={"search": ""}).status_code == 400
+
+
+def test_every_api_response_is_marked_no_store():
+    # The question is in the URL and the reply repeats it: nothing may be cached (D-029).
+    def failing(text):
+        raise RuntimeError("boom")
+
+    web = client()
+    for response in (web.get("/?search=what+causes+asthma"), web.get("/?search="), web.get("/missing"),
+                     web.post("/?search=x"), web.get("/health"), client(chat_main=failing).get("/?search=x")):
+        assert response.headers["Cache-Control"] == "no-store", response.status_code
+
+
+def test_nginx_marks_api_responses_no_store_and_keeps_its_security_headers():
+    from pathlib import Path
+    conf = (Path(__file__).resolve().parents[1] / "docker" / "nginx.conf").read_text(encoding="utf-8")
+    api = conf[conf.index("location /api/"):conf.index("location / {")]
+    server = conf[:conf.index("location /api/")]
+    for header in ("X-Content-Type-Options", "Referrer-Policy", "Content-Security-Policy"):
+        assert f"add_header {header}" in api and f"add_header {header}" in server
+    assert "proxy_hide_header Cache-Control;" in api and 'add_header Cache-Control "no-store" always;' in api
+    assert "access_log" not in api and "error_log" not in api   # nginx logs nothing; this block adds no log

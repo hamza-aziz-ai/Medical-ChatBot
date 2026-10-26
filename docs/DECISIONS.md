@@ -353,3 +353,18 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** It fixes most of the readability problem with no risk to the facts, no model and no latency.
 - **Trade-off:** The source's grammar and mistranslations stay as stored; plain numbers without punctuation ("1 pig") are not split; very long answers are still long.
 - **Revisit if:** the rewording step (next) is designed, or a field's structure is misread.
+
+## D-029: Reworded answers come from a reviewed file, never a live model; API responses are not cached
+
+- **Date:** 2026-10-26; **Model:** Claude Opus 5.5 (claude-opus-5-5); design agreed with Codex in two councils; the owner chose "formatter first, then rewording with safeguards" and "build up to my review"
+- **Context:** The owner wants answers more conversational. A model rewriting medical text can change a fact unnoticed (a dropped "not", a reversed cause, a changed dose), and temperature 0 does not prevent that. Separately, nothing set `Cache-Control`, although the question travels in the URL and the reply repeats it.
+- **Options:**
+  1. a committed `api/dictionary/rewordings.json` of individually approved rewordings, shipped in the API image
+  2. rewordings as Neo4j properties written by the importer
+  3. generate on first request and keep the result (a lazy cache)
+  4. Redis or SQLite
+  5. cache whole API responses in nginx or the browser
+- **Chosen:** 1, plus `no-store` on every API response. Entries are keyed by (subject, intent) and carry `input_sha256` over one canonical `{subject, intent, ordered values}` built by the same function that serves answers, the formatter/schema identity, the reworded sections and their hash, the generation metadata and the check results; approval is bound to the input and output hashes. A rewording is served only when all of them match; anything else shows the formatted original. A pilot of about 10 fields covers only descriptions, causes and prevention. Automated checks (numbers, units and negation words kept, the same point count, no new names the dictionary recognises, entailment both ways), measured first against deliberately broken rewrites, only filter candidates: the owner approves every served field side by side. The original stays one click away ("Show original"), and labels, cautions, abstentions and the data warning are never reworded. Caching the model's routing is deferred until identical model inputs are shown to repeat. `Cache-Control: no-store` is set by Flask on every response and by nginx on `/api/` (covering its own 429/502/504), with nginx's three security headers repeated there because a location-level `add_header` stops their inheritance.
+- **Why:** No model writes medical text while a user waits, every served rewording has a human approval tied to its exact input and output, and a content hash makes stale entries harmless. Option 2 changes the graph fingerprint (D-023) and ties the importer to the model; 3 lets a model write live text; 4 solves neither approval nor fidelity; 5 would keep users' questions and could skip the readiness check.
+- **Trade-off:** Review effort limits coverage; checks are filters, not proof; approval means faithful to the source, not clinically correct; the source's rights (A-01) are unchanged.
+- **Revisit if:** the pilot's review shows the checks miss errors, or the owner wants wider coverage.

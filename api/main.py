@@ -82,6 +82,12 @@ def create_app(chatbot=None):
     CORS(app, origins=origins, allow_headers=["Content-Type"])
     logger.info("API started; %d allowed CORS origin(s)", len(origins))
 
+    @app.after_request
+    def no_store(response):
+        # The question travels in the URL and the reply repeats it, so no browser or proxy may keep either (D-029).
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
     @app.route("/", methods=["GET"])
     def home():
         # No authentication: the API is read-only over public data and listens on loopback only
