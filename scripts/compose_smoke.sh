@@ -48,8 +48,8 @@ grep -Eq '"status": *"abstain"' <<<"$(ask how long does asthma last "$SENTINEL")
 codes=$(seq 1 60 | xargs -P 30 -I{} curl -s -o /dev/null -w '%{http_code}\n' "$BASE/api/?search=what+causes+asthma")
 grep -q '^429$' <<<"$codes" || fail "rate limiting did not engage"
 # D-029: answers, health and nginx's own 429 are no-store; the static page keeps only its security headers.
-header() { curl -s -D - -o /dev/null "$1" | tr -d '\r' | grep -i "^$2:" | head -1; }
-limited=$(seq 1 60 | xargs -P 30 -I{} curl -s -D - -o /dev/null "$BASE/api/?search=what+causes+asthma" | tr -d '\r' | awk '/^HTTP/{s=$2} tolower($0) ~ /^cache-control: no-store/ && s==429 {print "ok"; exit}')
+header() { curl -s -D - -o /dev/null "$1" | tr -d '\r' | awk -v h="$2" 'tolower($0) ~ "^" tolower(h) ":" && !n++'; }
+limited=$(seq 1 60 | xargs -P 30 -I{} curl -s -D - -o /dev/null "$BASE/api/?search=what+causes+asthma" | tr -d '\r' | awk '/^HTTP/{s=$2} tolower($0) ~ /^cache-control: no-store/ && s==429 {found=1} END{if (found) print "ok"}')
 [ "$limited" = ok ] || fail "a 429 from nginx is not no-store"
 sleep 3
 [ "$(header "$BASE/api/?search=what+causes+asthma" Cache-Control)" = "Cache-Control: no-store" ] || fail "answer not no-store"
