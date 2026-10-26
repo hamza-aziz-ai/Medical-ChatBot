@@ -205,3 +205,64 @@ def test_conversations_carry_each_configurations_own_topic_and_resets_clear_it()
     assert isolated == [None, None, None]          # labelled topics: reset clears, q2 leaves None
     assert rollout == [None, None, GOUT]           # its own mistake carries into q3; the reset still cleared
     assert sum(r["correct"] for r in rows) == 0 and len(rows) == 6
+
+
+# Round 2 (D-027): the running configuration.
+
+def test_round2_inputs_match_their_frozen_hashes():
+    u.check_freeze()   # the set, prompt, runtime code and dictionaries are as the protocol recorded
+
+
+def test_round2_compares_the_real_respond_with_the_model_off_and_on(monkeypatch):
+    monkeypatch.setenv("LLM_UNDERSTANDING", "on")       # the environment never decides the arms
+    rules, runtime = u.round2_bots(replying('{"decision": "unsupported", "intents": []}'))
+    assert not rules.understanding.enabled and runtime.understanding.enabled
+    assert isinstance(runtime.understanding.admission, u.PermitAll) and isinstance(runtime.understanding.breaker, u.NeverOpen)
+
+
+def test_each_run_asks_each_distinct_input_once_and_never_reuses_another_run():
+    sent = []
+
+    def transport(messages, url, model):
+        sent.append(messages[1]["content"])
+        return '{"decision": "answer", "intents": [["disease_cause", "e1"]]}', "m"
+
+    case = scenario(turns=[{"question": "why does asthma happen", "selections": [],
+                            "expect": answer([("disease_cause", "asthma")], [ASTHMA], ASTHMA)}])
+    rule_rows, runtime_runs, calls, seconds, inputs = u.run_round2([case], transport=transport, runs=3)
+    assert len(sent) == 3 and inputs == [1, 1, 1]          # both modes share one call per run; three runs, three calls
+    assert all(c["error"] is None for c in calls) and len(runtime_runs) == 3
+    assert all(r["got"]["model_called"] and r["correct"] for rows in runtime_runs for r in rows)
+
+
+def test_a_turn_handled_locally_never_reaches_the_model_and_failures_are_counted():
+    sent = []
+
+    def failing(messages, url, model):
+        sent.append(1)
+        raise u.understanding.ModelError("timeout")
+
+    typo = scenario(turns=[{"question": "what causes asthama", "selections": [], "expect": other("clarify", None)}])
+    plain = scenario(id="t", family="g", turns=[{"question": "what causes asthma", "selections": [],
+                                                 "expect": answer([("disease_cause", "asthma")], [ASTHMA], ASTHMA)}])
+    _, runtime_runs, calls, _, _ = u.run_round2([typo, plain], transport=failing, runs=1)
+    assert len(sent) == 1 and calls == [{"error": "failed_timeout", "seconds": calls[0]["seconds"], "no_entity": False}]
+    by_id = {r["id"]: r for r in runtime_runs[0] if r["mode"] == "isolated"}
+    assert not by_id["s"]["got"]["model_called"] and by_id["t"]["got"]["model_called"]
+    assert by_id["t"]["correct"]                            # the rules answered after the failure
+
+
+def test_round2_results_are_appended_once_and_round1_is_never_rewritten(tmp_path, monkeypatch):
+    report = tmp_path / "report.md"
+    report.write_text("# r\n\n## Results\n\nround one\n", encoding="utf-8")
+    monkeypatch.setattr(u, "REPORT", report)
+    with pytest.raises(u.SetError, match="register"):
+        u.append_round2("## Round 2 results\n\nx\n")
+    report.write_text("# r\n\n## Results\n\nround one\n\n## Round 2 protocol\n\np\n", encoding="utf-8")
+    before = report.read_text(encoding="utf-8")
+    u.append_round2("## Round 2 results\n\nx\n")
+    assert report.read_text(encoding="utf-8").startswith(before.rstrip("\n"))
+    with pytest.raises(u.SetError, match="already published"):
+        u.append_round2("## Round 2 results\n\ny\n")
+    with pytest.raises(u.SetError, match="closed"):
+        u.write_report("Rules (baseline)", {})
