@@ -39,7 +39,8 @@
       <summary>How it works</summary>
       <ul>
         <li>Disease and symptom names are found in your question as whole words.</li>
-        <li>Keywords decide what you are asking.</li>
+        <li>A language model reads what you are asking, choosing only among the names found; if it is unavailable or unsure, keywords decide.</li>
+        <li>Questions and relevant topic context may be sent to Ollama's cloud to understand them; answers come only from the knowledge graph.</li>
         <li>The matching facts are looked up in the graph and returned as plain sentences.</li>
         <li>If the graph has no answer, or you ask about treatment duration, cure probability or who is susceptible, Mr. Healthcare says it cannot answer.</li>
       </ul>
