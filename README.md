@@ -2,6 +2,8 @@
 
 This is a student prototype for local use. It is not medical advice and is not built for public deployment.
 
+Mr. Healthcare answers basic questions about 658 diseases and their symptoms (symptoms, causes, prevention, treatments, complications, descriptions) from a Neo4j knowledge graph, and says plainly when it cannot answer. A Vue 3 page talks to a Flask API. The API finds disease and symptom names with an Aho-Corasick automaton and answers only through fixed, parameterized Cypher queries. A language model (`gpt-oss:120b-cloud` through a local Ollama) may read each question to understand it better, but it only chooses among the names the rules found and never writes an answer; when it is unavailable, slow or unsure, the rules answer. Long answers are shown with their own headings and numbered points, and more conversational rewordings are served only after the owner approves each one against the original.
+
 ## Setup
 
 Tested with Python 3.14. The importer and API were tested live against the official Docker images Neo4j 5.26.32 and 4.4.48; other Neo4j versions are untested.
@@ -13,14 +15,14 @@ python -m venv .venv
 
 Configuration comes from environment variables. For local use, copy `.env.example` to `.env` in the repository root and fill it in; the API and the importer read it at startup, and variables already set in your shell take precedence. `.env` is git-ignored, so keep real secrets only there.
 
-| Variable | Required | Default |
-|---|---|---|
-| `NEO4J_PASSWORD` | yes | none |
-| `NEO4J_URI` | no | `neo4j://localhost:7687` (Bolt schemes only: `bolt`, `neo4j` and their `+s`/`+ssc` variants; query timeouts do not work over HTTP) |
-| `NEO4J_USER` | no | `neo4j` |
-| `NEO4J_DATABASE` | no | `neo4j` |
-| `NEO4J_QUERY_TIMEOUT` | no | `5` (seconds per API query; must be a positive number) |
-| `CORS_ORIGINS` | no | `http://localhost:8080,http://127.0.0.1:8080` (exact `http(s)://host[:port]` origins, comma-separated; patterns and `*` are refused) |
+| Variable              | Required | Default                                                                                                                              |
+|-----------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `NEO4J_PASSWORD`      | yes      | none                                                                                                                                 |
+| `NEO4J_URI`           | no       | `neo4j://localhost:7687` (Bolt schemes only: `bolt`, `neo4j` and their `+s`/`+ssc` variants; query timeouts do not work over HTTP)   |
+| `NEO4J_USER`          | no       | `neo4j`                                                                                                                              |
+| `NEO4J_DATABASE`      | no       | `neo4j`                                                                                                                              |
+| `NEO4J_QUERY_TIMEOUT` | no       | `5` (seconds per API query; must be a positive number)                                                                               |
+| `CORS_ORIGINS`        | no       | `http://localhost:8080,http://127.0.0.1:8080` (exact `http(s)://host[:port]` origins, comma-separated; patterns and `*` are refused) |
 
 An earlier version of this repository contained a hard-coded Neo4j password. If you used that password anywhere, change it.
 
@@ -68,16 +70,16 @@ A release that changes `compose.yaml` is not deployed automatically: review it, 
 
 Every workflow runs only when its inputs change, so documentation-only changes start nothing. Nothing is published until `autorelease.yml` or the owner starts a release.
 
-| Workflow | Runs when these change | What it does |
-|---|---|---|
-| `backend.yml` | `api/`, `tests/`, `notebooks/`, `eval/`, `scripts/evaluate_kg.py`, `scripts/next_release.py`, the release workflows, `requirements*.txt` | Offline pytest suite |
-| `frontend.yml` | `frontend/` | Lint, tests and build on Node 22 and 24 |
-| `mlops.yml` | the CSV, the dictionary, the importer and the modules that answer questions, `eval/`, the evaluator, the requirements and the importer, evaluation and live tests | Data gates, live tests on Neo4j 5 and 4.4, then a real import and evaluation on Neo4j 5 |
-| `docker.yml` | `docker/`, `compose.yaml`, the requirements, the smoke script, and the `api/` and `frontend/` files copied into the images | Builds both images and runs the Compose smoke test |
-| `release.yml` | a pushed `vX.Y.Z` tag, a manual run, or a call from `autorelease.yml` | Continuous delivery (below) |
-| `autorelease.yml` | `automerge` finishes, a manual run, or its own previous successful run | Releases the oldest merge not yet released, with its version, through `release.yml`, then starts the next run |
-| `workflows.yml` | `.github/workflows/` | Lints every workflow with actionlint |
-| `automerge.yml` | a CI workflow finishes, or a pull request is opened or updated | Merges the pull request into `main` once every check on its latest commit has passed |
+| Workflow          | Runs when these change                                                                                                                                            | What it does                                                                                                  |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `backend.yml`     | `api/`, `tests/`, `notebooks/`, `eval/`, `scripts/evaluate_kg.py`, `scripts/next_release.py`, the release workflows, `requirements*.txt`                          | Offline pytest suite                                                                                          |
+| `frontend.yml`    | `frontend/`                                                                                                                                                       | Lint, tests and build on Node 22 and 24                                                                       |
+| `mlops.yml`       | the CSV, the dictionary, the importer and the modules that answer questions, `eval/`, the evaluator, the requirements and the importer, evaluation and live tests | Data gates, live tests on Neo4j 5 and 4.4, then a real import and evaluation on Neo4j 5                       |
+| `docker.yml`      | `docker/`, `compose.yaml`, the requirements, the smoke script, and the `api/` and `frontend/` files copied into the images                                        | Builds both images and runs the Compose smoke test                                                            |
+| `release.yml`     | a pushed `vX.Y.Z` tag, a manual run, or a call from `autorelease.yml`                                                                                             | Continuous delivery (below)                                                                                   |
+| `autorelease.yml` | `automerge` finishes, a manual run, or its own previous successful run                                                                                            | Releases the oldest merge not yet released, with its version, through `release.yml`, then starts the next run |
+| `workflows.yml`   | `.github/workflows/`                                                                                                                                              | Lints every workflow with actionlint                                                                          |
+| `automerge.yml`   | a CI workflow finishes, or a pull request is opened or updated                                                                                                    | Merges the pull request into `main` once every check on its latest commit has passed                          |
 
 **Automatic merging.** A pull request from a branch of this repository is merged into `main` as soon as every check on its latest commit has passed, with no review. If a check fails, the pull request stays open; push a fix and it merges when the checks pass. A pull request whose changes start no CI (documentation only) is merged about a minute after it is opened. Pull requests from forks and drafts are never merged automatically. The merge is made with the workflow's own token, so it does not start the `main` runs of the other workflows again; the pull request's runs already tested the change.
 
@@ -110,11 +112,11 @@ The source and clinical review status of `medical.csv` are unknown. Each importe
 
 Every backend module writes its own rotating log file in `logs/<year>/<Month>/`, named after the module: `main.log`, `chatbot_graph_logic.log`, `question_classifier.log`, `question_parser.log`, `answer_searcher.log`, `database.log`, `terms.log`, `build_medicalgraph.log` and `app_logging.log`. Messages from third-party libraries go to `external.log`. The frontend runs in the browser and does not write log files. If the API and the importer run at the same time, the modules they share (`database`, `terms`) write to the same file, and its midnight rotation can fail while the other process holds it open. Each file is closed at midnight and renamed `<name>.log.DD-MMM-YYYY` (for example `api.log.25-Oct-2026`) in the folder it was written in, and a new file starts in the folder for the current month. Lines look like `25 October 2026, Sunday, 02:15:53.293 PM India Standard Time [INFO] main: Answered a question of 18 characters`. The timezone is the operating system's local name: an abbreviation such as `IST` on Linux and macOS, the full name on Windows.
 
-| Variable | Default | Meaning |
-|---|---|---|
-| `LOG_LEVEL` | `DEBUG` | `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL` |
-| `LOG_BACKUP_COUNT` | `30` | Rotated files kept per module log, across all folders; `0` keeps every file |
-| `LOG_DIR` | `logs` in the repository root | Where the year folders go; git-ignored |
+| Variable           | Default                       | Meaning                                                                     |
+|--------------------|-------------------------------|-----------------------------------------------------------------------------|
+| `LOG_LEVEL`        | `DEBUG`                       | `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`                           |
+| `LOG_BACKUP_COUNT` | `30`                          | Rotated files kept per module log, across all folders; `0` keeps every file |
+| `LOG_DIR`          | `logs` in the repository root | Where the year folders go; git-ignored                                      |
 
 The API does not log questions, tokens or credentials, and silences the development server's request log, which would otherwise print each question in the URL. This applies to the Flask app and its local development server. The Docker images keep the same rule: gunicorn has no access log, and nginx logs nothing (see Docker). Configure any other server or proxy separately.
 
@@ -126,7 +128,24 @@ The API accepts `GET /?search=<question>` and `GET /health` only; other methods 
 
 With `LLM_UNDERSTANDING=on` (the Docker default; off unless set when running Flask directly), a language model reads each question first (D-027): `gpt-oss:120b-cloud` through your local Ollama (`OLLAMA_URL`, `LLM_MODEL`), which must be installed and signed in. It only chooses among the disease and symptom names found in the question and the allowed question types; answers still come only from the graph, and on any failure, timeout or busy budget the rules answer as before. Questions and relevant topic context may be sent to Ollama's cloud to understand them; answers come only from the knowledge graph. Set `LLM_UNDERSTANDING=off` to keep questions on this machine.
 
+Long text answers keep every word but show their own headings and numbered points (`sections`, D-028). A reworded, more conversational version is added beside the original only when the owner has approved that exact field (`reworded_sections`, D-029); the store `api/dictionary/rewordings.json` ships empty. Every API response carries `Cache-Control: no-store`, because the question travels in the URL. With the model on, `understanding.log` holds outcome counts (attempts, routed, failures, budget denials), never questions or addresses.
+
 The API does not load similarity models or return stored patient answers. No model weights or Quora training download are required for the API.
+
+## Language-model evaluation and rewording (offline)
+
+These scripts call the cloud model through your local Ollama; they never run in CI and never touch the running API.
+
+```
+python scripts/llm_understanding.py --round2 --dry-run   # check the frozen Round-2 inputs; no model calls
+python scripts/reword_answers.py --inventory             # sizes of the rewording pilot fields; no model calls
+python scripts/reword_answers.py --challenge             # measure the rewording checks on reviewed broken rewrites
+python scripts/reword_answers.py --generate              # reword the pilot fields into local candidates
+python scripts/reword_answers.py --review                # write pilot-data/rewordings/review.html for the owner
+python scripts/reword_answers.py --approve decisions.json   # publish only approved, unchanged, passing fields
+```
+
+Results: [docs/pilot/LLM-UNDERSTANDING.md](docs/pilot/LLM-UNDERSTANDING.md) (Rounds 1 and 2) and [docs/pilot/REWORDING.md](docs/pilot/REWORDING.md).
 
 ## Historical training experiments
 
@@ -147,4 +166,5 @@ The `docs/` folder follows the "Defend What You Ship" field guide. Start with [d
 ## Known limitations
 
 - **Training reproducibility.** The notebook fits its tokenizer before splitting the data, does not seed the split, and has no separate test set. Fixing this needs the training data, the GloVe embeddings and a new evaluation run, so it has not been done.
+- **Language model.** It runs by the owner's decision before meeting its pre-registered bar: on a fresh set it understood far more phrasings and added no wrong-subject answer the rules do not also give, but missed the reliability (98.1% usable replies) and latency (p95 1.56 s) targets. Real questions go to Ollama's cloud while it is on; set `LLM_UNDERSTANDING=off` to keep them on this machine.
 - **Access control.** The API has no authentication (D-013 in `docs/DECISIONS.md`). It answers read-only questions over public data and listens on this machine only; in Docker, nginx limits each client to 10 questions per second. Putting it on the internet would need real authentication and HTTPS first.
