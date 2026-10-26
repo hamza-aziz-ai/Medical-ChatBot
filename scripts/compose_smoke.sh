@@ -10,6 +10,7 @@ export COMPOSE_PROJECT_NAME=medical-chatbot-smoke
 export NEO4J_PASSWORD="smoke-$RANDOM$RANDOM$RANDOM"
 export WEB_PORT="${WEB_PORT:-18080}"
 export LOG_LEVEL=DEBUG
+export LLM_UNDERSTANDING=off  # the smoke test never reaches a language model (D-027)
 SENTINEL="sentinelq$RANDOM$RANDOM"
 BASE="http://127.0.0.1:$WEB_PORT"
 # An explicit empty env file keeps a developer's real .env out of the test.

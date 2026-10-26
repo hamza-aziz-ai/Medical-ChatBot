@@ -39,6 +39,10 @@ services:
     environment:
       <<: *api-env
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # D-027: on by default here; the owner's Ollama relays gpt-oss:120b-cloud. Set LLM_UNDERSTANDING=off to use the rules only.
+      LLM_UNDERSTANDING: ${LLM_UNDERSTANDING:-on}
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      LLM_MODEL: ${LLM_MODEL:-gpt-oss:120b-cloud}
     volumes:
       - api-logs:/app/logs
     restart: unless-stopped

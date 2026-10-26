@@ -124,6 +124,15 @@ describe("ChatPanel", () => {
     expect(why).toContain('"whooping cough" was read as pertussis');
   });
 
+  it("says when a language model read the question, and discloses that it may", () => {
+    const interpretation = { entities: [], intents: [], used_topic: false, aliases: [] };
+    const read = panel({ messages: [{ agent: "bot", type: "answer", text: "t", answers: [], interpretation: { ...interpretation, understood_by: "model" } }] });
+    expect(read.find(".why").text()).toContain("A language model, through Ollama's cloud, read your question");
+    const rules = panel({ messages: [{ agent: "bot", type: "answer", text: "t", answers: [], interpretation }] });
+    expect(rules.find(".why").text()).not.toContain("language model");
+    expect(rules.find(".disclosure").text()).toContain("may be sent to Ollama's cloud");
+  });
+
   it("links one-disease answers to MedlinePlus as an external site", () => {
     const wrapper = panel({ messages: [{ agent: "bot", type: "answer", text: "t",
       answers: [{ intent: "disease_cause", subject: "asthma", text: "The possible causes of asthma are: dust" }] }] });

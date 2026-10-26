@@ -11,6 +11,7 @@ from build_medicalgraph import OWNER
 import question_classifier
 from question_classifier import ENTITIES_PATH, TYPO_BUDGET_SECONDS, QuestionClassifier, read_dictionary
 from question_parser import ENTITY_TYPES, QuestionParser
+from understanding import Understanding, build_candidates
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,12 @@ ABSTAIN_REASONS = {
     ),
     "unsupported_entity": "I know that as a medical department, but I can only answer questions about diseases and symptoms.",
     "no_facts": "The knowledge graph has nothing recorded for that question.",
+    "outside_scope": (
+        "I can only say what a disease's symptoms, causes, prevention, treatments, complications or description are, "
+        "or which diseases a symptom can point to."
+    ),
 }
+UNCLEAR_SUBJECT = "Which disease or symptom do you mean? Please name it in your question."
 
 UNSUPPORTED_INTENTS = frozenset({
     "disease_last_time",
@@ -154,6 +160,8 @@ def replace_phrase(question, phrase, replacement):
 
 
 class ChatBotGraph:
+    understanding = None  # set in __init__; a bot built without it (some tests) uses the rules only
+
     def __init__(self):
         # D35: one read of the dictionary, so the classifier, the suggestions and readiness can never come from two
         # versions of the file if the importer replaces it while the API starts.
@@ -164,6 +172,7 @@ class ChatBotGraph:
         self.availability = self.load_availability(document=document)
         self.source = self.load_source(document=document)
         self.suggestion_budget = SuggestionBudget()
+        self.understanding = Understanding()
         logger.info("Chatbot ready: %d disease, %d symptom and %d department terms loaded",
                     len(self.classifier.disease_words), len(self.classifier.symptom_words), len(self.classifier.department_words))
 
@@ -277,6 +286,14 @@ class ChatBotGraph:
             logger.info("Clarifying: a name is both a disease and a symptom")
             return self.clarify(question, ambiguous[0], chosen, interpretation)
 
+        # D-027: every confirmation and veto above is local and needs no graph. Only now may the language model route
+        # the question; a valid reply wins (its refusals included), anything else falls through to the rules below.
+        if self.understanding and self.understanding.enabled:
+            candidates = build_candidates(arguments, used_topic)
+            routed = self.understanding.route(question, candidates, client)
+            if routed:
+                return self.respond_routed(routed, candidates, used_topic, alias_hits)
+
         answers = self.searcher.search_structured(self.parser.parser_main(classified)) if intents else []
         if not answers:
             logger.info("Abstained: the graph had no answer for intents %s", intents)
@@ -332,6 +349,52 @@ class ChatBotGraph:
 
     def keyword_words(self):
         return {word for phrase in self.classifier.intent_keywords() for word in phrase.lower().split()}
+
+    def respond_routed(self, routed, candidates, used_topic, alias_hits):
+        """A valid model routing (D-027): an answer runs the fixed query of each (intent, subject) pair, never the
+        rules' cross-product; a refusal or a clarification is final, whatever the rules would have said."""
+        decision, checked = routed
+        provenance = {"entities": [], "intents": [], "used_topic": used_topic, "aliases": [], "understood_by": "model"}
+        if decision == "clarify":
+            return self.reply("clarify", "unclear_subject", UNCLEAR_SUBJECT, interpretation=provenance)
+        if decision == "unsupported":
+            reason = "unsupported_question" if any(intent in UNSUPPORTED_INTENTS for intent, _ in checked) else "outside_scope"
+            return self.abstain(reason, provenance, self.declined_topic(candidates, checked))
+        subjects = sorted({(c["name"], c["type"]) for _, c in checked})
+        names_by_intent = {}
+        for intent, name in sorted({(intent, c["name"]) for intent, c in checked}):
+            names_by_intent.setdefault(intent, []).append(name)
+        intents = list(names_by_intent)
+        selected = {name for name, _ in subjects}
+        interpretation = self.interpretation({name: [t] for name, t in subjects}, intents, used_topic,
+                                             [hit for hit in alias_hits if hit["names"][0]["name"] in selected])
+        interpretation["understood_by"] = "model"
+        topic_out = {"name": subjects[0][0], "type": subjects[0][1]} if len(subjects) == 1 else None
+        sqls = [{"question_type": intent, "sql": self.parser.sql_transfer(intent, names)} for intent, names in names_by_intent.items()]
+        answers = self.searcher.search_structured(sqls)
+        if not answers:
+            logger.info("Abstained: the graph had no answer for the model's intents %s", intents)
+            return self.abstain("no_facts", interpretation, topic_out, suggest=True)
+        for answer in answers:
+            answer["label"] = INTENT_LABELS[answer["intent"]]
+        logger.info("Answered with %d result(s) for the model's intents %s", len(answers), intents)
+        return self.reply(
+            "answer", "answered", "\n".join(answer["text"] for answer in answers),
+            answers=answers, topic=topic_out, interpretation=interpretation,
+            options=self.suggestions(topic_out, exclude=intents),
+        )
+
+    @staticmethod
+    def declined_topic(candidates, checked):
+        """After a refusal, the one subject the question named (so the page shows it), else None (the page keeps its
+        topic), as the rules do for unsupported questions."""
+        named = {c["name"] for c in candidates if c["source"] == "mention"}
+        if len(named) != 1:
+            return None
+        name = named.pop()
+        types = {c["type"] for c in candidates if c["name"] == name}
+        types &= {c["type"] for _, c in checked if c["name"] == name} or types
+        return {"name": name, "type": types.pop()} if len(types) == 1 else None
 
     def clarify_typo(self, question, typos):
         names = " or ".join(f'"{name}"' for _, name in typos)

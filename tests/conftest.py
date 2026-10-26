@@ -1,8 +1,11 @@
+import os
 import sys
 from pathlib import Path
 
 import pytest
 
+# Tests never reach a language model (D-027); enabled behaviour is tested with a fake transport.
+os.environ["LLM_UNDERSTANDING"] = "off"
 API_DIR = Path(__file__).resolve().parents[1] / "api"
 sys.path.insert(0, str(API_DIR))
 
