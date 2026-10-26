@@ -4,7 +4,9 @@ Deterministic and conservative: the only changes are removing the numbering mark
 trimming whitespace and capitalising first letters. Every letter of the stored text survives, in order, so no fact
 can be added, dropped or reworded here. Text without a clear numbered run is left as one paragraph.
 """
+import hashlib
 import re
+from pathlib import Path
 
 # "1." "2," "3、" or "(1)" "（2）", at the start or after whitespace or a colon, then whitespace. A bare "1 pig" is
 # not a marker: plain numbers are too common in the text to split on.
@@ -79,3 +81,24 @@ def sections(text):
     for section in result:
         section["items"] = [capitalised(item) for item in section["items"] if item.strip()]
     return result
+
+
+# Rewording support (D-029): one projection of a whole prose field, shared by the offline generator and serving, and
+# an identity that changes whenever this file does, so an approval made against older formatting is never served.
+SCHEMA_VERSION = 1
+
+
+def prose_segments(values):
+    """[{heading, paragraph, items}] for a whole field: each value's own sections, or the value as one paragraph."""
+    segments = []
+    for value in values:
+        segments += sections(value) or [{"heading": None, "paragraph": capitalised(value), "items": []}]
+    return segments
+
+
+def _identity():
+    source = Path(__file__).read_bytes().replace(b"\r\n", b"\n")
+    return f"v{SCHEMA_VERSION}:{hashlib.sha256(source).hexdigest()}"
+
+
+FORMAT_IDENTITY = _identity()

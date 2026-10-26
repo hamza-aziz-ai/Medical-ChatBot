@@ -112,6 +112,20 @@ describe("ChatPanel", () => {
     expect(wrapper.text()).toContain("See a doctor.");
   });
 
+  it("shows an approved rewording first and the original one click away", async () => {
+    const wrapper = panel({ messages: [{ agent: "bot", type: "answer", text: "t", answers: [{ intent: "disease_prevention", subject: "asthma",
+      text: "Precautions for asthma include: avoid allergens.", lead: "Precautions for asthma include:", reworded: true,
+      reworded_sections: [{ heading: null, paragraph: "Stay away from things you are allergic to.", items: [] }] }] }] });
+    expect(wrapper.text()).toContain("Stay away from things you are allergic to.");
+    expect(wrapper.find(".reworded").text()).toContain("Reworded for readability");
+    const toggle = wrapper.find(".reworded button");
+    expect(toggle.attributes("aria-pressed")).toBe("false");
+    await toggle.trigger("click");
+    expect(wrapper.text()).toContain("Precautions for asthma include: avoid allergens.");
+    expect(wrapper.text()).not.toContain("Stay away from things");
+    expect(wrapper.find(".reworded button").text()).toBe("Show reworded");
+  });
+
   it("offers the latest reply's options and sends their question, choices and topic", async () => {
     const options = [
       { label: "anemia as a disease", question: "q", selections: [{ name: "anemia", type: "disease" }] },
