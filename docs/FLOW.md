@@ -28,6 +28,7 @@ frontend/src/components/ChatPanel.vue  submit() / ask(chip)   typed question, or
   -> api/question_parser.py            parser_main() -> sql_transfer()   template + {name, limit: 20}
   -> api/answer_searcher.py            search_structured()    execute_query, READ routing, query timeout (5 s default); lead, items, note per subject
        text_format.sections()          long text: its own headings and numbered points, every letter kept (D-028)
+       add_rewording()                 an approved rewording only on an exact input, output and formatter match (D-029)
        no rows -> abstain (no_facts)
        suggestions()                   from the intents table in entities.json (no query), only chips that classify back to their intent
   <- api/main.py                       jsonify({search, status, reason, message, answers, topic, interpretation, options})
