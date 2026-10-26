@@ -340,3 +340,16 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Trade-off:** Real questions now leave the machine for Ollama's cloud. This exact configuration (the stricter topic guard, local confirmations first, refusals final) has not been measured on a fresh holdout, so its safety is inferred from step 3, not shown. Wrong interpretations remain possible, including those of the rules on fallback. With one worker, other requests wait behind a model call (on a throwaway stack, `/health` took 1.64 s during a 1.88 s call). The small budgets mean an active user soon falls back to the rules. The compose change makes the updater wait for a manual update (D-021).
 - **Revisit if:** a fresh-holdout run of this configuration fails the D-026 bar, the cloud model changes or is retired, real users rely on it (privacy review), or the budgets prove too tight in use.
 - **Addendum (2026-10-26, the owner's choice):** the page names no vendor or technology. The note is generic and only in the About card ("Questions may be processed by an external AI service to understand them; answers come only from the knowledge graph."), and "Why this answer?" says only that a language model helped read the question. The note under the input was removed.
+
+## D-028: Show long graph text as sections and numbered points, without changing a word
+
+- **Date:** 2026-10-26; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner chose "a deterministic formatter first, then language-model rewording as a separate, safeguarded step"
+- **Context:** Long answers (prevention and causes reach 32,000 characters) arrived as one block, though most carry their own structure: labelled sections ("health education:") and numbered points ("1.", "2,", "(3)").
+- **Options:**
+  1. a deterministic formatter that finds that structure
+  2. language-model rewording straight away
+  3. leave the text as it is
+- **Chosen:** 1. `api/text_format.py` splits only on numbered runs that count up from 1 in one marker style (a new "1" starts a new list), takes a short labelled clause before a run as its heading, and leaves anything else as a paragraph. It only removes the markers, trims whitespace and capitalises first letters: a test checks over every stored field (464 structured) that the letters of the text survive in order. Text answers gain `lead` and `sections`; `message` and `text` are unchanged.
+- **Why:** It fixes most of the readability problem with no risk to the facts, no model and no latency.
+- **Trade-off:** The source's grammar and mistranslations stay as stored; plain numbers without punctuation ("1 pig") are not split; very long answers are still long.
+- **Revisit if:** the rewording step (next) is designed, or a field's structure is misread.
