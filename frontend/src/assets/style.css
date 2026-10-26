@@ -488,18 +488,11 @@ button:disabled {
 
 .hint {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 4px 12px;
+  gap: 12px;
   margin: 8px 2px 0;
   font-size: 0.78rem;
   color: var(--muted);
-}
-
-/* The language-model disclosure (D-027) takes its own line under the input help. */
-.hint .disclosure {
-  flex-basis: 100%;
-  order: 3;
 }
 
 /* About panel */

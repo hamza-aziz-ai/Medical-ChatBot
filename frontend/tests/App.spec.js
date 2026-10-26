@@ -69,6 +69,12 @@ describe("App", () => {
     expect(wrapper.find("textarea").element.disabled).toBe(false);
   });
 
+  it("notes external AI processing in the About card only, naming no vendor", () => {
+    const wrapper = mount(App);
+    expect(wrapper.find(".about").text()).toContain("Questions may be processed by an external AI service");
+    expect(wrapper.text()).not.toMatch(/ollama|gpt-oss/i);
+  });
+
   it("shows the medical-advice notice and makes no external image requests", () => {
     const wrapper = mount(App);
     expect(wrapper.find('[role="note"]').text()).toContain("Not medical advice");
