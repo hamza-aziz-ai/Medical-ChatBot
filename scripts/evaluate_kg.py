@@ -16,6 +16,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "api"))
+# The MLOps gate measures the rules; it never calls a language model (D-027).
+os.environ["LLM_UNDERSTANDING"] = "off"
 
 import build_medicalgraph as builder  # noqa: E402
 
