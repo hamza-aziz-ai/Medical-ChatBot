@@ -13,14 +13,14 @@ python -m venv .venv
 
 Configuration comes from environment variables. For local use, copy `.env.example` to `.env` in the repository root and fill it in; the API and the importer read it at startup, and variables already set in your shell take precedence. `.env` is git-ignored, so keep real secrets only there.
 
-| Variable | Required | Default |
-|---|---|---|
-| `NEO4J_PASSWORD` | yes | none |
-| `NEO4J_URI` | no | `neo4j://localhost:7687` (Bolt schemes only: `bolt`, `neo4j` and their `+s`/`+ssc` variants; query timeouts do not work over HTTP) |
-| `NEO4J_USER` | no | `neo4j` |
-| `NEO4J_DATABASE` | no | `neo4j` |
-| `NEO4J_QUERY_TIMEOUT` | no | `5` (seconds per API query; must be a positive number) |
-| `CORS_ORIGINS` | no | `http://localhost:8080,http://127.0.0.1:8080` (exact `http(s)://host[:port]` origins, comma-separated; patterns and `*` are refused) |
+| Variable              | Required | Default                                                                                                                              |
+|-----------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `NEO4J_PASSWORD`      | yes      | none                                                                                                                                 |
+| `NEO4J_URI`           | no       | `neo4j://localhost:7687` (Bolt schemes only: `bolt`, `neo4j` and their `+s`/`+ssc` variants; query timeouts do not work over HTTP)   |
+| `NEO4J_USER`          | no       | `neo4j`                                                                                                                              |
+| `NEO4J_DATABASE`      | no       | `neo4j`                                                                                                                              |
+| `NEO4J_QUERY_TIMEOUT` | no       | `5` (seconds per API query; must be a positive number)                                                                               |
+| `CORS_ORIGINS`        | no       | `http://localhost:8080,http://127.0.0.1:8080` (exact `http(s)://host[:port]` origins, comma-separated; patterns and `*` are refused) |
 
 An earlier version of this repository contained a hard-coded Neo4j password. If you used that password anywhere, change it.
 
@@ -68,16 +68,16 @@ A release that changes `compose.yaml` is not deployed automatically: review it, 
 
 Every workflow runs only when its inputs change, so documentation-only changes start nothing. Nothing is published until `autorelease.yml` or the owner starts a release.
 
-| Workflow | Runs when these change | What it does |
-|---|---|---|
-| `backend.yml` | `api/`, `tests/`, `notebooks/`, `eval/`, `scripts/evaluate_kg.py`, `scripts/next_release.py`, the release workflows, `requirements*.txt` | Offline pytest suite |
-| `frontend.yml` | `frontend/` | Lint, tests and build on Node 22 and 24 |
-| `mlops.yml` | the CSV, the dictionary, the importer and the modules that answer questions, `eval/`, the evaluator, the requirements and the importer, evaluation and live tests | Data gates, live tests on Neo4j 5 and 4.4, then a real import and evaluation on Neo4j 5 |
-| `docker.yml` | `docker/`, `compose.yaml`, the requirements, the smoke script, and the `api/` and `frontend/` files copied into the images | Builds both images and runs the Compose smoke test |
-| `release.yml` | a pushed `vX.Y.Z` tag, a manual run, or a call from `autorelease.yml` | Continuous delivery (below) |
-| `autorelease.yml` | `automerge` finishes, a manual run, or its own previous successful run | Releases the oldest merge not yet released, with its version, through `release.yml`, then starts the next run |
-| `workflows.yml` | `.github/workflows/` | Lints every workflow with actionlint |
-| `automerge.yml` | a CI workflow finishes, or a pull request is opened or updated | Merges the pull request into `main` once every check on its latest commit has passed |
+| Workflow          | Runs when these change                                                                                                                                            | What it does                                                                                                  |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `backend.yml`     | `api/`, `tests/`, `notebooks/`, `eval/`, `scripts/evaluate_kg.py`, `scripts/next_release.py`, the release workflows, `requirements*.txt`                          | Offline pytest suite                                                                                          |
+| `frontend.yml`    | `frontend/`                                                                                                                                                       | Lint, tests and build on Node 22 and 24                                                                       |
+| `mlops.yml`       | the CSV, the dictionary, the importer and the modules that answer questions, `eval/`, the evaluator, the requirements and the importer, evaluation and live tests | Data gates, live tests on Neo4j 5 and 4.4, then a real import and evaluation on Neo4j 5                       |
+| `docker.yml`      | `docker/`, `compose.yaml`, the requirements, the smoke script, and the `api/` and `frontend/` files copied into the images                                        | Builds both images and runs the Compose smoke test                                                            |
+| `release.yml`     | a pushed `vX.Y.Z` tag, a manual run, or a call from `autorelease.yml`                                                                                             | Continuous delivery (below)                                                                                   |
+| `autorelease.yml` | `automerge` finishes, a manual run, or its own previous successful run                                                                                            | Releases the oldest merge not yet released, with its version, through `release.yml`, then starts the next run |
+| `workflows.yml`   | `.github/workflows/`                                                                                                                                              | Lints every workflow with actionlint                                                                          |
+| `automerge.yml`   | a CI workflow finishes, or a pull request is opened or updated                                                                                                    | Merges the pull request into `main` once every check on its latest commit has passed                          |
 
 **Automatic merging.** A pull request from a branch of this repository is merged into `main` as soon as every check on its latest commit has passed, with no review. If a check fails, the pull request stays open; push a fix and it merges when the checks pass. A pull request whose changes start no CI (documentation only) is merged about a minute after it is opened. Pull requests from forks and drafts are never merged automatically. The merge is made with the workflow's own token, so it does not start the `main` runs of the other workflows again; the pull request's runs already tested the change.
 
@@ -110,11 +110,11 @@ The source and clinical review status of `medical.csv` are unknown. Each importe
 
 Every backend module writes its own rotating log file in `logs/<year>/<Month>/`, named after the module: `main.log`, `chatbot_graph_logic.log`, `question_classifier.log`, `question_parser.log`, `answer_searcher.log`, `database.log`, `terms.log`, `build_medicalgraph.log` and `app_logging.log`. Messages from third-party libraries go to `external.log`. The frontend runs in the browser and does not write log files. If the API and the importer run at the same time, the modules they share (`database`, `terms`) write to the same file, and its midnight rotation can fail while the other process holds it open. Each file is closed at midnight and renamed `<name>.log.DD-MMM-YYYY` (for example `api.log.25-Oct-2026`) in the folder it was written in, and a new file starts in the folder for the current month. Lines look like `25 October 2026, Sunday, 02:15:53.293 PM India Standard Time [INFO] main: Answered a question of 18 characters`. The timezone is the operating system's local name: an abbreviation such as `IST` on Linux and macOS, the full name on Windows.
 
-| Variable | Default | Meaning |
-|---|---|---|
-| `LOG_LEVEL` | `DEBUG` | `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL` |
-| `LOG_BACKUP_COUNT` | `30` | Rotated files kept per module log, across all folders; `0` keeps every file |
-| `LOG_DIR` | `logs` in the repository root | Where the year folders go; git-ignored |
+| Variable           | Default                       | Meaning                                                                     |
+|--------------------|-------------------------------|-----------------------------------------------------------------------------|
+| `LOG_LEVEL`        | `DEBUG`                       | `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`                           |
+| `LOG_BACKUP_COUNT` | `30`                          | Rotated files kept per module log, across all folders; `0` keeps every file |
+| `LOG_DIR`          | `logs` in the repository root | Where the year folders go; git-ignored                                      |
 
 The API does not log questions, tokens or credentials, and silences the development server's request log, which would otherwise print each question in the URL. This applies to the Flask app and its local development server. The Docker images keep the same rule: gunicorn has no access log, and nginx logs nothing (see Docker). Configure any other server or proxy separately.
 
