@@ -609,3 +609,24 @@ details ul {
     scroll-behavior: auto !important;
   }
 }
+
+/* A reworded answer says so and offers the original (D-029). */
+.reworded {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.reworded .link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

@@ -46,7 +46,41 @@
               :key="answerIndex"
               class="answer"
             >
-              <template v-if="answer.items">
+              <template v-if="answer.reworded && !originals[index + '-' + answerIndex]">
+                <p class="text">
+                  {{ answer.lead }}
+                </p>
+                <div
+                  v-for="(section, sectionIndex) in answer.reworded_sections"
+                  :key="sectionIndex"
+                  class="section"
+                >
+                  <p
+                    v-if="section.heading"
+                    class="section-heading"
+                  >
+                    {{ section.heading }}
+                  </p>
+                  <p
+                    v-if="section.paragraph"
+                    class="text"
+                  >
+                    {{ section.paragraph }}
+                  </p>
+                  <ol
+                    v-if="section.items.length"
+                    class="items"
+                  >
+                    <li
+                      v-for="(item, itemIndex) in section.items"
+                      :key="itemIndex"
+                    >
+                      {{ item }}
+                    </li>
+                  </ol>
+                </div>
+              </template>
+              <template v-else-if="answer.items">
                 <p class="text">
                   {{ answer.lead }}
                 </p>
@@ -104,6 +138,20 @@
                 class="text"
               >
                 {{ answer.text }}
+              </p>
+              <p
+                v-if="answer.reworded"
+                class="reworded"
+              >
+                <span>{{ originals[index + '-' + answerIndex] ? "Original text from the knowledge graph." : "Reworded for readability; approved against the original." }}</span>
+                <button
+                  type="button"
+                  class="link"
+                  :aria-pressed="Boolean(originals[index + '-' + answerIndex])"
+                  @click="toggleOriginal(index + '-' + answerIndex)"
+                >
+                  {{ originals[index + '-' + answerIndex] ? "Show reworded" : "Show original" }}
+                </button>
               </p>
             </div>
           </template>
@@ -256,7 +304,7 @@ export default {
   },
   emits: ["send", "reset"],
   data() {
-    return { draft: "" };
+    return { draft: "", originals: {} };
   },
   computed: {
     canSend() {
@@ -286,6 +334,10 @@ export default {
     },
   },
   methods: {
+    toggleOriginal(key) {
+      // D-029: per answer, local only; the reworded and original texts both came with the reply.
+      this.originals = { ...this.originals, [key]: !this.originals[key] };
+    },
     onEnter(event) {
       // Shift+Enter adds a line; Enter during IME composition confirms the composition.
       if (event.shiftKey || event.isComposing || event.keyCode === 229) return;
