@@ -1,0 +1,2 @@
+# The understanding set is frozen by SHA-256 (D-026): keep its bytes identical on every platform.
+eval/understanding.jsonl text eol=lf

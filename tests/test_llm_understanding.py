@@ -37,6 +37,12 @@ def test_the_committed_set_keeps_its_contract():
     assert sum(c["author"] == "claude" for c in cases) == sum(c["author"] == "codex" for c in cases) == 75
 
 
+def test_the_set_is_byte_identical_to_the_frozen_hash():
+    # .gitattributes keeps its line endings LF everywhere; any edit to the set needs a new, recorded freeze.
+    protocol = (Path(__file__).resolve().parents[1] / "docs" / "pilot" / "LLM-UNDERSTANDING.md").read_text(encoding="utf-8")
+    assert f"SHA-256 `{u.set_digest()}`" in protocol
+
+
 @pytest.mark.parametrize("change, message", [
     (lambda c: c.update(family="f", split="dev") or None, None),
     (lambda c: c["turns"][0]["expect"]["entities"].__setitem__(0, {"name": "brain worms", "type": "disease"}), "not a dictionary"),
