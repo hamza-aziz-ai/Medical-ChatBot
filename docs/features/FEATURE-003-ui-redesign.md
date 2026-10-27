@@ -13,3 +13,4 @@
 ## Log
 
 - 2026-10-25: Built and checked in a browser against the real stack (answer, example question, abstention) and with `vite preview` at 960 px and 390 px in both themes, with no horizontal overflow. Frontend lint clean; 8 helper and 14 component tests passed.
+- 2026-10-27: New favicon (teal speech bubble with a graph-node cross, from an owner-chosen generated image): 16 and 32 px PNGs, a 48 px ICO and a 180 px Apple touch icon, transparent background.
