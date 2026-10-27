@@ -1,0 +1,9 @@
+{
+  "note": "What Docker Hub shows for each repository (D-031). scripts/dockerhub_metadata.py makes Docker Hub match this file and overview.md after every merge. Short descriptions are at most 100 bytes. Categories have no API: they are set on Docker Hub by hand (D-031).",
+  "overview": "overview.md",
+  "immutable_tags_rules": ["[0-9]+\\.[0-9]+\\.[0-9]+"],
+  "repositories": {
+    "medical-chatbot-api": "Mr. Healthcare API: rule-based medical Q&A over a Neo4j knowledge graph (Flask, gunicorn)",
+    "medical-chatbot-web": "Mr. Healthcare web page: Vue 3 on unprivileged nginx, forwarding /api/ to the API image"
+  }
+}
