@@ -67,7 +67,13 @@ def database_uri():
     return uri
 
 
-def create_driver():
+# API requests run under Gunicorn's 30 s watchdog, so an unreachable graph must fail as a 503 well before it (D-032).
+# Measured against an unreachable host: 32.7 s with the importer's values below, 11.0 s with these.
+API_DRIVER_SETTINGS = {"connection_timeout": 5, "connection_acquisition_timeout": 5, "max_transaction_retry_time": 5}
+
+
+def create_driver(**settings):
+    """A driver with the importer's patient defaults; the API passes API_DRIVER_SETTINGS."""
     password = os.environ.get("NEO4J_PASSWORD")
     if not password:
         logger.error("NEO4J_PASSWORD is not set")
@@ -79,6 +85,5 @@ def create_driver():
     return GraphDatabase.driver(
         uri,
         auth=(os.environ.get("NEO4J_USER", "neo4j"), password),
-        connection_timeout=10,
-        max_transaction_retry_time=15,
+        **{"connection_timeout": 10, "max_transaction_retry_time": 15, **settings},
     )

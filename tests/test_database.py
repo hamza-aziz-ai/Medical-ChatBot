@@ -50,3 +50,18 @@ def test_env_file_fills_missing_variables_only(monkeypatch, tmp_path):
 
 def test_missing_env_file_is_ignored(tmp_path):
     database.load_env_file(tmp_path / "absent.env")
+
+
+def test_the_api_fails_fast_while_the_importer_stays_patient(monkeypatch):
+    # D-032: an unreachable graph must answer 503 well inside Gunicorn's 30 s watchdog; the importer keeps waiting longer.
+    seen = []
+    monkeypatch.setattr(database.GraphDatabase, "driver", lambda uri, **kwargs: seen.append(kwargs) or object())
+    monkeypatch.setenv("NEO4J_PASSWORD", "x")
+    from answer_searcher import AnswerSearcher
+
+    AnswerSearcher()
+    database.create_driver()
+    api, importer = seen
+    assert {k: api[k] for k in database.API_DRIVER_SETTINGS} == database.API_DRIVER_SETTINGS
+    assert importer["connection_timeout"] == 10 and importer["max_transaction_retry_time"] == 15
+    assert "connection_acquisition_timeout" not in importer
