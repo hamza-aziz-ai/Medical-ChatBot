@@ -210,6 +210,10 @@ def test_conversations_carry_each_configurations_own_topic_and_resets_clear_it()
 # Round 2 (D-027): the running configuration.
 
 def test_round2_inputs_match_their_frozen_hashes():
+    # The freeze guards a registered round until its results are published; after that the runtime may change
+    # (D-033), and a new round needs a new set and its own freeze. append_round2 still refuses a second publication.
+    if u.ROUND2_RESULTS in u.REPORT.read_text(encoding="utf-8"):
+        pytest.skip("Round 2 results are published; its inputs no longer need to stay frozen")
     u.check_freeze()   # the set, prompt, runtime code and dictionaries are as the protocol recorded
 
 

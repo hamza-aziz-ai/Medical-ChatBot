@@ -285,3 +285,44 @@ def test_the_harness_alone_can_replace_the_budget_and_breaker():
     assert understanding.counters.snapshot()["attempts"] == 10                  # no budget, no breaker in the way
     production = un.Understanding(enabled=True)
     assert isinstance(production.admission, un.Admission) and isinstance(production.breaker, un.Breaker)
+
+
+def test_an_api_key_is_sent_only_over_https_and_never_logged(monkeypatch, caplog):
+    # D-033: the hosted stack calls Ollama's cloud directly with a bearer key.
+    clock, sent = Clock(), []
+    envelope = json.dumps({"message": {"content": "{}"}, "model": "m"}).encode()
+
+    def recording(response):
+        base = connection_for(response)
+
+        class Connection(base):
+            def request(self, method, path, body, headers):
+                sent.append(headers)
+        return Connection
+
+    un.chat([], "https://ollama.com", "m", clock=clock, connect=recording(Response([envelope], clock, 0)), api_key="k-secret")
+    un.chat([], "http://localhost:11434", "m", clock=clock, connect=recording(Response([envelope], clock, 0)))
+    assert sent[0]["Authorization"] == "Bearer k-secret" and "Authorization" not in sent[1]
+    with pytest.raises(un.ModelError, match="needs https"):
+        un.chat([], "http://example.test", "m", clock=clock, connect=recording(Response([envelope], clock, 0)), api_key="k-secret")
+    assert len(sent) == 2
+
+    monkeypatch.setenv("OLLAMA_API_KEY", "k-secret")
+    understanding = un.Understanding(enabled=True, url="http://example.test")
+    with caplog.at_level("DEBUG"):
+        assert understanding.route("q", [{"id": "e1", "name": "asthma", "type": "disease", "source": "rules"}]) is None
+    assert "k-secret" not in caplog.text
+
+
+def test_the_overall_budget_can_be_lowered_for_the_public_site(monkeypatch):
+    monkeypatch.setenv("LLM_GLOBAL_PER_MINUTE", "6")
+    clock = Clock()
+    admission = un.Admission(clock)
+    assert admission.global_per_minute == 6
+    admitted = [admission.admit(f"client-{i}") for i in range(2)]
+    assert admitted == [None, None] and admission.admit("client-9") == "global"
+    clock.now += 10  # 6 per minute refills one attempt every 10 s
+    assert admission.admit("client-9") is None
+    monkeypatch.setenv("LLM_GLOBAL_PER_MINUTE", "0")
+    with pytest.raises(ValueError):
+        un.Admission(clock)
