@@ -14,3 +14,4 @@
 
 - 2026-10-27: Built. Unit tests for validation and the per-image decisions; live copy of v1.1.13's API index from GHCR into a throwaway registry kept the digest, the attestation manifest and every blob.
 - 2026-10-27: Merged (PR #58). The v1.1.13 backfill (run 40508274098) copied both images; Docker Hub and GHCR index digests match, and both repositories are public.
+- 2026-10-27: Repository pages (D-031): descriptions and overview from `docs/dockerhub/`, synced after every merge; immutable version tags; OCI labels on the images.

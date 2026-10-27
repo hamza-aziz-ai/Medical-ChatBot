@@ -76,6 +76,9 @@ api/build_medicalgraph.py main()
 .github/workflows/mirror.yml        (a separate run, started by publish or by hand with a tag; D-030)
   -> release published, final and passing; GHCR digests from its manifest.json
   -> per image on docker.io/hamzaazizai: same digest -> skip | other digest -> fail | confirmed absent -> skopeo copy --all --preserve-digests -> re-read and compare
+
+.github/workflows/dockerhub-metadata.yml   (after every automerge run, or by hand; D-031)
+  -> docs/dockerhub/ -> per repository: read Docker Hub -> patch only what differs (descriptions, immutable tags) -> read back
 ```
 
 ## A readiness probe (D-022)
