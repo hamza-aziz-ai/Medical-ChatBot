@@ -8,6 +8,7 @@ Done:
 - Docker Hub mirror (D-030, FEATURE-014): after each release is published, `release.yml` starts `mirror.yml`, which copies the release's GHCR digests to `docker.io/hamzaazizai/medical-chatbot-api` and `-web` under the same version. The owner set the `DOCKERHUB_TOKEN` secret; the `DOCKERHUB_USERNAME` variable is `hamzaazizai`.
 
 - Docker Hub pages (D-031): short descriptions and a shared overview in `docs/dockerhub/`, applied after every merge by `dockerhub-metadata.yml`, which also turns on immutable version tags; OCI labels on both images from the next release.
+- Docker Hub categories set by the owner on both repositories (Machine learning & AI, Web servers, Databases & storage), read back from the API.
 - v1.1.13 backfilled to Docker Hub (PR #58, mirror run 40508274098): both images have the same index digests as on GHCR, with the attestation manifest, and both repositories are public.
 
 In progress:
@@ -17,7 +18,7 @@ Broken or risky:
 - The Docker Hub token in Actions is admin-scoped (the owner's choice): a leak could delete the repositories (D-031).
 
 Next:
-- Owner: set the categories on both Docker Hub repositories (Machine learning & AI, Web servers, Databases & storage), and check that the token has an expiry.
+- Owner: check that the Docker Hub token has an expiry.
 
 Do not touch:
 - `.env` contents, real credentials, the GitHub profile repository `hamza-aziz-ai/hamza-aziz-ai`, LinkedIn. See CONSTRAINTS.md.
