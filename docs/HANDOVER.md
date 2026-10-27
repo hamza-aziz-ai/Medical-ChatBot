@@ -7,14 +7,16 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 Done:
 - Docker Hub mirror (D-030, FEATURE-014): after each release is published, `release.yml` starts `mirror.yml`, which copies the release's GHCR digests to `docker.io/hamzaazizai/medical-chatbot-api` and `-web` under the same version. The owner set the `DOCKERHUB_TOKEN` secret; the `DOCKERHUB_USERNAME` variable is `hamzaazizai`.
 
+- v1.1.13 backfilled to Docker Hub (PR #58, mirror run 40508274098): both images have the same index digests as on GHCR, with the attestation manifest, and both repositories are public.
+
 In progress:
-- The v1.1.13 backfill: a manual run of `mirror.yml` with `tag=v1.1.13` once this merges.
+- Nothing.
 
 Broken or risky:
-- The first real Docker Hub run is untested against Docker Hub itself (A-18, A-19); any surprise fails the mirror run only.
+- Docker Hub's immutable tags are off, so anyone holding the token could still change a tag (A-18).
 
 Next:
-- Owner: check that both Docker Hub repositories are public, that the token is Read & Write without Delete and has an expiry, and turn on immutable tags if the plan offers them.
+- Owner: turn on immutable tags for both Docker Hub repositories, and check that the token is Read & Write without Delete and has an expiry.
 
 Do not touch:
 - `.env` contents, real credentials, the GitHub profile repository `hamza-aziz-ai/hamza-aziz-ai`, LinkedIn. See CONSTRAINTS.md.
