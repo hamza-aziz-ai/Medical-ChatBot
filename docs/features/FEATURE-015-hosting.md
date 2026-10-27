@@ -8,7 +8,7 @@
 
 **Status.** Live at https://medical.hamzaaziz.dev since 2026-10-27, on v1.1.14, enrolled for automatic updates.
 
-**Language model.** On since D-033, through Ollama's cloud API.
+**Language model.** On since v1.1.18 (D-033 addendum), through the VM's own Ollama signed in to the owner's free plan; the direct API key needs paid credits.
 
 **Open questions.** Memory under a real update on the VM; whether Aura's pause is prevented by the health check; whether a Cloudflare rate-limit rule is needed.
 
