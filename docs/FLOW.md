@@ -70,8 +70,12 @@ api/build_medicalgraph.py main()
        backend, frontend, mlops at that sha
        images    pushed as sha-<sha>-<run_id>-<run_attempt>
        smoke     Compose smoke test of those digests
-       publish   create the tag -> draft with assets -> version image tags -> publish
+       publish   create the tag -> draft with assets -> version image tags -> publish -> start mirror.yml (a warning if that fails)
   -> continue (only after success)   gh workflow run autorelease.yml -> the next merge
+
+.github/workflows/mirror.yml        (a separate run, started by publish or by hand with a tag; D-030)
+  -> release published, final and passing; GHCR digests from its manifest.json
+  -> per image on docker.io/hamzaazizai: same digest -> skip | other digest -> fail | confirmed absent -> skopeo copy --all --preserve-digests -> re-read and compare
 ```
 
 ## A readiness probe (D-022)

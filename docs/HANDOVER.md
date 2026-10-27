@@ -2,7 +2,24 @@
 
 Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md). Newest entry on top. Update it at the end of every session.
 
-## Latest session: 2026-10-25 to 2026-10-26 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
+## Latest session: 2026-10-27 (model: Claude Opus 5.5, claude-opus-5-5; council with Codex/ChatGPT)
+
+Done:
+- Docker Hub mirror (D-030, FEATURE-014): after each release is published, `release.yml` starts `mirror.yml`, which copies the release's GHCR digests to `docker.io/hamzaazizai/medical-chatbot-api` and `-web` under the same version. The owner set the `DOCKERHUB_TOKEN` secret; the `DOCKERHUB_USERNAME` variable is `hamzaazizai`.
+
+In progress:
+- The v1.1.13 backfill: a manual run of `mirror.yml` with `tag=v1.1.13` once this merges.
+
+Broken or risky:
+- The first real Docker Hub run is untested against Docker Hub itself (A-18, A-19); any surprise fails the mirror run only.
+
+Next:
+- Owner: check that both Docker Hub repositories are public, that the token is Read & Write without Delete and has an expiry, and turn on immutable tags if the plan offers them.
+
+Do not touch:
+- `.env` contents, real credentials, the GitHub profile repository `hamza-aziz-ai/hamza-aziz-ai`, LinkedIn. See CONSTRAINTS.md.
+
+## Session: 2026-10-25 to 2026-10-26 (model: Claude Opus 5.5, claude-opus-5-5; councils with Codex/ChatGPT)
 
 Done:
 - Reworded answers built up to the owner's review (D-029, FEATURE-013): 10 pilot candidates in `pilot-data/rewordings/review.html` (2 pass every check); the API ships with an empty store, so nothing changes until fields are approved.

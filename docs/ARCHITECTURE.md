@@ -8,23 +8,24 @@ A rule-based medical question-answering chatbot. It finds disease and symptom na
 
 ## Modules and what they own
 
-| Module                                                      | Owns                                                                                                                                                 |
-|-------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `frontend/` (Vue 3, Vite)                                   | The page: chat panel and About panel. Talks to the API through `src/chatApi.mjs`.                                                                    |
-| `api/main.py`                                               | The HTTP boundary: CORS, input limits, JSON errors, request logging without questions. No authentication (D-013).                                    |
-| `api/chatbot_graph_logic.py`                                | One question in, one answer or abstention out.                                                                                                       |
-| `api/question_classifier.py`                                | Entity matching (Aho-Corasick over `api/dictionary/entities.json`) and keyword intents.                                                              |
-| `api/question_parser.py`                                    | Turning intents and entities into parameterized Cypher templates.                                                                                    |
-| `api/answer_searcher.py`                                    | Running the queries (read routing, timeout) and wording the answers.                                                                                 |
-| `api/text_format.py`                                        | Headings and numbered points found in long text without changing a word (D-028); the prose projection and formatter identity for rewordings (D-029). |
-| `api/understanding.py`                                      | The language-model contract (D-027): candidates, frozen prompt, validator, bounded transport, attempt budgets, breaker.                              |
-| `api/database.py`                                           | `.env` loading, Neo4j connection settings and validation.                                                                                            |
-| `api/build_medicalgraph.py`                                 | Validating the CSV and replacing the importer-owned graph snapshot; publishing `entities.json`.                                                      |
-| `api/app_logging.py`                                        | One rotating log file per module.                                                                                                                    |
-| `scripts/llm_understanding.py`, `scripts/reword_answers.py` | Offline only: the language-model evaluation rounds (D-026, D-027) and the reviewed rewording pipeline (D-029).                                       |
-| `scripts/evaluate_kg.py`, `eval/`                           | The MLOps gate: graph integrity and behavioural evaluation.                                                                                          |
-| `docker/`, `compose.yaml`                                   | Images and the local stack (nginx web, gunicorn API, Neo4j).                                                                                         |
-| `.github/workflows/`                                        | Path-filtered CI, MLOps, Docker checks, automatic merging, tag-gated release.                                                                        |
+| Module                                                        | Owns                                                                                                                                                   |
+|---------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `frontend/` (Vue 3, Vite)                                     | The page: chat panel and About panel. Talks to the API through `src/chatApi.mjs`.                                                                      |
+| `api/main.py`                                                 | The HTTP boundary: CORS, input limits, JSON errors, request logging without questions. No authentication (D-013).                                      |
+| `api/chatbot_graph_logic.py`                                  | One question in, one answer or abstention out.                                                                                                         |
+| `api/question_classifier.py`                                  | Entity matching (Aho-Corasick over `api/dictionary/entities.json`) and keyword intents.                                                                |
+| `api/question_parser.py`                                      | Turning intents and entities into parameterized Cypher templates.                                                                                      |
+| `api/answer_searcher.py`                                      | Running the queries (read routing, timeout) and wording the answers.                                                                                   |
+| `api/text_format.py`                                          | Headings and numbered points found in long text without changing a word (D-028); the prose projection and formatter identity for rewordings (D-029).   |
+| `api/understanding.py`                                        | The language-model contract (D-027): candidates, frozen prompt, validator, bounded transport, attempt budgets, breaker.                                |
+| `api/database.py`                                             | `.env` loading, Neo4j connection settings and validation.                                                                                              |
+| `api/build_medicalgraph.py`                                   | Validating the CSV and replacing the importer-owned graph snapshot; publishing `entities.json`.                                                        |
+| `api/app_logging.py`                                          | One rotating log file per module.                                                                                                                      |
+| `scripts/llm_understanding.py`, `scripts/reword_answers.py`   | Offline only: the language-model evaluation rounds (D-026, D-027) and the reviewed rewording pipeline (D-029).                                         |
+| `scripts/mirror_release.py`, `.github/workflows/mirror.yml`   | Copies each published release's GHCR digests to Docker Hub, never rebuilding or overwriting (D-030).                                                   |
+| `scripts/evaluate_kg.py`, `eval/`                             | The MLOps gate: graph integrity and behavioural evaluation.                                                                                            |
+| `docker/`, `compose.yaml`                                     | Images and the local stack (nginx web, gunicorn API, Neo4j).                                                                                           |
+| `.github/workflows/`                                          | Path-filtered CI, MLOps, Docker checks, automatic merging, tag-gated release.                                                                          |
 
 ## Data flow and trust boundaries
 

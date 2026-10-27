@@ -15,6 +15,7 @@
 - Suggestions from a table the importer writes over a database lookup per request: no extra query or timeout on the answer path (D-016).
 - Sourced aliases and confirmed spelling suggestions over silent fuzzy matching: a near-miss can be a different disease (D-017).
 - One release per merge, tagged only after every gate, over manual tags or tag-then-test: a failed release uses up no version, and releases stay in merge order (D-019, D-020).
+- A Docker Hub copy of each release by digest, in its own run, over pushing from the release itself: users can pull from Docker Hub, and a Docker Hub outage never blocks a release (D-030).
 - A scheduled pull-based updater over a self-hosted runner: no inbound access, and no way for other people's pull requests to run code on this machine (D-021).
 
 **Data structures and why.** A Neo4j graph with unique-name constraints, because every lookup is "facts about this named disease or symptom". An in-memory Aho-Corasick automaton, because it finds every known name in one pass over the question. See DATA.md.
