@@ -75,6 +75,24 @@ compose up -d --wait neo4j >/dev/null
 for _ in $(seq 1 30); do [ "$(health)" = 200 ] && break; sleep 2; done
 [ "$(health)" = 200 ] || fail "readiness did not recover after the graph came back"
 
+# BUG-003: a question whose worker the watchdog kills must not be logged. The API is pointed at a listener that
+# accepts and never answers, so the request stalls until Gunicorn's timeout (shortened to 3 s here) kills the worker.
+stall_net="$COMPOSE_PROJECT_NAME-stall"
+cleanup_stall() { docker rm -f "$stall_net-api" "$stall_net-db" >/dev/null 2>&1 || true; docker network rm "$stall_net" >/dev/null 2>&1 || true; }
+trap 'cleanup_stall; compose --profile init down -v --remove-orphans >/dev/null 2>&1 || true' EXIT
+docker network create "$stall_net" >/dev/null
+docker run -d --name "$stall_net-db" --network "$stall_net" --network-alias stall   busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e   sh -c 'while true; do sleep 3600 | nc -l -p 7687 >/dev/null; done' >/dev/null
+docker run -d --name "$stall_net-api" --network "$stall_net" --no-healthcheck -e NEO4J_URI=neo4j://stall:7687   -e NEO4J_PASSWORD=unused -e LLM_UNDERSTANDING=off -e GUNICORN_CMD_ARGS="--timeout 3"   "${API_IMAGE:-medical-chatbot-api:local}" >/dev/null
+sleep 4
+docker exec "$stall_net-api" python -c "import urllib.request
+try: urllib.request.urlopen('http://127.0.0.1:5000/?search=what+causes+asthma+$SENTINEL', timeout=30)
+except Exception: pass"
+sleep 2
+stalled=$(docker logs "$stall_net-api" 2>&1; docker exec "$stall_net-api" sh -c 'cat /app/logs/*/*/*.log')
+grep -q 'WORKER TIMEOUT' <<<"$stalled" || fail "the stalled request did not reach Gunicorn's timeout"
+if grep -q "$SENTINEL" <<<"$stalled"; then fail "a question reached the logs when a worker timed out"; fi
+cleanup_stall
+
 logs=$(compose logs --no-color; compose exec -T api sh -c 'cat /app/logs/*/*/*.log')
 [ -n "$logs" ] || fail "no logs collected"
 if grep -q "$SENTINEL" <<<"$logs"; then fail "a question reached the logs"; fi
