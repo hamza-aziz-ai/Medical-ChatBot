@@ -424,3 +424,19 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Trade-off:** Strangers can ask anything; Cloudflare and Oracle carry questions in URLs. One API worker serves everyone, so many addresses can fill the 16 slots. Aura Free pauses after 72 idle hours (the API's health check queries it) and deletes an instance paused for more than 30 days; it offers on-demand snapshots but no automatic rollback, so the importer is the recovery recipe, not a backup. Oracle may reclaim idle Always Free instances. The dataset's redistribution rights (A-01) remain unresolved; the owner has been told, and it is recorded as an open risk, not as accepted.
 - **Found on the way:** BUG-003 (a question reached the container log when Gunicorn's watchdog killed a worker), fixed in the shared image.
 - **Revisit if:** the site is abused (add Cloudflare Access or a rate-limit rule), memory on the VM proves too tight, Aura Free changes its limits, or the images become multi-architecture.
+
+## D-033: The language model on the public site, through Ollama's cloud API; amends D-032
+
+- **Date:** 2026-10-27; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner asked to switch the model on for the live demo and chose a direct cloud API key and a lower public budget
+- **Context:** D-032 fixed the model off on the hosted site. The local stack reaches `gpt-oss:120b-cloud` through the owner's Ollama, which the VM cannot use. Every public question that reaches the model counts against the owner's Ollama plan, and a model call holds the single API worker for up to 2 s.
+- **Options:**
+  1. call Ollama's cloud directly (`https://ollama.com`, model `gpt-oss:120b`) with an API key in the VM's `.env`
+  2. install Ollama on the VM and sign it in to the owner's account
+  3. keep the local budgets (6 per minute per visitor, 12 in total) on the public site
+  4. lower the shared budget to 6 per minute for the public site
+  5. a daily cap
+- **Chosen:** 1 and 4.
+- **Why:** Option 1 adds no process to the 1 GB VM, and the key can be revoked at once. Option 2 keeps a signed-in device of the owner's account on a public machine. Option 4 limits strangers to about 8,600 calls a day; beyond it the rules answer alone, as before.
+- **How:** `chat()` sends `Authorization: Bearer <OLLAMA_API_KEY>` only over HTTPS and never logs the key; it refuses to send a key over plain HTTP. `Admission` reads `LLM_GLOBAL_PER_MINUTE` (default 12). The hosted compose sets `LLM_UNDERSTANDING` from `.env` (default on, so `off` there is the kill switch), `OLLAMA_URL=https://ollama.com`, `LLM_MODEL=gpt-oss:120b`, the key from `.env`, and a shared budget of 6. The routing contract (prompt, candidates, validator) is unchanged. The Round 2 freeze test now applies only until a round's results are published.
+- **Trade-off:** Public questions and candidate names go to Ollama's cloud. Round 2's numbers were measured through the local relay; the direct API's latency over the network is not yet measured (A-24). A leaked key spends the owner's plan until revoked. The same model name on the direct API might not behave identically.
+- **Revisit if:** the plan's allowance runs low, the direct API is slower than the 2 s timeout too often, or the site is abused.
