@@ -1,0 +1,94 @@
+# Hosted stack (D-032): the API and web on a small VM, the graph on Neo4j Aura, public HTTPS only through a
+# Cloudflare Tunnel. Published with each release as compose.hosted.yaml; set it up as hosting/oracle/README.md says.
+# Needs Docker Compose 2.23.1 or newer (inline configs). Secrets and the site's address come from the VM's .env.
+# No application port is public: web listens on 127.0.0.1 for the updater's checks, and cloudflared dials out.
+name: medical-chatbot
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "1m"
+    max-file: "3"
+
+x-api: &api
+  image: ${API_IMAGE:?set API_IMAGE from the release's release.env}
+  environment: &api-env
+    NEO4J_URI: ${NEO4J_URI:?set NEO4J_URI to the Aura neo4j+s:// address in .env}
+    NEO4J_USER: ${NEO4J_USER:-neo4j}
+    NEO4J_PASSWORD: ${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}
+    NEO4J_DATABASE: ${NEO4J_DATABASE:-neo4j}
+    # Fixed, not read from .env: strangers' questions never reach a language model here (D-032).
+    LLM_UNDERSTANDING: "off"
+  logging: *logging
+
+services:
+  # Rebuilds only this dedicated, importer-owned Aura graph (D-032); the updater stops serving first.
+  importer:
+    <<: *api
+    profiles: [init]
+    command: ["python", "build_medicalgraph.py"]
+    mem_limit: 400m
+
+  api:
+    <<: *api
+    environment:
+      <<: *api-env
+      LOG_LEVEL: INFO
+      CORS_ORIGINS: ${PUBLIC_ORIGIN:?set PUBLIC_ORIGIN to the site's https:// address in .env}
+    volumes:
+      - api-logs:/app/logs
+    mem_limit: 300m
+    restart: unless-stopped
+
+  web:
+    image: ${WEB_IMAGE:?set WEB_IMAGE from the release's release.env}
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    networks:
+      default:
+      edge:
+        ipv4_address: 10.213.0.3
+    configs:
+      - source: trusted-tunnel
+        target: /etc/nginx/realip.d/tunnel.conf
+    depends_on:
+      - api
+    mem_limit: 64m
+    restart: unless-stopped
+    logging: *logging
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.0@sha256:9b49eed8f62806d5d45ddf59ecefb5710429598ea6d3fcccd2af938f621b2b07
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env}
+    networks:
+      edge:
+        ipv4_address: 10.213.0.2
+    depends_on:
+      - web
+    mem_limit: 128m
+    restart: unless-stopped
+    # Nothing is kept: cloudflared's error messages can contain request URLs, and URLs hold questions.
+    logging:
+      driver: none
+
+networks:
+  # Only web and cloudflared. The subnet is outside Docker's default pools; web trusts exactly 10.213.0.2.
+  # Both have fixed addresses and automatic ones come from .4 to .7, so nothing else can take the tunnel's.
+  edge:
+    enable_ipv6: false
+    ipam:
+      config:
+        - subnet: 10.213.0.0/29
+          ip_range: 10.213.0.4/30
+
+configs:
+  trusted-tunnel:
+    content: |
+      # Cloudflare's edge sets CF-Connecting-IP to the visitor's address; only the tunnel connector may pass it on.
+      set_real_ip_from 10.213.0.2;
+      real_ip_header CF-Connecting-IP;
+
+volumes:
+  api-logs:

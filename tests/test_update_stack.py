@@ -12,6 +12,7 @@ us = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(us)
 
 COMPOSE = b"services:\n  neo4j:\n    image: neo4j:5.26@sha256:" + b"a" * 64 + b"\n"
+HOSTED_COMPOSE = b"services:\n  cloudflared:\n    image: cloudflare/cloudflared@sha256:" + b"b" * 64 + b"\n"
 NOISE = "SECRET-DOCKER-OUTPUT"
 
 
@@ -19,10 +20,11 @@ def image(name, n):
     return f"ghcr.io/hamza-aziz-ai/medical-chatbot-{name}@sha256:{str(n) * 64}"
 
 
-def release_files(tag, n, compose=COMPOSE, evaluation=True, health=False):
+def release_files(tag, n, compose=COMPOSE, evaluation=True, health=False, hosted_compose=HOSTED_COMPOSE):
     api, web = image("api", n), image("web", n)
     return {
         "compose.yaml": compose,
+        "compose.hosted.yaml": hosted_compose,
         "release.env": f"API_IMAGE={api}\nWEB_IMAGE={web}\n".encode(),
         "manifest.json": json.dumps({"tag": tag, "images": {"api": api, "web": web}, "evaluation_passed": evaluation,
                                      **({"capabilities": {"health": True}} if health else {})}).encode(),
@@ -38,6 +40,9 @@ class Fake:
         self.healthy = True
         self.health_route = {}  # api image -> /api/health status; images without an entry have no route (404)
         self.running = {}  # service -> image reference
+        self.tunnel = False  # hosted (D-032): whether cloudflared, the only public way in, is running
+        self.fail_once = set()  # steps that fail the next time only
+        self.broken = set()  # api images whose page and answers fail the health check
         self.releases = {}
         self.files = {}
         self.tmp = tmp_path
@@ -65,17 +70,25 @@ class Fake:
             if code != 200:
                 raise OSError(f"HTTP {code}")
             return b'{"status": "ok"}'
+        healthy = self.healthy and self.running.get("api") not in self.broken
         if url.endswith("/api/?search=what+causes+asthma"):
-            return json.dumps({"status": "answer" if self.healthy else "abstain"}).encode()
-        return b'<div id="app">' if self.healthy else b""
+            return json.dumps({"status": "answer" if healthy else "abstain"}).encode()
+        return b'<div id="app">' if healthy else b""
 
     def run(self, args, env=None):
         args = list(args)
         step = self.step(args)
         self.calls.append(step)
         done = lambda out="": subprocess.CompletedProcess(args, 0, out, NOISE)  # noqa: E731
-        if step in self.fail:
+        if step in self.fail or step in self.fail_once:
+            self.fail_once.discard(step)
             return subprocess.CompletedProcess(args, 1, "", NOISE)
+        if step == "stop_tunnel":
+            self.tunnel = False
+        if step == "up_tunnel":
+            # Public access must never open on a stack that is not serving the checked release.
+            assert self.running and self.running.get("api") not in self.broken
+            self.tunnel = True
         if args[:2] == ["docker", "ps"]:
             service = next(a.rsplit("=", 1)[1] for a in args if a.startswith("label=com.docker.compose.service="))
             return done(f"c-{service}" if service in self.running else "")
@@ -108,6 +121,10 @@ class Fake:
                 return "pull"
             if tail == ["stop", "web", "api"]:
                 return "stop_app"
+            if tail == ["stop", "cloudflared"]:
+                return "stop_tunnel"
+            if tail[:1] == ["up"] and tail[-1] == "cloudflared":
+                return "up_tunnel"
             if tail == ["stop", "neo4j"]:
                 return "stop_neo4j"
             if tail == ["stop"]:
@@ -144,11 +161,12 @@ def fake(tmp_path, monkeypatch):
     return fake
 
 
-def enrolled(fake, tag="v1.1.0", n=1):
+def enrolled(fake, tag="v1.1.0", n=1, hosted=False):
     """A stack running a published release and recorded by --enroll."""
     fake.add_release(tag, n)
-    deployment = us.download(fake.releases[tag])
+    deployment = us.download(fake.releases[tag], hosted)
     fake.running = {"api": deployment["api_image"], "web": deployment["web_image"]}
+    fake.tunnel = hosted
     us.write_json(us.STATE, deployment)
     fake.calls.clear()
     return deployment
@@ -384,3 +402,91 @@ def test_a_release_whose_health_route_fails_is_rolled_back_to_one_without_it(fak
     state = json.loads(us.STATE.read_text())
     assert state["tag"] == "v1.1.0" and not state.get("health")
     assert fake.running["api"] == image("api", 1)
+
+
+# The hosted stack (D-032): no volume backup, public access closed while the graph changes.
+
+def test_a_hosted_update_closes_public_access_rebuilds_the_graph_and_reopens_after_the_checks(fake):
+    enrolled(fake, hosted=True)
+    fake.add_release("v1.1.1", 2)
+    assert us.update() == 0
+    assert steps(fake) == ["pull", "stop_tunnel", "stop_app", "import", "up_app", "up_tunnel"]
+    state = json.loads(us.STATE.read_text())
+    assert state["tag"] == "v1.1.1" and state["mode"] == "hosted" and state["compose"].endswith("compose.hosted.yaml")
+    assert fake.tunnel and fake.running["api"] == image("api", 2) and not us.JOURNAL.exists()
+
+
+def test_a_hosted_site_that_is_not_healthy_is_not_updated(fake):
+    enrolled(fake, hosted=True)
+    fake.add_release("v1.1.1", 2)
+    fake.healthy = False  # for example a paused graph
+    assert us.update() == 0
+    assert steps(fake) == [] and json.loads(us.STATE.read_text())["tag"] == "v1.1.0" and fake.tunnel
+
+
+@pytest.mark.parametrize("failure", ["import", "checks"])
+def test_a_failed_hosted_update_rebuilds_the_previous_graph_before_reopening(fake, failure):
+    enrolled(fake, hosted=True)
+    fake.add_release("v1.1.1", 2)
+    if failure == "import":
+        fake.fail_once.add("import")
+    else:
+        fake.broken.add(image("api", 2))
+    assert us.update() == 1
+    recovery = ["stop_tunnel", "stop_app", "import", "up_app", "up_tunnel"]
+    assert steps(fake)[-len(recovery):] == recovery
+    assert "up_tunnel" not in steps(fake)[:-1]  # opened once, for the previous release only
+    assert json.loads(us.STATE.read_text())["tag"] == "v1.1.0" and json.loads(us.FAILED.read_text())["tag"] == "v1.1.1"
+    assert fake.tunnel and fake.running["api"] == image("api", 1)
+
+
+def test_a_failed_hosted_recovery_keeps_public_access_closed(fake):
+    enrolled(fake, hosted=True)
+    fake.add_release("v1.1.1", 2)
+    fake.fail.add("import")
+    assert us.update() == 1
+    assert not fake.tunnel and "up_tunnel" not in steps(fake)
+    assert json.loads(us.JOURNAL.read_text())["recovery_failed"] is True
+    assert us.update() == 1 and not fake.tunnel
+
+
+def test_a_crash_while_importing_is_recovered_by_rebuilding_the_previous_graph(fake):
+    previous = enrolled(fake, hosted=True)
+    fake.add_release("v1.1.1", 2)
+    target = us.download(fake.releases["v1.1.1"], True)
+    us.write_json(us.JOURNAL, {"target": target, "previous": previous, "phase": "importing"})
+    fake.running, fake.tunnel = {}, False
+    fake.calls.clear()
+    assert us.update() == 1
+    assert steps(fake) == ["stop_tunnel", "stop_app", "import", "up_app", "up_tunnel"]
+    assert fake.running["api"] == image("api", 1) and fake.tunnel
+
+
+def test_a_crash_before_the_import_reopens_without_touching_the_graph(fake):
+    previous = enrolled(fake, hosted=True)
+    fake.add_release("v1.1.1", 2)
+    target = us.download(fake.releases["v1.1.1"], True)
+    us.write_json(us.JOURNAL, {"target": target, "previous": previous, "phase": "closed"})
+    fake.calls.clear()
+    us.update()
+    assert "import" not in steps(fake) and fake.tunnel
+
+
+def test_a_hosted_release_that_changes_its_compose_file_needs_a_manual_deploy(fake):
+    enrolled(fake, hosted=True)
+    fake.add_release("v1.1.1", 2, hosted_compose=HOSTED_COMPOSE + b"    ports: ['0.0.0.0:80:8080']\n")
+    with pytest.raises(us.Refused, match="compose.hosted.yaml"):
+        us.update()
+    assert steps(fake) == []
+
+
+def test_enrolling_the_hosted_stack_checks_it_runs_the_released_hosted_compose(fake):
+    fake.add_release("v1.1.0", 1)
+    running_compose = fake.tmp / "running-compose.yaml"
+    fake.running = {"api": image("api", 1), "web": image("web", 1)}
+    running_compose.write_bytes(COMPOSE)
+    with pytest.raises(us.Refused, match="compose.hosted.yaml"):
+        us.enroll(hosted_stack=True)
+    running_compose.write_bytes(HOSTED_COMPOSE)
+    assert us.enroll(hosted_stack=True) == 0
+    assert json.loads(us.STATE.read_text())["mode"] == "hosted"

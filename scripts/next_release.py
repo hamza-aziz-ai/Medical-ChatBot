@@ -18,7 +18,7 @@ VERSION_TAG = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 BUMPS = ("patch", "minor", "major")
 
 # Files copied into the images or attached to the release. Docs, eval, tests and workflows only trigger checks.
-SHIPPED = ["docker/*", "compose.yaml", "requirements.txt", "requirements-deploy.txt", ".env.example", "api/*", "frontend/*"]
+SHIPPED = ["docker/*", "compose.yaml", "hosting/oracle/compose.yaml", "requirements.txt", "requirements-deploy.txt", ".env.example", "api/*", "frontend/*"]
 NOT_SHIPPED = ["api/models/*", "api/data/questions.json", "frontend/tests/*", "frontend/README.md"]
 
 # Lookup results. "error" is never read as absence: a failed lookup stops the run.

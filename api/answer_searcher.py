@@ -84,7 +84,7 @@ class AnswerSearcher:
     rewordings = {}  # set in __init__; a searcher built otherwise (tests, the offline harness) serves none
 
     def __init__(self, driver=None):
-        self.driver = driver if driver is not None else database.create_driver()
+        self.driver = driver if driver is not None else database.create_driver(**database.API_DRIVER_SETTINGS)
         self.num_limit = 20
         self.query_timeout = database.query_timeout()
         self.rewordings = load_rewordings()

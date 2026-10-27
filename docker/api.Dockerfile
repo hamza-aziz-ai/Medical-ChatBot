@@ -22,4 +22,6 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
     CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=4)"]
 # One worker: the log files rotate per process (see README, Logging).
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "main:create_app()"]
+# Critical only (BUG-003): when the 30 s watchdog kills a stuck worker, Gunicorn logs "Error handling request"
+# with the URL, which holds the question, at error level. Its "WORKER TIMEOUT" line is critical and has no URL.
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--log-level", "critical", "main:create_app()"]
