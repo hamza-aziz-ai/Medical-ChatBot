@@ -6,6 +6,10 @@ than the recorded one, deploy it in a short maintenance window: pull, stop, back
 Neo4j, re-import, start api and web, check health, record. Any failure restores the previous release.
 
 One-time setup: run a published release by hand, then `python scripts/update_stack.py --enroll` records it.
+Hosted mode (D-032, `--enroll --hosted`, run by a systemd timer on the VM): the graph lives on Neo4j Aura, so there is
+no volume to back up. It uses the release's compose.hosted.yaml, closes public access (stops cloudflared) before
+touching the graph, rebuilds the graph with the importer, and reopens only after the checks pass. Recovery rebuilds
+the graph with the previous release's image, which stays on the VM.
 State lives in deploy/ (git-ignored). The owner's .env is passed to Compose by path and never read here.
 Logs hold steps and outcomes only: never Docker's output, the probe question, or the replies.
 """
@@ -34,6 +38,7 @@ ASSET_URL = f"https://github.com/{REPO}/releases/download/"
 PROJECT = "medical-chatbot"
 VOLUME = f"{PROJECT}_neo4j-data"
 ASSETS = ("compose.yaml", "release.env", "manifest.json")
+HOSTED_COMPOSE = "compose.hosted.yaml"
 VERSION_TAG = re.compile(r"^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
 IMAGE = {name: re.compile(rf"^ghcr\.io/hamza-aziz-ai/medical-chatbot-{name}@sha256:[0-9a-f]{{64}}$") for name in ("api", "web")}
 KEEP = 2  # release folders and backups kept besides those still referenced
@@ -45,6 +50,8 @@ FAILED = DEPLOY / "failed.json"
 
 # Journal phases, in order. A backup exists only from backup_ready on, so only then may recovery restore it.
 PHASES = ("prepared", "stopped", "backup_ready", "importing", "started", "committed")
+# Hosted phases (D-032). From importing on, the graph's state is unknown and recovery must rebuild it.
+HOSTED_PHASES = ("prepared", "closed", "importing", "started", "committed")
 
 
 class Refused(Exception):
@@ -119,13 +126,15 @@ def parse_env(text):
     return values
 
 
-def download(release):
-    """The release's compose.yaml, release.env and manifest.json, checked; returns its deployment record."""
+def download(release, hosted_stack=False):
+    """The release's compose file (compose.hosted.yaml for the hosted stack), release.env and manifest.json,
+    checked; returns its deployment record."""
     tag = release["tag_name"]
     urls = {asset["name"]: asset["browser_download_url"] for asset in release.get("assets", [])}
     folder = DEPLOY / "releases" / tag
     folder.mkdir(parents=True, exist_ok=True)
-    for name in ASSETS:
+    compose_name = HOSTED_COMPOSE if hosted_stack else "compose.yaml"
+    for name in (compose_name, *ASSETS[1:]):
         url = urls.get(name, "")
         if not url.startswith(f"{ASSET_URL}{tag}/"):
             raise Refused(f"The release has no {name} from this repository.")
@@ -140,12 +149,17 @@ def download(release):
         raise Refused("manifest.json does not match the release and its images.")
     if manifest.get("evaluation_passed") is not True:
         raise Refused("The release's evaluation did not pass.")
-    compose = folder / "compose.yaml"
+    compose = folder / compose_name
     # Releases with the /health route (D-022) say so; older records lack the flag and keep the older checks,
     # so rolling back to them still works.
     health = (manifest.get("capabilities") or {}).get("health") is True
     return {"tag": tag, "api_image": api, "web_image": web, "compose": str(compose),
-            "compose_sha256": hashlib.sha256(compose.read_bytes()).hexdigest(), "health": health}
+            "compose_sha256": hashlib.sha256(compose.read_bytes()).hexdigest(), "health": health,
+            "mode": "hosted" if hosted_stack else "local"}
+
+
+def hosted(deployment):
+    return deployment.get("mode") == "hosted"
 
 
 # Docker.
@@ -236,7 +250,7 @@ def deploy(target, previous):
     journal = {"target": target, "previous": previous}
     set_phase(journal, "prepared")
     try:
-        steps_ok = maintenance(journal, target)
+        steps_ok = (maintenance_hosted if hosted(target) else maintenance)(journal, target)
     except (OSError, ValueError, Refused):
         steps_ok = False
     if not steps_ok:
@@ -269,29 +283,82 @@ def maintenance(journal, target):
     return healthy(target)
 
 
-def recover(journal):
-    """Finish a committed update, or bring back the previous release; restore the backup only if one was verified."""
-    target, previous, phase = journal["target"], journal["previous"], journal["phase"]
-    if phase == "committed" and (read_json(STATE) or {}).get("tag") == target["tag"] and running_matches(target) and healthy(target):
-        JOURNAL.unlink()
-        logger.info("Finished the update to %s", target["tag"])
-        return True
-
-    restored = True
-    if PHASES.index(phase) >= PHASES.index("backup_ready"):
-        restored = compose(previous, "stop") and restore(previous, journal["backup"])
-    back = restored and compose(previous, "up", "-d", "--no-build", "--pull", "never") and healthy(previous)
-    if not back:
-        compose(previous, "stop", "web", "api")
-        journal["recovery_failed"] = True
-        write_json(JOURNAL, journal)
-        logger.error("Could not restore %s; the app is stopped. See docs/ROLLBACK.md", previous["tag"])
+def maintenance_hosted(journal, target):
+    """Hosted steps (D-032): public access closes before the graph changes and reopens only after the checks pass."""
+    if not (compose(target, "stop", "cloudflared") and compose(target, "stop", "web", "api")):
         return False
+    set_phase(journal, "closed")
+    set_phase(journal, "importing")
+    if not (compose(target, "--profile", "init", "run", "--rm", "--no-deps", "importer")
+            and compose(target, "up", "-d", "--no-build", "--no-deps", "--pull", "never", "api", "web")):
+        return False
+    set_phase(journal, "started")
+    return healthy(target) and compose(target, "up", "-d", "--no-build", "--no-deps", "--pull", "never", "cloudflared")
+
+
+def finished(journal):
+    """True if a committed update is in place and healthy, so recovery only clears the journal."""
+    target = journal["target"]
+    if journal["phase"] != "committed" or (read_json(STATE) or {}).get("tag") != target["tag"]:
+        return False
+    if not (running_matches(target) and healthy(target)):
+        return False
+    JOURNAL.unlink()
+    logger.info("Finished the update to %s", target["tag"])
+    return True
+
+
+def give_up(journal, previous):
+    journal["recovery_failed"] = True
+    write_json(JOURNAL, journal)
+    logger.error("Could not restore %s; the app is stopped. See docs/ROLLBACK.md", previous["tag"])
+    return False
+
+
+def restored(journal, previous, target):
     write_json(STATE, previous)
     write_json(FAILED, {"tag": target["tag"]})
     JOURNAL.unlink()
     logger.warning("Restored %s; %s will not be retried automatically", previous["tag"], target["tag"])
     return False
+
+
+def recover(journal):
+    """Finish a committed update, or bring back the previous release; restore the backup only if one was verified."""
+    if hosted(journal["target"]):
+        return recover_hosted(journal)
+    target, previous, phase = journal["target"], journal["previous"], journal["phase"]
+    if finished(journal):
+        return True
+
+    restored_ok = True
+    if PHASES.index(phase) >= PHASES.index("backup_ready"):
+        restored_ok = compose(previous, "stop") and restore(previous, journal["backup"])
+    back = restored_ok and compose(previous, "up", "-d", "--no-build", "--pull", "never") and healthy(previous)
+    if not back:
+        compose(previous, "stop", "web", "api")
+        return give_up(journal, previous)
+    return restored(journal, previous, target)
+
+
+def recover_hosted(journal):
+    """Bring back the previous release with public access closed: rebuild the graph with its image if an import
+    began (a failed import leaves the graph's state unknown), and reopen only after its checks pass."""
+    target, previous, phase = journal["target"], journal["previous"], journal["phase"]
+    if finished(journal):
+        return True
+    back = compose(previous, "stop", "cloudflared") and compose(previous, "stop", "web", "api")
+    if back and HOSTED_PHASES.index(phase) >= HOSTED_PHASES.index("importing"):
+        back = compose(previous, "--profile", "init", "run", "--rm", "--no-deps", "importer")
+    back = (back and compose(previous, "up", "-d", "--no-build", "--no-deps", "--pull", "never", "api", "web")
+            and healthy(previous)
+            and compose(previous, "up", "-d", "--no-build", "--no-deps", "--pull", "never", "cloudflared"))
+    if not back:
+        # Public access stays closed: never serve a graph that was not checked.
+        compose(previous, "stop", "cloudflared")
+        compose(previous, "stop", "web", "api")
+        return give_up(journal, previous)
+    return restored(journal, previous, target)
 
 
 def prune():
@@ -337,18 +404,22 @@ def update():
     if (read_json(FAILED) or {}).get("tag") == tag:
         logger.info("%s failed before and is not retried automatically", tag)
         return 0
-    target = download(release)
+    target = download(release, hosted(current))
     if target["compose_sha256"] != current["compose_sha256"]:
-        raise Refused(f"{tag} changes compose.yaml; review it, deploy it by hand and enrol again")
+        raise Refused(f"{tag} changes {Path(target['compose']).name}; review it, deploy it by hand and enrol again")
+    # Hosted (D-032): with the graph paused or unreachable the rebuild would fail, so wait for it instead.
+    if hosted(current) and not healthy(current, attempts=3):
+        logger.warning("The running site is not healthy (graph paused or unreachable?); not updating to %s yet", tag)
+        return 0
     logger.info("Updating from %s to %s", current["tag"], tag)
     return 0 if deploy(target, current) else 1
 
 
-def enroll(tag=None):
+def enroll(tag=None, hosted_stack=False):
     """Record the running stack as a known published release, after checking it really is that release."""
     if read_json(JOURNAL):
         raise Refused("An update is in progress or needs recovery.")
-    target = download(fetch_release(tag))
+    target = download(fetch_release(tag), hosted_stack)
     for service in ("api", "web"):
         output(["docker", "pull", "-q", target[f"{service}_image"]])
     if not running_matches(target):
@@ -357,7 +428,7 @@ def enroll(tag=None):
     files = output(["docker", "inspect", "--format", '{{index .Config.Labels "com.docker.compose.project.config_files"}}', cid])
     paths = (files or "").split(",")
     if len(paths) != 1 or not Path(paths[0]).is_file() or hashlib.sha256(Path(paths[0]).read_bytes()).hexdigest() != target["compose_sha256"]:
-        raise Refused(f"The running stack does not use {target['tag']}'s compose.yaml.")
+        raise Refused(f"The running stack does not use {target['tag']}'s {Path(target['compose']).name}.")
     write_json(STATE, target)
     FAILED.unlink(missing_ok=True)
     logger.info("Enrolled %s", target["tag"])
@@ -384,6 +455,7 @@ def locked():
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--enroll", nargs="?", const="latest", metavar="TAG", help="record the running release (default: latest)")
+    parser.add_argument("--hosted", action="store_true", help="with --enroll: the hosted stack on a VM (D-032)")
     args = parser.parse_args(argv)
     setup_logging()
     lock = locked()
@@ -395,7 +467,7 @@ def main(argv=None):
             logger.info("Docker is not running; nothing to do")
             return 0
         if args.enroll:
-            return enroll(None if args.enroll == "latest" else args.enroll)
+            return enroll(None if args.enroll == "latest" else args.enroll, args.hosted)
         return update()
     except Refused as refused:
         logger.warning("%s", refused)
