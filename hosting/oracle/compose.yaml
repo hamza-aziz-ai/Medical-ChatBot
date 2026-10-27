@@ -17,12 +17,11 @@ x-api: &api
     NEO4J_USER: ${NEO4J_USER:-neo4j}
     NEO4J_PASSWORD: ${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}
     NEO4J_DATABASE: ${NEO4J_DATABASE:-neo4j}
-    # The language model reads questions here too (D-033): Ollama's cloud directly, with the owner's key, and at most
-    # 6 calls a minute for everyone together. LLM_UNDERSTANDING=off in .env switches it off; the rules answer alone.
+    # The language model reads questions here too (D-033): through the ollama service below, signed in to the owner's
+    # free plan, at most 6 calls a minute for everyone together. LLM_UNDERSTANDING=off in .env switches it off.
     LLM_UNDERSTANDING: ${LLM_UNDERSTANDING:-on}
-    OLLAMA_URL: https://ollama.com
-    LLM_MODEL: gpt-oss:120b
-    OLLAMA_API_KEY: ${OLLAMA_API_KEY:?set OLLAMA_API_KEY in .env}
+    OLLAMA_URL: http://ollama:11434
+    LLM_MODEL: gpt-oss:120b-cloud
     LLM_GLOBAL_PER_MINUTE: "6"
   logging: *logging
 
@@ -62,6 +61,16 @@ services:
     restart: unless-stopped
     logging: *logging
 
+  # Relays the cloud model for the API, signed in once to the owner's Ollama account (hosting/oracle/README.md). Only
+  # the API can reach it: no published port. Its request log has times, paths and statuses, never questions.
+  ollama:
+    image: ollama/ollama:0.40.11@sha256:dea72d1e22270fe095b68fdf756d2b489d615643c5a2eaebbc5f569181e322d8
+    volumes:
+      - ollama-identity:/root/.ollama
+    mem_limit: 256m
+    restart: unless-stopped
+    logging: *logging
+
   cloudflared:
     image: cloudflare/cloudflared:2026.10.0@sha256:9b49eed8f62806d5d45ddf59ecefb5710429598ea6d3fcccd2af938f621b2b07
     command: ["tunnel", "--no-autoupdate", "run"]
@@ -97,3 +106,5 @@ configs:
 
 volumes:
   api-logs:
+  # The signed-in device key: keep it, or sign in again after `docker compose down -v`.
+  ollama-identity:

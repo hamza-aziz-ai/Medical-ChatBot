@@ -19,11 +19,13 @@ def test_no_application_port_is_public():
     assert "network_mode" not in HOSTED and "neo4j:" not in HOSTED
 
 
-def test_the_language_model_uses_the_cloud_over_https_with_a_lower_shared_budget():
-    # D-033: on by default with an .env kill switch; the key comes from .env and travels only over HTTPS.
+def test_the_language_model_goes_through_a_private_signed_in_ollama_with_a_lower_shared_budget():
+    # D-033: on by default with an .env kill switch, through the stack's own Ollama on the free plan.
     assert "LLM_UNDERSTANDING: ${LLM_UNDERSTANDING:-on}" in HOSTED
-    assert "OLLAMA_URL: https://ollama.com" in HOSTED and "OLLAMA_API_KEY: ${OLLAMA_API_KEY:?" in HOSTED
+    assert "OLLAMA_URL: http://ollama:11434" in HOSTED and "LLM_MODEL: gpt-oss:120b-cloud" in HOSTED
     assert 'LLM_GLOBAL_PER_MINUTE: "6"' in HOSTED
+    ollama = service("ollama")
+    assert "ports" not in ollama and re.search(r"ollama/ollama:[\d.]+@sha256:[0-9a-f]{64}", ollama)
 
 
 def test_only_the_tunnel_is_trusted_for_visitor_addresses():
@@ -41,9 +43,9 @@ def test_the_tunnel_keeps_no_logs_and_reads_its_token_from_env():
 
 
 def test_secrets_and_the_origin_come_from_env_and_every_service_is_bounded():
-    for variable in ("NEO4J_URI", "NEO4J_PASSWORD", "PUBLIC_ORIGIN", "API_IMAGE", "WEB_IMAGE", "OLLAMA_API_KEY"):
+    for variable in ("NEO4J_URI", "NEO4J_PASSWORD", "PUBLIC_ORIGIN", "API_IMAGE", "WEB_IMAGE"):
         assert f"${{{variable}:?" in HOSTED, variable
-    for name in ("importer", "api", "web", "cloudflared"):
+    for name in ("importer", "api", "web", "ollama", "cloudflared"):
         assert re.search(r"mem_limit: \d+m", service(name)), name
 
 
