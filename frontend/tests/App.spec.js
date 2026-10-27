@@ -71,7 +71,7 @@ describe("App", () => {
 
   it("notes external AI processing in the About card only, naming no vendor", () => {
     const wrapper = mount(App);
-    expect(wrapper.find(".about").text()).toContain("Questions may be processed by an external AI service");
+    expect(wrapper.find(".about").text()).toContain("Questions are processed on this site's servers and may pass through external hosting, network and AI services");
     expect(wrapper.text()).not.toMatch(/ollama|gpt-oss/i);
   });
 
