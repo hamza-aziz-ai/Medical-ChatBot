@@ -5,7 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-27 (model: Claude Opus 5.5, claude-opus-5-5; council with Codex/ChatGPT)
 
 Done:
-- The language model on the public site (D-033 and its addendum): the direct API key `medbot-vm` was refused with HTTP 402 (paid credits), so the hosted stack now runs its own Ollama, signed in to the owner's free plan, at most 6 calls a minute in total; `LLM_UNDERSTANDING=off` in the VM's `.env` switches it off.
+- The language model on the public site (D-033 and its addendum): the direct API key `medbot-vm` was refused with HTTP 402 (paid credits), so the hosted stack now runs its own Ollama, signed in to the owner's free plan, at most 6 calls a minute in total. Live since v1.1.18 (deployed by hand without closing public access): "what does asthma feel like" and a negated gout question were read by the model on the public site; `LLM_UNDERSTANDING=off` in the VM's `.env` switches it off.
 - The site is public at https://medical.hamzaaziz.dev (D-032, FEATURE-015): Oracle micro VM, AuraDB Free, Cloudflare Tunnel, v1.1.14, update timer every 15 minutes; every public check passed. Cloudflare: HSTS (6 months, zone-wide, no subdomains or preload) and a cache-bypass rule for `/api`.
 - Public hosting built, agreed with Codex: `hosting/oracle/` (compose, systemd units, setup guide), the updater's hosted mode, `scripts/hosted_check.sh`, the hosted-only nginx include and a 16-request API ceiling, API driver limits, and the About note.
 - BUG-003 fixed: Gunicorn logged the question when its watchdog killed a worker; the API now runs it at `--log-level critical`, and the smoke test forces a real timeout.
@@ -23,7 +23,7 @@ Broken or risky:
 
 Next:
 - Owner: go through the Lane-B checklist in TESTING.md for the public site; watch the first automatic hosted update; check Oracle's idle-reclamation terms.
-- Owner: check that the Docker Hub token has an expiry.
+- Owner: check that the Docker Hub token has an expiry; revoke the unused Ollama API key `medbot-vm` and remove `OLLAMA_API_KEY` from the VM's `.env`.
 
 Do not touch:
 - `.env` contents, real credentials, the GitHub profile repository `hamza-aziz-ai/hamza-aziz-ai`, LinkedIn. See CONSTRAINTS.md.
