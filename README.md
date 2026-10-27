@@ -93,7 +93,9 @@ Superseded pull-request runs are cancelled; runs on `main` and releases are not.
 
 **Docker Hub.** Each release is also copied, byte for byte, to Docker Hub under the same version, with no `latest`: `docker pull hamzaazizai/medical-chatbot-api:1.1.13` (and `-web`). GHCR stays the source: `release.env`, compose and the updater use GHCR digests. The copy is a separate run, so a Docker Hub problem shows as a failed `mirror` run and never blocks a release; re-run `mirror.yml` with the tag (D-030). The Docker Hub descriptions and overview come from `docs/dockerhub/` and are synced after every merge, version tags there are immutable, and the images carry OCI labels linking them to this repository (D-031).
 
-**Not automated.** Deployment to a hosted server is not automated: there is no target, account or budget, and putting a medical-information service online is the owner's decision. To add it, create a protected `production` environment and a deploy job that runs after `publish`. Retraining the historical notebooks is not automated either, because they are not used at runtime, cannot be reproduced (see Known limitations), and need Kaggle access and the multi-gigabyte GloVe embeddings. There are no scheduled runs.
+**Hosting.** The owner's public site runs on an Oracle Cloud Always Free VM, with the graph on Neo4j AuraDB Free and HTTPS through a Cloudflare Tunnel; no application port is open, the language model is off, and the VM updates itself from each release, closing public access while the graph is rebuilt (D-032). [hosting/oracle/README.md](hosting/oracle/README.md) sets it up.
+
+**Not automated.** Retraining the historical notebooks is not automated either, because they are not used at runtime, cannot be reproduced (see Known limitations), and need Kaggle access and the multi-gigabyte GloVe embeddings. There are no scheduled runs.
 
 ## Graph import
 

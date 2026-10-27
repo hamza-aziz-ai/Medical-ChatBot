@@ -13,10 +13,10 @@ Lane A today: a local student prototype with no real users. The owner asked for 
 - Never put a secret in a `VITE_*` variable or a Docker build argument; Vite compiles those into the public bundle.
 - Never render answer or question text as HTML (`v-html`) in the frontend.
 - Never paste values into Cypher; pass them as parameters.
-- Never weaken the 500-character limit, the GET-only API, the exact-origin CORS list, the loopback-only binding, the nginx rate limit or the nginx log suppression. Never expose the API beyond this machine without adding real authentication and HTTPS first (D-013).
+- Never weaken the 500-character limit, the GET-only API, the exact-origin CORS list, the loopback-only binding, the nginx rate limit or the nginx log suppression. Never expose the API beyond this machine without adding real authentication and HTTPS first (D-013). The one exception is the hosted stack in `hosting/oracle/` (D-032): anonymous public HTTPS only through its Cloudflare Tunnel, no public application port, the language model fixed off, visitor addresses trusted only from the tunnel, and every limit and log protection above kept.
 - Never delete, skip or loosen a test, the evaluation baseline or an integrity check to make CI pass. Change `eval/baseline.json` or `eval/cases.jsonl` only in a reviewed, explained commit.
 - Never hand-edit `api/data/medical.csv` to fix data; the importer quarantines bad fields and records why.
-- Never run the live tests or the importer against a database that is not disposable or backed up; the live tests delete all data.
+- Never run the live tests or the importer against a database that is not disposable or backed up; the live tests delete all data. The one exception is rebuilding the hosted stack's dedicated, importer-owned Aura graph through the updater or its documented first import (D-032); never point tests at it.
 - Never force-push `main`, rewrite published history, overwrite a published release or image tag, or push a release tag by hand unless the owner asks. Release tags come only from `release.yml` after every gate passes (D-019).
 - Never touch the GitHub profile repository `hamza-aziz-ai/hamza-aziz-ai` or LinkedIn from this project.
 
@@ -37,6 +37,7 @@ Lane A today: a local student prototype with no real users. The owner asked for 
 - `.github/workflows/release.yml`, `autorelease.yml` and `automerge.yml`: publication, release planning and merging.
 - `scripts/update_stack.py` and the owner's `deploy/` folder: the updater replaces the running stack and its graph; never run it against a stack you do not own, and never weaken its backup, journal or compose checks.
 - `docker/nginx.conf`: request logging.
+- `hosting/oracle/compose.yaml`: public exposure, the trusted tunnel address and the model switch (D-032); the updater's hosted mode must keep public access closed while the graph changes.
 
 ## AI allow policy (habit 22)
 

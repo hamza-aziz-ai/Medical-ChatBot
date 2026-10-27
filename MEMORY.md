@@ -25,3 +25,4 @@ Shared, durable memory for every coding agent in this repository. Read it at the
 - 2026-10-25: The local `gh` login lacks the `read:packages` scope; check GHCR images with the anonymous token endpoint instead. Both images are public.
 - 2026-10-25: In claude.ai artifact pages, scrolling inside the frame does not work in browser automation; navigate to `#anchor` ids (figures A5–A7 have ids) to check diagrams.
 - 2026-10-26: Ollama's request log (`%LOCALAPPDATA%\Ollama\server.log`, `[GIN]` lines with time, status and latency, no content) gives exact counts of cloud model calls; use it to account for the owner's call allowance.
+- 2026-10-27: In Git Bash, arguments that start with `/` (for example `/etc/...` or `-O /dev/null` passed to `docker exec`) are rewritten to Windows paths; wrap them in `sh -c '...'`. Heredocs sent through the agent's Bash tool can mangle backslashes and newline escapes; write edit scripts to a file instead.

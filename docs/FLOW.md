@@ -81,6 +81,25 @@ api/build_medicalgraph.py main()
   -> docs/dockerhub/ -> per repository: read Docker Hub -> patch only what differs (descriptions, immutable tags) -> read back
 ```
 
+## A question on the hosted site (D-032)
+
+```
+browser --HTTPS--> Cloudflare edge (TLS ends; sets CF-Connecting-IP; /api/* bypasses the cache)
+  -> tunnel -> cloudflared (10.213.0.2, keeps no logs) -> nginx (trusts CF-Connecting-IP only from 10.213.0.2)
+       limits per visitor (10 r/s, burst 20) and 16 API requests in flight in total
+  -> API (model fixed off) -> Aura over neo4j+s (API driver limits: about 11 s to a 503 when unreachable)
+```
+
+## A hosted update (D-032)
+
+```
+medical-chatbot-update.timer (every 15 min) -> update_stack.py, hosted mode
+  -> newer release with an unchanged compose.hosted.yaml -> site healthy? else wait
+  -> pull -> stop cloudflared (public access closed) -> stop web, api -> importer rebuilds the Aura graph
+  -> up api, web (loopback) -> page, a question, /api/health ok -> up cloudflared -> record
+  -> any failure: rebuild with the previous release's image -> checks -> reopen; if that fails, stay closed
+```
+
 ## A readiness probe (D-022)
 
 ```
