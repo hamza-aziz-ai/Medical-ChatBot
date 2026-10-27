@@ -37,6 +37,10 @@ To undo a wrong Docker Hub description, revert the change to `docs/dockerhub/`; 
 
 On the VM, `hosted` is the Compose command from step 3 of [hosting/oracle/README.md](../hosting/oracle/README.md). `hosted stop cloudflared` closes public access at once. If a recovery failed, the updater kept public access closed and left `deploy/journal.json` with `recovery_failed`. Choose the release to run, then follow step 3 with that tag: download its hosted assets, run its importer, start `api web`, and check `/api/health` and a question on 127.0.0.1. Then run `hosted up -d cloudflared`, delete `deploy/journal.json` and enrol again with `python3 scripts/update_stack.py --enroll <tag> --hosted`. A wrong graph is fixed the same way: stop `cloudflared`, `web` and `api`, and run the importer of the release you trust.
 
+## A release tag refused with HTTP 403 (BUG-004)
+
+If `publish` fails creating the tag with `Resource not accessible by integration`, a workflow change landed after the merge being released. With the owner's approval, push that version's tag at the planned commit by hand, then start `release.yml` from `main` with only `tag` set; a tag push alone runs the tagged commit's older workflow. Every gate runs again before publishing.
+
 ## Running stack (Docker)
 
 1. Point the stack at the last good images: copy `API_IMAGE` and `WEB_IMAGE` from that release's `release.env` into `.env`, then `docker compose up -d`.
