@@ -14,6 +14,7 @@ Shared, durable memory for every coding agent in this repository. Read it at the
 - 2026-10-25: After significant changes the owner may ask to "update the two artifacts": the claude.ai pages Solution Architecture and Software & System Design, published by Claude Code.
 - 2026-10-26: The page must not name vendors, models or the tech stack to end users. Privacy notes stay generic ("an external AI service"), in the About card only.
 - 2026-10-25: Never touch the GitHub profile repository `hamza-aziz-ai/hamza-aziz-ai` or LinkedIn from this project, never read `.env`, and never repeat the old (rotated) Neo4j password.
+- 2026-10-27: Always tell the owner times in IST (UTC+5:30); convert UTC timestamps from logs, GitHub and the VM.
 
 ## Project facts
 
