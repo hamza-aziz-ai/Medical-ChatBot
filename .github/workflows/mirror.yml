@@ -1,0 +1,58 @@
+name: mirror
+
+# Copies a published release's images from GHCR to Docker Hub, byte for byte (D-030). release.yml starts this
+# run after publishing; it is a separate run so a Docker Hub failure never fails a release or stops
+# autorelease's chain. Run it by hand with a tag to backfill or retry. GHCR stays the source of truth.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published stable release to mirror, for example v1.1.13
+        required: true
+
+permissions:
+  contents: read
+
+# Runs for the same version never overlap; different versions mirror independently.
+concurrency:
+  group: mirror-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TAG: ${{ inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+    steps:
+      # A private Docker config with no credential helper, so Skopeo can read the login as a plain auth file.
+      - run: echo "DOCKER_CONFIG=$RUNNER_TEMP/docker" >> "$GITHUB_ENV"
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: main
+      - name: Read the release and its manifest
+        run: |
+          gh release view "$TAG" --json tagName,isDraft,isPrerelease > "$RUNNER_TEMP/release.json"
+          gh release download "$TAG" -p manifest.json -D "$RUNNER_TEMP"
+      - name: Log in to Docker Hub
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -z "$DOCKERHUB_USERNAME" ] || [ -z "$DOCKERHUB_TOKEN" ]; then
+            echo "::error::Docker Hub mirroring is not configured: set the DOCKERHUB_USERNAME variable and the DOCKERHUB_TOKEN secret"
+            exit 1
+          fi
+          mkdir -p "$DOCKER_CONFIG"
+          echo "$DOCKERHUB_TOKEN" | docker login docker.io -u "$DOCKERHUB_USERNAME" --password-stdin >/dev/null
+      - name: Copy the release's digests
+        env:
+          RELEASE_JSON: ${{ runner.temp }}/release.json
+          MANIFEST_JSON: ${{ runner.temp }}/manifest.json
+          DOCKER_AUTHFILE: ${{ runner.temp }}/docker/config.json
+        run: python3 scripts/mirror_release.py "$TAG"
+      - name: Forget the login
+        if: always()
+        run: rm -rf "$DOCKER_CONFIG"
