@@ -1,6 +1,6 @@
 # Hosting on an Oracle VM with Neo4j Aura and a Cloudflare Tunnel
 
-How to run Mr. Healthcare publicly at an address such as `https://medical.hamzaaziz.dev` (D-032). The API and the page run on an Oracle Cloud Always Free VM (`VM.Standard.E2.1.Micro`: AMD, 1 GB of memory). The graph lives on Neo4j AuraDB Free, because Neo4j alone needs about 1 GB. Visitors reach the site only through a Cloudflare Tunnel, which connects out from the VM, so no application port is open to the internet. The language model is always off here, and anyone may ask questions without signing in.
+How to run Mr. Healthcare publicly at an address such as `https://medical.hamzaaziz.dev` (D-032). The API and the page run on an Oracle Cloud Always Free VM (`VM.Standard.E2.1.Micro`: AMD, 1 GB of memory). The graph lives on Neo4j AuraDB Free, because Neo4j alone needs about 1 GB. Visitors reach the site only through a Cloudflare Tunnel, which connects out from the VM, so no application port is open to the internet. The language model reads questions through Ollama's cloud API with your key, at most 6 calls a minute for everyone together (D-033); set `LLM_UNDERSTANDING=off` in `.env` to switch it off. Anyone may ask questions without signing in.
 
 Do the steps in order. Public access is switched on last, after the checks.
 
@@ -8,6 +8,7 @@ Do the steps in order. Public access is switched on last, after the checks.
 
 - An Oracle Cloud account with an Always Free tenancy.
 - A Neo4j Aura account.
+- An Ollama account with an API key for the language model (D-033).
 - `hamzaaziz.dev` on Cloudflare (it is) and access to Cloudflare Zero Trust (free).
 - A release that contains `compose.hosted.yaml` among its assets.
 
@@ -17,7 +18,8 @@ Secrets (the Aura password and the tunnel token) go only into the VM's `.env`. N
 
 1. **VM.** In Oracle Cloud, create a compute instance with the shape `VM.Standard.E2.1.Micro` and the image Canonical Ubuntu 24.04 (x86_64). Add your SSH public key and keep the public IP address. In the subnet's security list, allow TCP 22 only from your own address and nothing else inbound.
 2. **Graph.** In the Aura console, create an AuraDB Free instance. Save the credentials file it offers: the connection URI (`neo4j+s://<id>.databases.neo4j.io`), the user (`neo4j`) and the password.
-3. **Tunnel.** In Cloudflare Zero Trust, go to Networks, Tunnels, and create a tunnel of type Cloudflared named `medical-chatbot`. Choose Docker as the environment and copy only the token from the command it shows. Do not add a public hostname yet.
+3. **Model key.** On ollama.com, under Settings, Keys, create an API key named `medbot-vm`.
+4. **Tunnel.** In Cloudflare Zero Trust, go to Networks, Tunnels, and create a tunnel of type Cloudflared named `medical-chatbot`. Choose Docker as the environment and copy only the token from the command it shows. Do not add a public hostname yet.
 
 ## 2. Prepare the VM
 
@@ -57,6 +59,7 @@ NEO4J_PASSWORD=<the Aura password>
 NEO4J_DATABASE=neo4j
 PUBLIC_ORIGIN=https://medical.hamzaaziz.dev
 TUNNEL_TOKEN=<the tunnel token>
+OLLAMA_API_KEY=<the Ollama key>
 ```
 
 ## 3. Deploy a release with public access closed

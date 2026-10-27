@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 export COMPOSE_PROJECT_NAME=medical-chatbot-hosted-check
 export API_IMAGE="${API_IMAGE:-medical-chatbot-api:local}" WEB_IMAGE="${WEB_IMAGE:-medical-chatbot-web:local}"
 # Placeholders: Compose requires them, but no API, Aura or tunnel runs here.
-export WEB_PORT="${WEB_PORT:-18081}" NEO4J_URI=neo4j://127.0.0.1:1 NEO4J_PASSWORD=unused PUBLIC_ORIGIN=https://example.test TUNNEL_TOKEN=unused
+export WEB_PORT="${WEB_PORT:-18081}" NEO4J_URI=neo4j://127.0.0.1:1 NEO4J_PASSWORD=unused PUBLIC_ORIGIN=https://example.test TUNNEL_TOKEN=unused OLLAMA_API_KEY=unused
 BUSYBOX=busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
 compose() { docker compose --env-file /dev/null -f hosting/oracle/compose.yaml "$@"; }
 fail() { echo "HOSTED CHECK FAIL: $*" >&2; exit 1; }

@@ -17,8 +17,13 @@ x-api: &api
     NEO4J_USER: ${NEO4J_USER:-neo4j}
     NEO4J_PASSWORD: ${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}
     NEO4J_DATABASE: ${NEO4J_DATABASE:-neo4j}
-    # Fixed, not read from .env: strangers' questions never reach a language model here (D-032).
-    LLM_UNDERSTANDING: "off"
+    # The language model reads questions here too (D-033): Ollama's cloud directly, with the owner's key, and at most
+    # 6 calls a minute for everyone together. LLM_UNDERSTANDING=off in .env switches it off; the rules answer alone.
+    LLM_UNDERSTANDING: ${LLM_UNDERSTANDING:-on}
+    OLLAMA_URL: https://ollama.com
+    LLM_MODEL: gpt-oss:120b
+    OLLAMA_API_KEY: ${OLLAMA_API_KEY:?set OLLAMA_API_KEY in .env}
+    LLM_GLOBAL_PER_MINUTE: "6"
   logging: *logging
 
 services:

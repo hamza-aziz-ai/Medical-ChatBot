@@ -7,6 +7,7 @@ admission denial or open breaker means the caller uses the unchanged rules. Ques
 never logged.
 """
 import atexit
+import functools
 import hashlib
 import http.client
 import json
@@ -26,6 +27,7 @@ DECISIONS = ("answer", "clarify", "unsupported")
 TYPES = ("disease", "symptom")
 
 DEFAULT_URL = "http://localhost:11434"  # the owner's Ollama, which relays the cloud model
+# The hosted stack calls Ollama's cloud directly (https://ollama.com, model gpt-oss:120b) with OLLAMA_API_KEY (D-033).
 DEFAULT_MODEL = "gpt-oss:120b-cloud"
 OPTIONS = {"temperature": 0, "seed": 7, "num_predict": 1024}  # requested controls, not a guarantee of repeatability
 THINK = "low"
@@ -34,7 +36,7 @@ MAX_REPLY_BYTES = 64 * 1024
 
 # Attempt budgets (D-027): starting values. Every attempt is charged, failed or not; a denial falls back at once.
 CLIENT_BURST, CLIENT_PER_MINUTE = 2, 6
-GLOBAL_BURST, GLOBAL_PER_MINUTE = 2, 12
+GLOBAL_BURST, GLOBAL_PER_MINUTE = 2, 12  # LLM_GLOBAL_PER_MINUTE overrides the rate; the hosted stack uses 6 (D-033)
 MAX_CLIENTS = 10_000
 BREAKER_FAILURES, BREAKER_COOLDOWN_SECONDS = 3, 60
 SUMMARY_SECONDS = 300  # a cumulative counts line at most this often, and only when there is activity
@@ -121,12 +123,16 @@ def validate(content, candidates, ambiguous_alias=False):
     return decision, checked
 
 
-def chat(messages, url, model, timeout=TIMEOUT_SECONDS, clock=time.monotonic, connect=None):
+def chat(messages, url, model, timeout=TIMEOUT_SECONDS, clock=time.monotonic, connect=None, api_key=None):
     """One non-streamed call; (content, model name it reports). The deadline covers connecting and every read, so a
-    reply that arrives slowly still stops at it. http.client follows no redirects and uses no proxy settings."""
+    reply that arrives slowly still stops at it. http.client follows no redirects and uses no proxy settings.
+    An API key is sent only over HTTPS, as a bearer token, and never logged (D-033)."""
     parts = urllib.parse.urlsplit(url)
     if parts.scheme not in ("http", "https") or not parts.hostname:
         raise ModelError("bad url")
+    if api_key and parts.scheme != "https":
+        raise ModelError("an API key needs https")
+    headers = {"Content-Type": "application/json", **({"Authorization": f"Bearer {api_key}"} if api_key else {})}
     deadline = clock() + timeout
 
     def remaining():
@@ -139,8 +145,7 @@ def chat(messages, url, model, timeout=TIMEOUT_SECONDS, clock=time.monotonic, co
     connection = (connect or connection_class)(parts.hostname, parts.port, timeout=timeout)
     body = json.dumps({"model": model, "messages": messages, "stream": False, "options": OPTIONS, "think": THINK})
     try:
-        connection.request("POST", parts.path.rstrip("/") + "/api/chat", body=body.encode("utf-8"),
-                           headers={"Content-Type": "application/json"})
+        connection.request("POST", parts.path.rstrip("/") + "/api/chat", body=body.encode("utf-8"), headers=headers)
         connection.sock.settimeout(remaining())
         response = connection.getresponse()
         if response.status != 200:
@@ -170,9 +175,12 @@ class Admission:
     """Attempt budgets per client address and overall: token buckets in memory only, never logged. A full table
     forgets only idle, full clients, never one still short of credit."""
 
-    def __init__(self, clock=time.monotonic):
+    def __init__(self, clock=time.monotonic, global_per_minute=None):
         self.clock, self.lock, self.clients = clock, threading.Lock(), {}
         self.overall = [float(GLOBAL_BURST), clock()]
+        self.global_per_minute = global_per_minute or int(os.environ.get("LLM_GLOBAL_PER_MINUTE", GLOBAL_PER_MINUTE))
+        if self.global_per_minute < 1:
+            raise ValueError("LLM_GLOBAL_PER_MINUTE must be at least 1")
 
     @staticmethod
     def refill(entry, now, burst, per_minute):
@@ -182,7 +190,7 @@ class Admission:
         """None when admitted (and charged), else why not: "table_full", "client" or "global"."""
         with self.lock:
             now = self.clock()
-            self.refill(self.overall, now, GLOBAL_BURST, GLOBAL_PER_MINUTE)
+            self.refill(self.overall, now, GLOBAL_BURST, self.global_per_minute)
             entry = self.clients.get(client)
             if entry is None:
                 if len(self.clients) >= MAX_CLIENTS:
@@ -289,7 +297,9 @@ class Understanding:
         self.enabled = os.environ.get("LLM_UNDERSTANDING", "off") == "on" if enabled is None else enabled
         self.url = url or os.environ.get("OLLAMA_URL", DEFAULT_URL)
         self.model = model or os.environ.get("LLM_MODEL", DEFAULT_MODEL)
-        self.transport, self.clock = transport or chat, clock
+        # The key goes only into the transport; it is never stored elsewhere or logged.
+        self.transport = transport or functools.partial(chat, api_key=os.environ.get("OLLAMA_API_KEY") or None)
+        self.clock = clock
         # Production always builds its own budgets and breaker; only the offline harness passes others (D-029 round 2).
         self.admission, self.breaker = admission or Admission(clock), breaker or Breaker(clock)
         self.counters = Counters(clock)

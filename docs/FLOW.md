@@ -87,7 +87,7 @@ api/build_medicalgraph.py main()
 browser --HTTPS--> Cloudflare edge (TLS ends; sets CF-Connecting-IP; /api/* bypasses the cache)
   -> tunnel -> cloudflared (10.213.0.2, keeps no logs) -> nginx (trusts CF-Connecting-IP only from 10.213.0.2)
        limits per visitor (10 r/s, burst 20) and 16 API requests in flight in total
-  -> API (model fixed off) -> Aura over neo4j+s (API driver limits: about 11 s to a 503 when unreachable)
+  -> API (model through https://ollama.com with the owner's key, 6 calls a minute in total, D-033) -> Aura over neo4j+s (API driver limits: about 11 s to a 503 when unreachable)
 ```
 
 ## A hosted update (D-032)
