@@ -1,6 +1,7 @@
 name: docker
 
-# Builds both images and runs the disposable Compose smoke test when anything copied into them changes.
+# Builds both images and runs the disposable Compose smoke test, and the hosted proxy check, when anything
+# copied into them or the hosted compose changes.
 on:
   pull_request:
     paths: &docker-paths
@@ -9,6 +10,8 @@ on:
       - "requirements.txt"
       - "requirements-deploy.txt"
       - "scripts/compose_smoke.sh"
+      - "scripts/hosted_check.sh"
+      - "hosting/oracle/compose.yaml"
       - "api/**"
       - "!api/models/**"
       - "!api/data/questions.json"
@@ -35,3 +38,4 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - run: bash scripts/compose_smoke.sh
+      - run: bash scripts/hosted_check.sh

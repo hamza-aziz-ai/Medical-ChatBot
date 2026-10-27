@@ -173,6 +173,10 @@ jobs:
           API_IMAGE: ${{ env.IMAGE_PREFIX }}-api@${{ needs.images.outputs.api }}
           WEB_IMAGE: ${{ env.IMAGE_PREFIX }}-web@${{ needs.images.outputs.web }}
         run: bash scripts/compose_smoke.sh
+      - name: Hosted proxy check of the same web image (D-032)
+        env:
+          WEB_IMAGE: ${{ env.IMAGE_PREFIX }}-web@${{ needs.images.outputs.web }}
+        run: bash scripts/hosted_check.sh
 
   publish:
     needs: [resolve, images, smoke]
@@ -206,6 +210,7 @@ jobs:
       - name: Collect release assets
         run: |
           cp compose.yaml api/dictionary/entities.json dist/
+          cp hosting/oracle/compose.yaml dist/compose.hosted.yaml
           # Release assets cannot start with a dot.
           cp .env.example dist/env.example
           printf 'API_IMAGE=%s\nWEB_IMAGE=%s\n' "$IMAGE_PREFIX-api@$API_DIGEST" "$IMAGE_PREFIX-web@$WEB_DIGEST" > dist/release.env
