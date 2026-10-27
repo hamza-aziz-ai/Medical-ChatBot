@@ -14,7 +14,7 @@ BUSYBOX=busybox:1.37@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a
 compose() { docker compose --env-file /dev/null -f hosting/oracle/compose.yaml "$@"; }
 fail() { echo "HOSTED CHECK FAIL: $*" >&2; exit 1; }
 # A stub answers for the API at once, so only nginx's limits decide the status codes.
-compose create --no-build web >/dev/null 2>&1
+compose up --no-start --no-build --no-deps web >/dev/null
 docker run -d --name "$COMPOSE_PROJECT_NAME-stub" --network "${COMPOSE_PROJECT_NAME}_default" --network-alias api "$BUSYBOX" \
   sh -c 'mkdir -p /www && echo ok > /www/index.html && httpd -f -p 5000 -h /www' >/dev/null
 trap 'docker rm -f "$COMPOSE_PROJECT_NAME-stub" >/dev/null 2>&1 || true; compose down -v --remove-orphans >/dev/null 2>&1 || true' EXIT

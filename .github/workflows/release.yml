@@ -175,6 +175,8 @@ jobs:
         run: bash scripts/compose_smoke.sh
       - name: Hosted proxy check of the same web image (D-032)
         env:
+          # Compose validates the whole file, and older commits' check also creates the api service.
+          API_IMAGE: ${{ env.IMAGE_PREFIX }}-api@${{ needs.images.outputs.api }}
           WEB_IMAGE: ${{ env.IMAGE_PREFIX }}-web@${{ needs.images.outputs.web }}
         run: bash scripts/hosted_check.sh
 

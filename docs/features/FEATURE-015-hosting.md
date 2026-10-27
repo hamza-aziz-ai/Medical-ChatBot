@@ -13,3 +13,4 @@
 ## Log
 
 - 2026-10-27: Built. Proxy trust proven by `scripts/hosted_check.sh`; hosted updater tests cover the order, preflight, recovery and crash cases; BUG-003 found and fixed; unreachable-graph time cut from 32.7 s to 11.0 s.
+- 2026-10-27: The first release after merging (PR #62) failed in the hosted proxy check: in the release job, `compose create web` also created the api service, whose local image does not exist there. The release job now passes the release's API image, and the check creates only web; it passes with a missing API image.
