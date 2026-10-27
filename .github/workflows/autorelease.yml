@@ -71,6 +71,8 @@ jobs:
     permissions:
       contents: write
       packages: write
+      # The ceiling for release.yml's publish job, which starts mirror.yml (D-030).
+      actions: write
 
   # Only after a successful release: start the next run, which releases the next merge or finds none.
   # workflow_dispatch is one of the events the workflow token may start.

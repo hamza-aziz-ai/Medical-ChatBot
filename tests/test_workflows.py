@@ -27,8 +27,9 @@ def test_the_release_chain_continues_only_after_a_successful_release():
     assert "needs: release" in continue_job
     assert "if: needs.release.result == 'success'" in continue_job
     assert "gh workflow run autorelease.yml --ref main -f bump=auto" in continue_job
-    # The continue job alone may start workflows.
-    assert AUTORELEASE.count("actions: write") == 1 and "actions: write" in continue_job
+    # Only the continue job, and the release call's ceiling for starting the Docker Hub mirror (D-030), may start workflows.
+    release_job = AUTORELEASE[AUTORELEASE.index("\n  release:"):AUTORELEASE.index("\n  continue:")]
+    assert AUTORELEASE.count("actions: write") == 2 and "actions: write" in continue_job and "actions: write" in release_job
 
 
 def test_automatic_runs_never_drain_the_backlog_before_the_bootstrap_release():

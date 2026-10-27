@@ -167,6 +167,8 @@ jobs:
     permissions:
       contents: write
       packages: write
+      # Only to start mirror.yml (D-030).
+      actions: write
     env:
       TAG: ${{ needs.resolve.outputs.tag }}
       VERSION: ${{ needs.resolve.outputs.version }}
@@ -213,3 +215,9 @@ jobs:
           docker buildx imagetools create -t "$IMAGE_PREFIX-web:$VERSION" "$IMAGE_PREFIX-web@$WEB_DIGEST"
       - name: Publish the release
         run: gh release edit "$TAG" --draft=false
+      # A separate run (D-030): a Docker Hub failure shows there, never fails this release or stops autorelease.
+      - name: Start the Docker Hub mirror
+        run: |
+          if ! gh workflow run mirror.yml --ref main -f tag="$TAG"; then
+            echo "::warning::Could not start the Docker Hub mirror; run mirror.yml by hand with tag $TAG"
+          fi
