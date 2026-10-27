@@ -5,7 +5,8 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-27 (model: Claude Opus 5.5, claude-opus-5-5; council with Codex/ChatGPT)
 
 Done:
-- Public hosting built (D-032, FEATURE-015), agreed with Codex: `hosting/oracle/` (compose, systemd units, setup guide), the updater's hosted mode, `scripts/hosted_check.sh`, the hosted-only nginx include and a 16-request API ceiling, API driver limits, and the About note. Nothing is deployed yet.
+- The site is public at https://medical.hamzaaziz.dev (D-032, FEATURE-015): Oracle micro VM, AuraDB Free, Cloudflare Tunnel, v1.1.14, update timer every 15 minutes; every public check passed. Cloudflare: HSTS (6 months, zone-wide, no subdomains or preload) and a cache-bypass rule for `/api`.
+- Public hosting built, agreed with Codex: `hosting/oracle/` (compose, systemd units, setup guide), the updater's hosted mode, `scripts/hosted_check.sh`, the hosted-only nginx include and a 16-request API ceiling, API driver limits, and the About note.
 - BUG-003 fixed: Gunicorn logged the question when its watchdog killed a worker; the API now runs it at `--log-level critical`, and the smoke test forces a real timeout.
 - Docker Hub mirror (D-030, FEATURE-014): after each release is published, `release.yml` starts `mirror.yml`, which copies the release's GHCR digests to `docker.io/hamzaazizai/medical-chatbot-api` and `-web` under the same version. The owner set the `DOCKERHUB_TOKEN` secret; the `DOCKERHUB_USERNAME` variable is `hamzaazizai`.
 - Docker Hub pages (D-031): short descriptions and a shared overview in `docs/dockerhub/`, applied after every merge by `dockerhub-metadata.yml`, which also turns on immutable version tags; OCI labels on both images from the next release.
@@ -13,14 +14,14 @@ Done:
 - v1.1.13 backfilled to Docker Hub (PR #58, mirror run 40508274098): both images have the same index digests as on GHCR, with the attestation manifest, and both repositories are public.
 
 In progress:
-- Hosting: waiting for the owner to create the Oracle VM, the Aura instance and the tunnel, and for the release that carries `compose.hosted.yaml`; then follow `hosting/oracle/README.md`.
+- BUG-004 (release tag refused after a workflow change) is worked around, not fixed; choose a fix with the owner.
 
 Broken or risky:
 - The hosted site will be public without login (D-032): one API worker for everyone, questions visible to Cloudflare and Oracle, Aura pauses and Oracle reclamation, and the dataset's rights (A-01) unresolved.
 - The Docker Hub token in Actions is admin-scoped (the owner's choice): a leak could delete the repositories (D-031).
 
 Next:
-- Owner: create the resources and follow `hosting/oracle/README.md`; record the VM's memory measurements in TESTING.md before opening the tunnel's public hostname.
+- Owner: go through the Lane-B checklist in TESTING.md for the public site; watch the first automatic hosted update; check Oracle's idle-reclamation terms.
 - Owner: check that the Docker Hub token has an expiry.
 
 Do not touch:
