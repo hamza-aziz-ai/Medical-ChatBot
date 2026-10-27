@@ -31,6 +31,8 @@ Releases go in merge order, so a merge whose release fails blocks the merges aft
 
 Docker Hub is never read by compose or the updater, so it never needs a rollback for the owner's stack. Version tags are never overwritten: to withdraw a bad version from Docker Hub, the owner deletes its tags on Docker Hub (the token has no Delete scope) and a fixed version is released. To stop mirroring, delete the `DOCKERHUB_USERNAME` variable (each run then fails as not configured) or disable `mirror.yml` in the Actions tab; to undo the code, revert its pull request.
 
+To undo a wrong Docker Hub description, revert the change to `docs/dockerhub/`; the next `dockerhub-metadata` run restores the text. To stop the sync, disable `dockerhub-metadata.yml` in the Actions tab.
+
 ## Running stack (Docker)
 
 1. Point the stack at the last good images: copy `API_IMAGE` and `WEB_IMAGE` from that release's `release.env` into `.env`, then `docker compose up -d`.

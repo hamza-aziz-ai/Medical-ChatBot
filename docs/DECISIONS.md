@@ -387,3 +387,17 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Trade-off:** Docker Hub is a convenience mirror that the updater never reads; a failed mirror needs a manual re-run; Docker Hub personal access tokens reach every repository on the account; the pre-check cannot stop another writer overwriting a tag unless Docker Hub's immutable tags are on; anonymous Docker Hub pulls are rate-limited.
 - **Revisit if:** the owner wants `latest`, wants Docker Hub as the deploy source, or Docker Hub offers repository-scoped tokens on this plan.
 - **Checked (2026-10-27):** the opt-in live test copied v1.1.13's API index (one linux/amd64 image and its attestation manifest) from GHCR into a throwaway local registry with the pinned Skopeo: same index digest, every manifest and blob present, a re-run skipped, and a different digest under the same tag refused.
+
+## D-031: Docker Hub repository pages kept from files in this repository
+
+- **Date:** 2026-10-27; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner asked for descriptions, tags and the other repository settings on Docker Hub, maintained properly, said the existing `DOCKERHUB_TOKEN` has admin scope, and chose the categories
+- **Context:** The Docker Hub repositories made by D-030 had no description or overview, mutable tags and no categories, and the images carried no OCI labels. Docker Hub documents no namespace-scoped route for descriptions; its older repository route takes them with an admin-scoped token. Immutable tags have a documented admin-only route. Categories have no API.
+- **Options:**
+  1. `docs/dockerhub/` (short descriptions, one shared overview, the immutable-tag rule) applied by `scripts/dockerhub_metadata.py` from a `dockerhub-metadata.yml` run after every merge and by hand
+  2. the owner pastes the text into Docker Hub and changes the settings by hand
+  3. a second, separate admin token used only for metadata
+  4. a third-party action for the description
+- **Chosen:** 1, with the existing token, plus OCI labels (title, description, source, URL, version, revision) on both release builds. Categories are set by hand: Machine learning & AI, Web servers, Databases & storage.
+- **Why:** The text is reviewed and versioned like the code, and Docker Hub cannot drift from it for longer than one merge. A run with nothing to change only reads Docker Hub, and every change is read back. Option 2 drifts. Option 3 adds a second secret with the same reach, since the owner's token is already admin. Option 4 adds a dependency for two HTTP calls.
+- **Trade-off:** The token in Actions is admin-scoped, so a leak could delete or re-tag the repositories (it is read only by `mirror.yml` and `dockerhub-metadata.yml` on `main`). The description route is legacy and could be withdrawn; the run would then fail visibly and change nothing else. Labels appear only from the next release.
+- **Revisit if:** Docker Hub documents a namespace-scoped route for descriptions or an API for categories, or the owner moves to a narrower token.
