@@ -5,7 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-27 (model: Claude Opus 5.5, claude-opus-5-5; council with Codex/ChatGPT)
 
 Done:
-- The language model on the public site (D-033): Ollama's cloud API with the owner's key `medbot-vm`, at most 6 calls a minute in total; `LLM_UNDERSTANDING=off` in the VM's `.env` switches it off. Needs `OLLAMA_API_KEY` in `.env` and a manual redeploy, because the hosted compose changed.
+- The language model on the public site (D-033 and its addendum): the direct API key `medbot-vm` was refused with HTTP 402 (paid credits), so the hosted stack now runs its own Ollama, signed in to the owner's free plan, at most 6 calls a minute in total; `LLM_UNDERSTANDING=off` in the VM's `.env` switches it off.
 - The site is public at https://medical.hamzaaziz.dev (D-032, FEATURE-015): Oracle micro VM, AuraDB Free, Cloudflare Tunnel, v1.1.14, update timer every 15 minutes; every public check passed. Cloudflare: HSTS (6 months, zone-wide, no subdomains or preload) and a cache-bypass rule for `/api`.
 - Public hosting built, agreed with Codex: `hosting/oracle/` (compose, systemd units, setup guide), the updater's hosted mode, `scripts/hosted_check.sh`, the hosted-only nginx include and a 16-request API ceiling, API driver limits, and the About note.
 - BUG-003 fixed: Gunicorn logged the question when its watchdog killed a worker; the API now runs it at `--log-level critical`, and the smoke test forces a real timeout.
