@@ -443,3 +443,17 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Trade-off:** Public questions and candidate names go to Ollama's cloud. Round 2's numbers were measured through the local relay; the direct API's latency over the network is not yet measured (A-24). A leaked key spends the owner's plan until revoked. The same model name on the direct API might not behave identically.
 - **Revisit if:** the plan's allowance runs low, the direct API is slower than the 2 s timeout too often, or the site is abused.
 - **Addendum, the free route (2026-10-27):** Ollama's cloud API refused the key with HTTP 402, "Add usage credits to use cloud models", for both `gpt-oss:120b` and `gpt-oss:20b`: direct API calls need paid credits. The owner wants the model for free, so option 2 replaces option 1. The hosted stack runs its own `ollama/ollama:0.40.11` container (pinned by digest, no published port, 256 MiB limit), signed in once to the owner's account, and the API calls `http://ollama:11434` with `gpt-oss:120b-cloud`, as the local stack does through the owner's PC. The shared budget of 6 a minute stays. Trade-off: the VM now holds a signed-in device of the owner's Ollama account; anyone controlling the VM could use the owner's free allowance until the device is removed on ollama.com. The key support in `chat()` stays for a paid route later.
+
+## D-034: A release waits for main's workflow files (BUG-004); amends D-020
+
+- **Date:** 2026-10-28; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner chose "releases wait for pending workflow changes" over a GitHub App token
+- **Context:** The workflow token cannot create a tag on a commit whose workflow files differ from main's (BUG-004). D-020 releases each shippable merge on its own, in merge order, so a workflow change merged before an earlier merge's release blocked every later release.
+- **Options:**
+  1. a GitHub App with the `workflows` permission, used only to create tags
+  2. when workflow files changed after the oldest pending merge, release the first later commit on main whose workflows match main's, which contains the pending merges up to it
+  3. hand-pushed tags each time
+- **Chosen:** 2, in `scripts/next_release.py` only, so the fix changes no workflow file.
+- **Why:** No new secret or app; the tagged commit's workflows always match main's, so the token may create the tag. Option 1 adds a long-lived credential with write access to workflows. Option 3 needs the owner every time.
+- **How:** `settle()` compares `.github/workflows` tree ids. Normally it returns the oldest pending merge alone. Otherwise it walks main's first-parent line from that merge and returns the first commit whose workflows match main's (main itself at worst), with every pending merge up to it; those ship as one release with the largest bump any of them asked for. Later merges are released one by one again. A final guard refuses to plan a tag whose workflows differ from main's. Replaying the v1.1.14 incident, it picks PR #63's merge `7d4737b`, which contains PR #62.
+- **Trade-off:** In that case one release covers several merges, so a failure in it is not tied to a single merge, and the release can include a merge that changed only workflows. The rule rests on BUG-004's root cause, which GitHub does not document; if a tag is still refused, the ROLLBACK workaround applies.
+- **Revisit if:** a tag is refused despite matching workflows, or GitHub documents the rule differently.

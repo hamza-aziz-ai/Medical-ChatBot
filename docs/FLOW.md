@@ -65,6 +65,8 @@ api/build_medicalgraph.py main()
   -> scripts/next_release.py        last published release on main; stop on a draft, version images without a release, or a failed lookup
                                     oldest first-parent commit after it that changed shipped files and has no published release
                                     none -> stop the chain; else its version (patch, its pull request's label, or the bump input)
+                                    workflows changed after it -> release the first later commit whose workflows match main's,
+                                    with every pending merge up to it, at their largest bump (D-034, BUG-004)
   -> release.yml (workflow_call, tag + sha)
        resolve   tag absent, sha on main, no release or version images
        backend, frontend, mlops at that sha
