@@ -13,3 +13,4 @@
 ## Log
 
 - 2026-10-26: Built. Challenge set: verifier 35/35 mutations caught, 0/10 controls flagged; filters 3/10 controls flagged. Pilot: 10 fields, 54 calls, 2 passed every check.
+- 2026-10-28: The owner approved migraine / description and pertussis / prevention, the two fields that passed every check; they ship in `api/dictionary/rewordings.json`.
