@@ -115,6 +115,22 @@ def test_approval_refuses_a_field_that_failed_its_checks(tmp_path, monkeypatch, 
         r.approve(decisions, store)
 
 
+def test_an_owner_override_publishes_a_failed_field_and_records_what_was_overruled(tmp_path, monkeypatch, classifier):
+    _, _, store, decisions = approve_setup(tmp_path, monkeypatch, classifier, verdict=CLEAN.replace('"adds": false', '"adds": true'))
+    document = json.loads(Path(decisions).read_text(encoding="utf-8"))
+    for blank in ("", "   "):
+        document["approved"][0]["override"] = blank
+        Path(decisions).write_text(json.dumps(document), encoding="utf-8")
+        with pytest.raises(SystemExit, match="Refused"):
+            r.approve(decisions, store)
+    document["approved"][0]["override"] = "Reviewed side by side by the owner"
+    Path(decisions).write_text(json.dumps(document), encoding="utf-8")
+    assert r.approve(decisions, store) == 1
+    [entry] = json.loads(store.read_text(encoding="utf-8"))["entries"]
+    assert entry["override"] == "Reviewed side by side by the owner" and entry["checks_overridden"]
+    assert answer_searcher.load_rewordings(store)
+
+
 def test_the_challenge_set_is_well_formed():
     rows = [json.loads(line) for line in r.CHALLENGES.read_text(encoding="utf-8").splitlines() if line.strip()]
     kinds = {row["kind"] for row in rows}

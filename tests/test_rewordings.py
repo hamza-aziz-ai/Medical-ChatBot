@@ -30,12 +30,15 @@ def answer_for(searcher, value=VALUE):
 
 
 def test_the_shipped_store_holds_only_owner_approved_entries_that_all_load():
-    # D-029: the owner approved migraine/description and pertussis/prevention on 2026-10-28; nothing else is served.
+    # D-029: the owner approved all ten pilot fields on 2026-10-28, overriding the failed checks of eight; each override
+    # names the checks it overruled. Nothing outside the pilot is served.
     shipped = json.loads(a.REWORDINGS_PATH.read_text(encoding="utf-8"))["entries"]
-    assert {(e["subject"], e["intent"]) for e in shipped} == {("migraine", "disease_description"), ("pertussis", "disease_prevention")}
-    assert all(e["status"] == "approved" for e in shipped)
+    assert len(shipped) == 10 and all(e["status"] == "approved" for e in shipped)
+    overridden = {(e["subject"], e["intent"]) for e in shipped if "override" in e}
+    assert len(overridden) == 8 and all(e["checks_overridden"] for e in shipped if "override" in e)
+    assert {(e["subject"], e["intent"]) for e in shipped} - overridden == {("migraine", "disease_description"), ("pertussis", "disease_prevention")}
     assert set(a.load_rewordings()) == {(e["subject"], e["intent"]) for e in shipped}  # none dropped as invalid
-    assert "reworded" not in answer_for(a.AnswerSearcher(driver=object()))              # asthma stays original
+    assert "reworded" not in answer_for(a.AnswerSearcher(driver=object()))              # different input: original
 
 
 def test_an_approved_exact_match_is_served_beside_the_untouched_original(tmp_path):

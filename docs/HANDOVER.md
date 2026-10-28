@@ -6,7 +6,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 
 Done:
 - BUG-004 fixed (D-034): a release waits for main's workflow files, releasing the first matching commit with the pending merges it contains.
-- The owner went through the Lane-B gate for the public site and approved two reworded answers (migraine / description, pertussis / prevention), the two that passed every check (D-029 approval addendum).
+- The owner went through the Lane-B gate for the public site and approved all ten pilot rewordings: two passed every check, eight by recorded override (D-029 addenda). Gout / prevention and migraine / cause carry verifier findings the owner overrode.
 - The language model on the public site (D-033 and its addendum): the direct API key `medbot-vm` was refused with HTTP 402 (paid credits), so the hosted stack now runs its own Ollama, signed in to the owner's free plan, at most 6 calls a minute in total. Live since v1.1.18 (deployed by hand without closing public access): "what does asthma feel like" and a negated gout question were read by the model on the public site; `LLM_UNDERSTANDING=off` in the VM's `.env` switches it off.
 - The site is public at https://medical.hamzaaziz.dev (D-032, FEATURE-015): Oracle micro VM, AuraDB Free, Cloudflare Tunnel, v1.1.14, update timer every 15 minutes; every public check passed. Cloudflare: HSTS (6 months, zone-wide, no subdomains or preload) and a cache-bypass rule for `/api`.
 - Public hosting built, agreed with Codex: `hosting/oracle/` (compose, systemd units, setup guide), the updater's hosted mode, `scripts/hosted_check.sh`, the hosted-only nginx include and a 16-request API ceiling, API driver limits, and the About note.
