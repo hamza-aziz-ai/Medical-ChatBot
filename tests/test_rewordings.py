@@ -29,9 +29,13 @@ def answer_for(searcher, value=VALUE):
     return result
 
 
-def test_the_shipped_store_is_empty_so_nothing_changes_until_approval():
-    assert a.load_rewordings() == {}
-    assert "reworded" not in answer_for(a.AnswerSearcher(driver=object()))
+def test_the_shipped_store_holds_only_owner_approved_entries_that_all_load():
+    # D-029: the owner approved migraine/description and pertussis/prevention on 2026-10-28; nothing else is served.
+    shipped = json.loads(a.REWORDINGS_PATH.read_text(encoding="utf-8"))["entries"]
+    assert {(e["subject"], e["intent"]) for e in shipped} == {("migraine", "disease_description"), ("pertussis", "disease_prevention")}
+    assert all(e["status"] == "approved" for e in shipped)
+    assert set(a.load_rewordings()) == {(e["subject"], e["intent"]) for e in shipped}  # none dropped as invalid
+    assert "reworded" not in answer_for(a.AnswerSearcher(driver=object()))              # asthma stays original
 
 
 def test_an_approved_exact_match_is_served_beside_the_untouched_original(tmp_path):

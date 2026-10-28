@@ -1,4 +1,46 @@
 {
  "note": "Approved rewordings of prose answers (D-029). Written only by scripts/reword_answers.py --approve after the owner reviews each field.",
- "entries": []
+ "entries": [
+  {
+   "subject": "migraine",
+   "intent": "disease_description",
+   "status": "approved",
+   "input_sha256": "89aa459d07a9e3bbbe384327761ecef68877629bcef85ffc346b3cbdd57492ba",
+   "format_identity": "v1:6e358f98edd627311eb0fae428f6754e280e913bd2ac27fb3fcd69ac337b940d",
+   "sections": [
+    {
+     "heading": null,
+     "paragraph": "Migraine is a type of recurring episode that often runs in families. It is marked by sudden hemiplegic headache together with nausea, vomiting and a feeling of shame. After a period of rest, the headache can start again in a quiet, dark setting or after sleep, and the pain is relieved. It may be accompanied by nerve symptoms and mental dysfunction before or during the headache.",
+     "items": []
+    }
+   ],
+   "output_sha256": "dfc4ee3ae37fe2cc85158624b50835bd388cc4ca3707aa2debac930fc34e1da2",
+   "model": "gpt-oss:120b-cloud",
+   "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
+   "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
+   "approved_at": "2026-10-28"
+  },
+  {
+   "subject": "pertussis",
+   "intent": "disease_prevention",
+   "status": "approved",
+   "input_sha256": "ff8c7f942829cb2fb1c55adbb459d3dde6bc76462ae461e79e89ab9688ff10fc",
+   "format_identity": "v1:6e358f98edd627311eb0fae428f6754e280e913bd2ac27fb3fcd69ac337b940d",
+   "sections": [
+    {
+     "heading": null,
+     "paragraph": null,
+     "items": [
+      "Control of the source of infection: during the epidemic season, if prodromal symptoms appear, early antibiotic treatment should be given.",
+      "Stop the transmission route: the pertussis bacteria are vulnerable to the environment, so disinfection is not required, but indoor ventilation should be kept up, clothes should be dried in sunlight, and sputum and mouth or nose secretions should be disinfected."
+     ]
+    }
+   ],
+   "output_sha256": "4a136f287f0f727bd5c1d08aefc8f1482585f1649ae5a8549afd0e347efa6681",
+   "model": "gpt-oss:120b-cloud",
+   "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
+   "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
+   "approved_at": "2026-10-28"
+  }
+ ]
 }
