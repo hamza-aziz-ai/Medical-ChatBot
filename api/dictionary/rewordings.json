@@ -2,6 +2,187 @@
  "note": "Approved rewordings of prose answers (D-029). Written only by scripts/reword_answers.py --approve after the owner reviews each field.",
  "entries": [
   {
+   "subject": "asthma",
+   "intent": "disease_cause",
+   "status": "approved",
+   "input_sha256": "9594dd66dc52eb5115008400ef0fce115ebe60690e2b85f88d83ebdce5286c98",
+   "format_identity": "v1:6e358f98edd627311eb0fae428f6754e280e913bd2ac27fb3fcd69ac337b940d",
+   "sections": [
+    {
+     "heading": null,
+     "paragraph": "Asthma develops when environmental factors interact with a person’s genetic susceptibility. This susceptibility involves many genes and how they interact, and many different environmental factors can trigger the disease. Genetics is the main host factor. When a known gene is missing in two or more study groups, it suggests that interactions between genes may be more important and supports the idea that asthma is inherited through many genes. In addition, drug targets such as certain receptors (including the so‑called 汕2 receptors), glucocorticoid receptors and related genes are major research areas. Abnormalities in these genes may affect both how asthma develops and how well treatments work. Obesity is an independent risk factor for asthma, especially in women, and patients with obesity‑related asthma are harder to treat.",
+     "items": []
+    },
+    {
+     "heading": "Possible mechanisms",
+     "paragraph": null,
+     "items": [
+      "It alters the mechanical properties of the respiratory system.",
+      "Adipose tissue releases IL-6, TNF-α, eotaxin, estrogen and other inflammatory factors, causing the overall immune system to shift toward a pro‑inflammatory tendency.",
+      "Obesity also reflects a combination of genetic, developmental, hormonal, and nervous system abnormalities, and these same abnormalities may also cause asthma."
+     ]
+    },
+    {
+     "heading": null,
+     "paragraph": null,
+     "items": [
+      "Breathing in allergens causes asthma, and this idea is widely accepted. The most common inhaled allergen that triggers asthma attacks is Dermatophagoides species. Asthma caused by pollen, ragweed, or fungal spores usually occurs seasonally. During a storm, large amounts of pollen can be lifted into the air, leading many asthma patients to have attacks at once; this is called “thunderstorm asthma.” Allergens that are present year‑round in the environment can cause chronic, ongoing symptoms, and most of these are from household pet dander, mites, dust, and similar sources.",
+      "The link between allergens and asthma is complex and can depend on the kind of allergen, how much a person is exposed, when the exposure happens, the person's age at exposure, and their genetic makeup. Sometimes, early exposure to allergens can lead to immune tolerance and may protect against asthma. Also, strictly avoiding allergens does not lower the chance of developing asthma."
+     ]
+    },
+    {
+     "heading": null,
+     "paragraph": null,
+     "items": [
+      "When a fetus is exposed to cigarette smoke in the womb and a child continues to be exposed after birth, the chance of developing asthma-like symptoms goes up.",
+      "Smoking seriously harms people with asthma. It can cause more frequent asthma attacks, faster loss of lung function, more severe disease, higher rates of hospitalization, reduced effectiveness of corticosteroids, and higher death rates. In smokers with asthma, the airway inflammation is mainly driven by neutrophils, which is different from the inflammation seen in typical asthma."
+     ]
+    },
+    {
+     "heading": null,
+     "paragraph": null,
+     "items": [
+      "Air pollutants, such as sulfur dioxide and ozone, can trigger asthma attacks.",
+      "It is still unclear how air pollutants affect how common asthma is, and studies in cities with heavy traffic pollution have not shown a rise in asthma rates."
+     ]
+    }
+   ],
+   "output_sha256": "287dc9f2b2045d52735ed30c9b1151f94932d7fe0f92ea55b67cdffe50e06b36",
+   "model": "gpt-oss:120b-cloud",
+   "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
+   "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
+   "approved_at": "2026-10-28",
+   "checks_overridden": [
+    "negations",
+    "new_names"
+   ],
+   "override": "The owner reviewed it side by side with the original on 2026-10-28 and approved it despite the failed checks"
+  },
+  {
+   "subject": "asthma",
+   "intent": "disease_prevention",
+   "status": "approved",
+   "input_sha256": "3cc32cb0e31a39d6dd05b617f6020c7e8cb7adacded7750688319f9ae02cae5b",
+   "format_identity": "v1:6e358f98edd627311eb0fae428f6754e280e913bd2ac27fb3fcd69ac337b940d",
+   "sections": [
+    {
+     "heading": "Daily asthma prevention",
+     "paragraph": null,
+     "items": [
+      "Avoid re‑exposure to allergens. For example, if indoor dust or mucus triggers asthma, keep the indoor environment clean, let sunlight in, and keep windows open to maintain fresh air.",
+      "Cats, dogs, and other small pets should not be kept indoors.",
+      "People should generally pay attention to exercise, for example taking a cold water bath or drying the body with a towel, which can help relax the nerves of the lungs, trachea and bronchial vagus.",
+      "Having a balanced diet, avoiding mental stress, avoiding colds, and not becoming overly fatigued are also important for preventing asthma attacks."
+     ]
+    },
+    {
+     "heading": "Health education",
+     "paragraph": null,
+     "items": [
+      "Psychological guidance: tell patients how to manage asthma properly, help them build confidence that they can overcome the disease, and explain that asthma cannot be cured but can be fully controlled. Explain how mental factors such as emotions can affect asthma attacks so patients keep a positive mindset and avoid fear.",
+      "Diet guidance: asthma patients should eat a light, easy-to-digest diet. They should avoid foods that can trigger asthma, such as seafood—especially shrimp—and also almonds, peanuts and other nuts.",
+      "Environmental factors: because asthma is linked to environmental allergens, you should try to lower exposure to these allergens by keeping indoor air circulating, staying away from dust, pollen, gases, smoke and other irritants, and avoiding contact with dust mites, fungi, animal fur, certain foods and drugs. Outdoor air should be kept as clean as possible, and you should avoid going out in dusty conditions or wear a mask.",
+      "Medication guidance: Using medicines as prescribed is essential for effective treatment. Because asthma has a genetic component, it cannot be cured. Treatment is essentially lifelong. Medications should be taken under a doctor's supervision to avoid unsupervised stopping.",
+      "Teach patients to use a peak flow meter, monitor their asthma treatment, and remind them to keep an asthma diary.",
+      "Tell patients to be active: safe exercises like walking or tai chi can improve overall fitness and lung function, but people who have exercise‑induced asthma should know that activity might trigger an attack and they need to be careful."
+     ]
+    }
+   ],
+   "output_sha256": "b83c100f3fd65135f0ffaed7c6768fb24f41d7233945763f9f73eb80eb73baa0",
+   "model": "gpt-oss:120b-cloud",
+   "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
+   "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
+   "approved_at": "2026-10-28",
+   "checks_overridden": [
+    "negations",
+    "new_names"
+   ],
+   "override": "The owner reviewed it side by side with the original on 2026-10-28 and approved it despite the failed checks"
+  },
+  {
+   "subject": "gout",
+   "intent": "disease_prevention",
+   "status": "approved",
+   "input_sha256": "0048b59bdda48a77734816b53cde2f116b61b19bfde4f0e06816b9990f5bc3b2",
+   "format_identity": "v1:6e358f98edd627311eb0fae428f6754e280e913bd2ac27fb3fcd69ac337b940d",
+   "sections": [
+    {
+     "heading": null,
+     "paragraph": "People with gout should, in addition to taking the medicines their doctors prescribe, also follow these daily lifestyle guidelines.",
+     "items": []
+    },
+    {
+     "heading": null,
+     "paragraph": null,
+     "items": [
+      "Diet: 1. Avoid eating pork, beef, lamb, ham, sausage, chicken, duck, goose, rabbit and many animal organs such as liver, kidney, heart, brain, bone marrow and other foods that are high in purines; try not to eat them. 2. Fish, shrimp, spinach, beans, mushrooms, citrus, peanuts and similar foods also contain some purines, so eat them in smaller amounts. 3. Most vegetables, all fruits, milk and dairy products, eggs, rice, sugar and similar foods can be eaten. 4. Drink more water so that daily urine output stays above 2000 ml; because of the risk of kidney stones, uric acid concentration and urine pH, you may use alkaline medication if needed to prevent stones. 5. Avoid overeating or going hungry. 6. Do not use alcohol or tobacco, especially alcohol. 7. Do not drink strong tea, coffee or similar drinks.",
+      "Treat any underlying causes and reduce or stop medications that interfere with uric acid excretion, such as penicillin, tetracycline, high‑dose thiazide, ampicillin and other diuretics, vitamins B1 and B2, insulin, and low‑dose aspirin (less than 2 g per day), among others.",
+      "People who are obese should actively lose weight, which is very important for preventing gout.",
+      "Balance work and rest, avoid overworking, mental stress, infections, and surgery; gout patients are generally not advised to do running, other intense exercise, or long‑distance walking. This is part of health education."
+     ]
+    },
+    {
+     "heading": null,
+     "paragraph": null,
+     "items": [
+      "Establish regular exercise habits by exercising two or three times each week for at least thirty minutes.",
+      "People who are overweight or obese should lose weight gradually to reach an ideal weight."
+     ]
+    }
+   ],
+   "output_sha256": "5226a4af2933274a4d3ae30c4362133c9193cd540dda72699aaca51486193981",
+   "model": "gpt-oss:120b-cloud",
+   "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
+   "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
+   "approved_at": "2026-10-28",
+   "checks_overridden": [
+    "changes_quantity",
+    "negations",
+    "numbers",
+    "units"
+   ],
+   "override": "The owner reviewed it side by side with the original on 2026-10-28 and approved it despite the failed checks"
+  },
+  {
+   "subject": "migraine",
+   "intent": "disease_cause",
+   "status": "approved",
+   "input_sha256": "ccdbd142becefaf49140cf2dd2b95e6e9350210fcebe51fc2accae71e43ffac8",
+   "format_identity": "v1:6e358f98edd627311eb0fae428f6754e280e913bd2ac27fb3fcd69ac337b940d",
+   "sections": [
+    {
+     "heading": null,
+     "paragraph": "Oral contraceptives can increase how often migraine attacks occur. Menstruation is a common trigger or worsening factor for migraine, sometimes called “cyclical headache.” Pregnancy and sexual intercourse can also trigger a migraine attack, referred to as “sexual headache.” Some people who are susceptible may have typical migraine attacks after taking nifedipine (Xintongding), isosorbide (Xinxin) or nitroglycerin. Hot, cloudy or wet weather can especially provoke migraines. The most common dietary triggers are alcoholic drinks, such as certain red wines, dairy products and cheese—especially hard cheese—coffee, and foods that contain nitrites such as soups and hot dogs. Some fruits, like citrus fruits, and chocolate can cause “chocolate headache.” Certain vegetables, yeast, artificial sweets, and fermented pickled foods such as kimchi and MSG are also triggers. Small movements of the head can start or worsen migraine attacks, and some patients avoid riding because they fear an attack. People who play football can get headaches from head‑to‑head contact, called “sportsman migraine.” Migraine can also occur when climbing stairs.",
+     "items": []
+    },
+    {
+     "heading": null,
+     "paragraph": null,
+     "items": [
+      "Both excessive and insufficient sleep can trigger migraines.",
+      "Missing a meal or delaying it.",
+      "Smoking or being exposed to smoke.",
+      "Bright, flashing light can trigger a migraine.",
+      "Feeling nervous, angry, depressed, or crying (sometimes called a \"cry headache\"), as well as many women going shopping or attending crowded events, can trigger migraine attacks. Migraines can be worsened when a person is traveling abroad, even if the travel time is less than one minute. When considering these triggers, the amount of exposure, combined effects, and individual differences are important. For some sensitive people, eating one orange may not cause a headache, but eating several oranges can. In other cases, a few oranges alone do not cause a migraine, but if menstruation is also present, the combination can trigger an attack. Some individuals experience a migraine after being in a mall for a short time, while others only develop a migraine after waiting in a mall for a long period. Many strategies can help relieve a migraine: some people lie down as soon as an attack starts, some close their eyes in a dimly lit room, some press both hands over their eyes, and some wash their head with cold water. Migraine frequency usually decreases after menopause and about three months after pregnancy."
+     ]
+    }
+   ],
+   "output_sha256": "b3a10d43c94d5e56bd192851a1524071a3132a04e7b9278e96f83cd9e276433b",
+   "model": "gpt-oss:120b-cloud",
+   "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
+   "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
+   "approved_at": "2026-10-28",
+   "checks_overridden": [
+    "contradicts",
+    "length",
+    "negations",
+    "new_names",
+    "numbers",
+    "omits"
+   ],
+   "override": "The owner reviewed it side by side with the original on 2026-10-28 and approved it despite the failed checks"
+  },
+  {
    "subject": "migraine",
    "intent": "disease_description",
    "status": "approved",
@@ -19,6 +200,109 @@
    "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
    "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
    "approved_at": "2026-10-28"
+  },
+  {
+   "subject": "migraine",
+   "intent": "disease_prevention",
+   "status": "approved",
+   "input_sha256": "3ebe1c1defb52810964c61ae906d7a2ec33a258c29fbf1e3905da0e6c3823c9f",
+   "format_identity": "v1:6e358f98edd627311eb0fae428f6754e280e913bd2ac27fb3fcd69ac337b940d",
+   "sections": [
+    {
+     "heading": null,
+     "paragraph": "Because many things can trigger migraine, paying attention to daily care, avoiding those triggers, living carefully, maintaining a proper diet and managing emotions can help prevent migraine attacks to some degree.",
+     "items": []
+    },
+    {
+     "heading": null,
+     "paragraph": null,
+     "items": [
+      "Be aware that climate factors such as wind, dryness, damp heat, storms, bright sunlight, cold, thunder and other weather changes can trigger migraine attacks. Protect yourself from the cold, stay warm, and avoid getting wet in the rain to help prevent attacks.",
+      "Be aware that sleep, exercise and overwork can affect migraines; maintain regular sleep and exercise habits, improve work planning and organization, balance work and rest, and regulate eye strain, as eye protection is an important preventive measure for patients who are sensitive.",
+      "Make sure indoor spaces are well ventilated, and stop smoking and drinking alcohol.",
+      "Be aware that certain drugs can trigger migraines, such as contraceptives, nitroglycerin, histamine, reserpine, hydrazine, estrogen, excess vitamin A and similar substances."
+     ]
+    }
+   ],
+   "output_sha256": "87671d824510bd4cff4cb95b8d79ae731504f0d47040d00ecc4b8b114061ef9d",
+   "model": "gpt-oss:120b-cloud",
+   "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
+   "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
+   "approved_at": "2026-10-28",
+   "checks_overridden": [
+    "new_names"
+   ],
+   "override": "The owner reviewed it side by side with the original on 2026-10-28 and approved it despite the failed checks"
+  },
+  {
+   "subject": "obesity",
+   "intent": "disease_prevention",
+   "status": "approved",
+   "input_sha256": "abbb79f2895215940b5ae60f555847b001bb224ec6cd93699f5ee35db81e7841",
+   "format_identity": "v1:6e358f98edd627311eb0fae428f6754e280e913bd2ac27fb3fcd69ac337b940d",
+   "sections": [
+    {
+     "heading": null,
+     "paragraph": "Obesity prevention should start early, and people need to know their risks and keep their weight as normal as possible, beginning in childhood. Currently, obesity is described as a normal physiological process occurring in a pathological environment. The main driver of the rising prevalence of obesity is the environment, not the pathological effects of metabolic defects or individual gene mutations. Because the remaining factors are unchangeable, lifestyle must be regulated through a reasonable diet and appropriate physical activity to control weight gain. Based on this concept, governments are promoting healthy lifestyles and universal prevention programs. There are three types of preventive measures: universal prevention, selective prevention and targeted prevention. Universal prevention aims at the whole population to stabilize obesity levels, lower its incidence and prevalence, improve dietary habits, encourage suitable physical activity, and reduce smoking and drinking, thereby decreasing obesity‑related diseases. Selective prevention focuses on educating people at high risk of obesity so they can effectively combat risk factors, which may be hereditary. Interventions are placed where high‑risk groups can easily access them, such as schools, community centres and primary prevention sites, beginning with education and specific actions. The Singapore Ministry of Education’s use of this approach for children has lowered obesity prevalence from 15 % to 12.5 %.",
+     "items": []
+    }
+   ],
+   "output_sha256": "1430b323cb40bad66f5a453b4401ba29115fd86deb012076c4bcb534edb3c873",
+   "model": "gpt-oss:120b-cloud",
+   "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
+   "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
+   "approved_at": "2026-10-28",
+   "checks_overridden": [
+    "new_names"
+   ],
+   "override": "The owner reviewed it side by side with the original on 2026-10-28 and approved it despite the failed checks"
+  },
+  {
+   "subject": "osteoarthritis",
+   "intent": "disease_cause",
+   "status": "approved",
+   "input_sha256": "29b940149266df24ede0fdae18c08eaee99941cd3b9dc76564dfc853d88069c8",
+   "format_identity": "v1:6e358f98edd627311eb0fae428f6754e280e913bd2ac27fb3fcd69ac337b940d",
+   "sections": [
+    {
+     "heading": null,
+     "paragraph": "Many different factors can lead to joint cartilage fibrosis, cleft palate, ulceration, and joint disease due to loss. The exact cause is unclear, but it is associated with age, obesity, inflammation, trauma, and genetic factors. The pathological findings include degeneration and destruction of articular cartilage, sclerosis or cystic changes in the subchondral bone, joint bone overgrowth, synovial overgrowth, tightening of the joint capsule, relaxation or tightening of ligaments, and muscle wasting.",
+     "items": []
+    }
+   ],
+   "output_sha256": "08b2b56a86c308082a58c6725db3f0b41568e763c965ef7aa391d9114927a531",
+   "model": "gpt-oss:120b-cloud",
+   "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
+   "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
+   "approved_at": "2026-10-28",
+   "checks_overridden": [
+    "negations",
+    "new_names"
+   ],
+   "override": "The owner reviewed it side by side with the original on 2026-10-28 and approved it despite the failed checks"
+  },
+  {
+   "subject": "osteoarthritis",
+   "intent": "disease_description",
+   "status": "approved",
+   "input_sha256": "28f45901a7ad57fdb6cb5098a22a30b47b5b274d72f26e7968291b8911b2039d",
+   "format_identity": "v1:6e358f98edd627311eb0fae428f6754e280e913bd2ac27fb3fcd69ac337b940d",
+   "sections": [
+    {
+     "heading": null,
+     "paragraph": "Osteoarthritis, also called osteoarthrosis, proliferative arthritis, senile arthritis, degenerative arthritis, hypertrophic arthritis and similar names, is a chronic joint disease. Its main features are degeneration of the articular cartilage and secondary bone overgrowth. Based on the cause, it is classified as primary osteoarthrosis or secondary osteoarthrosis. In China, secondary osteoarthrosis is more common and primary osteoarthritis is rare. When normal joints develop degenerative changes without an obvious cause, this is called primary osteoarthrosis. When cartilage damage or changes in joint structure occur because of known reasons that later lead to abnormal joint friction or pressure, the resulting degeneration is called secondary osteoarthrosis.",
+     "items": []
+    }
+   ],
+   "output_sha256": "904ec70b4e8efd9376f8331ea4695e94f6f06c1b86e8a0a4ffa0e724bde5c5b1",
+   "model": "gpt-oss:120b-cloud",
+   "reword_prompt_sha256": "e731b3a49428ce63576f748d6b5d90a5cb8396a80253ecb29012cad3f5c91eec",
+   "verify_prompt_sha256": "87c0f4391521ea955e0c78acef73d73eb17ad74a8de3de154088abf2541a578a",
+   "approved_at": "2026-10-28",
+   "checks_overridden": [
+    "new_names"
+   ],
+   "override": "The owner reviewed it side by side with the original on 2026-10-28 and approved it despite the failed checks"
   },
   {
    "subject": "pertussis",
