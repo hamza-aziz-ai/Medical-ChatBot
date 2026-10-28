@@ -235,8 +235,16 @@ def review_page():
     return OUT / "review.html"
 
 
+def failed_checks(candidate):
+    """The names of the checks a candidate failed, for the record of an owner override."""
+    names = [str(f).split(":")[0] for p in candidate.get("passages", []) for f in p.get("failures", [])]
+    names += [str(f).split(":")[0] for f in candidate.get("field_failures", [])]
+    return sorted(set(names))
+
+
 def approve(decisions_path, store=answer_searcher.REWORDINGS_PATH):
-    """Publish only candidates the owner approved by their exact identities, unchanged since review, with passing checks."""
+    """Publish only candidates the owner approved by their exact identities, unchanged since review, with passing
+    checks, or with failed checks the owner explicitly overrode after review ("override": the reason)."""
     decisions = json.loads(Path(decisions_path).read_text(encoding="utf-8")).get("approved", [])
     entries = []
     for decision in decisions:
@@ -245,12 +253,16 @@ def approve(decisions_path, store=answer_searcher.REWORDINGS_PATH):
         unchanged = (c["input_sha256"] == decision["input_sha256"] and c["output_sha256"] == decision["output_sha256"]
                      and answer_searcher.sections_digest(c["sections"]) == c["output_sha256"]
                      and c["format_identity"] == decision["format_identity"] == text_format.FORMAT_IDENTITY)
-        if not unchanged or not c["checks_passed"]:
+        override = decision.get("override")
+        if not unchanged or not (c["checks_passed"] or (isinstance(override, str) and override.strip())):
             raise SystemExit(f"Refused {decision['subject']} / {decision['intent']}: changed since review, other formatter, or failed checks")
+        # A recorded override: who decided, why, and which checks were overruled (D-029 addendum, 2026-10-28).
+        record = {} if c["checks_passed"] else {"checks_overridden": failed_checks(c), "override": override.strip()}
         entries.append({"subject": c["subject"], "intent": c["intent"], "status": "approved", "input_sha256": c["input_sha256"],
                         "format_identity": c["format_identity"], "sections": c["sections"], "output_sha256": c["output_sha256"],
                         "model": c["model"], "reword_prompt_sha256": c["reword_prompt_sha256"],
-                        "verify_prompt_sha256": c["verify_prompt_sha256"], "approved_at": datetime.now(timezone.utc).strftime("%Y-%m-%d")})
+                        "verify_prompt_sha256": c["verify_prompt_sha256"], "approved_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                        **record})
     document = json.loads(Path(store).read_text(encoding="utf-8"))
     document["entries"] = entries
     partial = Path(store).with_suffix(".json.part")
