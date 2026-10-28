@@ -24,6 +24,8 @@ Start the stack (`docker compose up -d` after the one-time import), open http://
 
 ## Pre-ship gate (Lane B; run before any release a real user depends on)
 
+The owner went through this gate for the public site on 2026-10-28.
+
 - [ ] I can explain how this works at a high level, without notes.
 - [ ] `docs/defense/DEFENSE-medical-chatbot.md` is in my own words and current.
 - [ ] I know why we chose this approach over at least one alternative.
