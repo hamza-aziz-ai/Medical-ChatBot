@@ -39,7 +39,7 @@ On the VM, `hosted` is the Compose command from step 3 of [hosting/oracle/README
 
 ## A release tag refused with HTTP 403 (BUG-004)
 
-If `publish` fails creating the tag with `Resource not accessible by integration`, a workflow change landed after the merge being released. With the owner's approval, push that version's tag at the planned commit by hand, then start `release.yml` from `main` with only `tag` set; a tag push alone runs the tagged commit's older workflow. Every gate runs again before publishing.
+Since D-034 the planner should never pick such a commit. If `publish` still fails creating the tag with `Resource not accessible by integration`, a workflow change landed after the merge being released. With the owner's approval, push that version's tag at the planned commit by hand, then start `release.yml` from `main` with only `tag` set; a tag push alone runs the tagged commit's older workflow. Every gate runs again before publishing.
 
 ## Running stack (Docker)
 
