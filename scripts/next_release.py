@@ -6,6 +6,10 @@ $GITHUB_OUTPUT, or exits non-zero with recovery steps when the last release is i
 Each run releases the oldest first-parent commit on main, after the last published release, that changed
 shipped files; autorelease then starts the next run. Planning from the published state makes duplicate,
 replaced or no-op runs harmless, and the chain keeps releases in merge order.
+
+One exception (BUG-004, D-034): the workflow token cannot create a tag on a commit whose workflow files differ from
+main's. When workflow files changed after the oldest pending merge, the release waits for the first later commit on
+main whose workflows match main's, and releases that commit: the pending merges up to it ship together.
 """
 import argparse
 import fnmatch
@@ -64,6 +68,26 @@ def unreleased(baseline, head, released):
     return [sha for sha in commits if sha not in released and shipped_changes(f"{sha}^1", sha)]
 
 
+def workflows(ref):
+    """The tree id of ref's .github/workflows, or "" when it has none."""
+    result = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"{ref}:.github/workflows"],
+                            capture_output=True, text=True)
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def settle(commits, head):
+    """(commit to tag, pending merges it releases). Normally the oldest pending merge alone; when workflow files
+    changed after it, the first later commit on main whose workflows match head's, with every pending merge up to
+    it. head itself always matches, so this always finds one."""
+    current = workflows(head)
+    if workflows(commits[0]) == current:
+        return commits[0], commits[:1]
+    line = git("rev-list", "--first-parent", "--reverse", f"{commits[0]}^1..{head}").split()
+    target = next(sha for sha in line if workflows(sha) == current)
+    upto = set(line[:line.index(target) + 1])
+    return target, [sha for sha in commits if sha in upto]
+
+
 def release_state(tag, releases):
     """published, draft or absent, from the full release list (drafts are only listed, never found by tag)."""
     matches = [release for release in releases if release["tag_name"] == tag]
@@ -72,12 +96,13 @@ def release_state(tag, releases):
     return "draft" if any(release["draft"] for release in matches) else "published"
 
 
-def plan(tags, releases, image_state, pending, level_of, all_tags=(), require_baseline=None):
+def plan(tags, releases, image_state, pending, level_of, all_tags=(), require_baseline=None, settle_on=None):
     """The release to make, as (tag, sha), or None. Raises Stop when a human must act first.
 
     tags: version tags on main, newest first. releases: every release (None if the listing failed).
     image_state(version) -> present, absent or error. pending(baseline_tag) -> commits still to release,
-    oldest first. level_of(sha) -> patch, minor or major.
+    oldest first. level_of(sha) -> patch, minor or major. settle_on(commits) -> (commit to tag, merges it
+    releases); by default the oldest merge alone.
     """
     if not tags:
         raise Stop("No vX.Y.Z tag on main; cut the first release by hand.")
@@ -109,9 +134,11 @@ def plan(tags, releases, image_state, pending, level_of, all_tags=(), require_ba
     commits = pending(baseline)
     if not commits:
         return None
-    sha = commits[0]
+    sha, merges = settle_on(commits) if settle_on else (commits[0], commits[:1])
+    # Merges released together take the largest bump any of them asked for.
+    level = max((level_of(merge) for merge in merges), key=BUMPS.index)
     # Versions follow the highest tag, so an abandoned tag's number is never reused, though its merge is released again.
-    tag = bump(tags[0], level_of(sha))
+    tag = bump(tags[0], level)
     if tag in all_tags:
         raise Stop(f"{tag} already exists outside main; choose the next version by hand.")
     return tag, sha
@@ -169,7 +196,8 @@ def main(argv=None):
         result = plan(tags, releases, image_lookup(args.image_prefix),
                       lambda baseline: unreleased(baseline, head, released),
                       lambda sha: args.bump if args.bump != "auto" else label_bump(args.repo, sha),
-                      set(git("tag", "-l").split()), args.require_baseline)
+                      set(git("tag", "-l").split()), args.require_baseline,
+                      lambda commits: settle(commits, head))
     except Stop as stop:
         print(f"::error::{stop}", file=sys.stderr)
         return 1
@@ -178,6 +206,10 @@ def main(argv=None):
         print("Every merge that changed shipped files is released.", file=sys.stderr)
         return 0
     tag, sha = result
+    # settle() should make this impossible; refuse rather than let release.yml fail at the tag.
+    if workflows(sha) != workflows(head):
+        print(f"::error::{sha[:12]}'s workflow files differ from main's, so its tag would be refused (BUG-004).", file=sys.stderr)
+        return 1
     print("release=true")
     print(f"tag={tag}")
     print(f"sha={sha}")

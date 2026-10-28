@@ -81,6 +81,13 @@ def test_the_backlog_before_the_bootstrap_release_is_not_drained():
     assert run_plan(["v1.1.0"], published("v1.1.0"), require="v1.1.0")[0] == ("v1.1.1", "m1")
 
 
+def test_merges_released_together_take_the_largest_bump():
+    together = lambda commits: ("m2", ["m1", "m2"])  # noqa: E731
+    result = nr.plan(["v1.0.0"], published("v1.0.0"), images({}), lambda baseline: ["m1", "m2"],
+                     lambda sha: {"m2": "minor"}.get(sha, "patch"), settle_on=together)
+    assert result == ("v1.1.0", "m2")
+
+
 def test_shipped_paths():
     for path in ["api/main.py", "api/dictionary/entities.json", "frontend/src/App.vue", "docker/api.Dockerfile",
                  "compose.yaml", "requirements.txt", "requirements-deploy.txt", ".env.example"]:
@@ -235,3 +242,35 @@ def test_a_merge_takes_its_own_pull_request_label_and_failures_stop(monkeypatch)
     monkeypatch.setattr(nr.subprocess, "run", fake_run(1, stderr="HTTP 403: rate limit exceeded"))
     with pytest.raises(nr.Stop, match="labels"):
         nr.label_bump("o/r", "abc")
+
+
+# BUG-004 (D-034): a tag on a commit whose workflows differ from main's would be refused.
+
+def test_a_merge_behind_a_later_workflow_change_is_released_with_it(repo, monkeypatch, capsys):
+    repo.commit(".github/workflows/release.yml", "old")
+    repo.commit("api/main.py", "1")
+    repo.run("tag", "v1.0.0")
+    shippable = repo.merge("feature", "api/a.py", "a")
+    workflow_change = repo.merge("workflow", ".github/workflows/release.yml", "new")
+    later = repo.merge("later", "api/b.py", "b")
+    assert nr.settle([shippable, later], "main") == (workflow_change, [shippable])
+    monkeypatch.setattr(nr, "list_releases", lambda repo_name: published("v1.0.0"))
+    monkeypatch.setattr(nr, "image_lookup", lambda prefix: images({}))
+    monkeypatch.setattr(nr, "label_bump", lambda repo_name, sha: "patch")
+    args = ["--repo", "o/r", "--image-prefix", "ghcr.io/o/x", "--ref", "main"]
+    assert nr.main(args) == 0
+    assert capsys.readouterr().out.splitlines() == ["release=true", "tag=v1.0.1", f"sha={workflow_change}"]
+    # Once published, only the later merge is left, and it is released alone.
+    repo.run("tag", "v1.0.1", workflow_change)
+    monkeypatch.setattr(nr, "list_releases", lambda repo_name: published("v1.0.0", "v1.0.1"))
+    assert nr.main(args) == 0
+    assert capsys.readouterr().out.splitlines() == ["release=true", "tag=v1.0.2", f"sha={later}"]
+
+
+def test_without_a_workflow_change_each_merge_is_still_released_alone(repo):
+    repo.commit(".github/workflows/release.yml", "same")
+    repo.commit("api/main.py", "1")
+    repo.run("tag", "v1.0.0")
+    first = repo.merge("a", "api/a.py", "a")
+    second = repo.merge("b", "api/b.py", "b")
+    assert nr.settle([first, second], "main") == (first, [first])
