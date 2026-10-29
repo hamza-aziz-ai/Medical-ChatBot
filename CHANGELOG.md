@@ -4,6 +4,7 @@ Every release of Mr. Healthcare, newest first, with the pull requests it contain
 
 ## Unreleased
 
+- Record the open page's live updates verified on the public site (A-26)
 - Add CHANGELOG.md and bring the docs and both artifacts up to date with D-037
 
 ## v1.1.25 (2026-10-30)
