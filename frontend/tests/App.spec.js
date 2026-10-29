@@ -82,6 +82,14 @@ describe("App", () => {
     expect(wrapper.findAll("img").filter((img) => /^https?:/.test(img.attributes("src") || ""))).toHaveLength(0);
   });
 
+  it("links to the source repository in a new tab without an opener", () => {
+    const link = mount(App).find(".repo-link");
+    expect(link.attributes("href")).toBe("https://github.com/hamza-aziz-ai/Medical-ChatBot");
+    expect(link.attributes("target")).toBe("_blank");
+    expect(link.attributes("rel")).toBe("noopener noreferrer");
+    expect(link.attributes("aria-label")).toBeTruthy();
+  });
+
   it("sends the confirmed topic with a follow-up and forgets it on a new conversation", async () => {
     const fetch = vi.fn(async () => reply(200, { status: "answer", message: "m", answers: [], options: [],
       topic: { name: "asthma", type: "disease" }, interpretation: null }));

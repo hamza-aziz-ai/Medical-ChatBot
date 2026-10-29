@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-29 (model: Claude Opus 5.5, claude-opus-5-5)
 
 Done:
+- A GitHub link in the page's top corner (FEATURE-017): the GitHub mark beside the "Not medical advice" badge, light on the dark theme, opening the repository in a new tab.
 - The site's own 404 and maintenance pages (D-035, FEATURE-016): unknown paths get a real 404 with `frontend/public/404.html`; `hosting/cloudflare/maintenance.js` is a Cloudflare Worker that shows a "being updated" page (503, reloads every 30 s) while the tunnel is closed or the VM is down.
 - README made short (D-036): a System Design and a Solution Architecture diagram (Mermaid), a quick start and a guide table; the details moved unchanged into `docs/guides/` (SETUP, DOCKER, BEHAVIOR, CI-CD, OFFLINE).
 - Detailed diagrams: the full Solution Architecture in `docs/ARCHITECTURE.md` (CI/CD, artifacts, Cloudflare, the VM's containers, managed services, the optional local stack) and the Software & System Design in `docs/FLOW.md` (every branch of one question, function by function, and the offline import). Keep them current with the code, like the rest of both files.
