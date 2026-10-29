@@ -6,10 +6,10 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 
 Done:
 - The site's own 404 and maintenance pages (D-035, FEATURE-016): unknown paths get a real 404 with `frontend/public/404.html`; `hosting/cloudflare/maintenance.js` is a Cloudflare Worker that shows a "being updated" page (503, reloads every 30 s) while the tunnel is closed or the VM is down.
+- README made short (D-036): a System Diagram and a Solution Architecture diagram (Mermaid), a quick start and a guide table; the details moved unchanged into `docs/guides/` (SETUP, DOCKER, BEHAVIOR, CI-CD, OFFLINE).
 - Answered the HalalLens session about the VM (it does not fit HalalLens; a separate A1.Flex VM recommended) and the Ollama setup; the portfolio card now says the model "never writes an answer at question time".
 
 Next:
-- Owner: install the Worker once (hosting/oracle/README.md, step 5.4) and watch the next update show the page (A-25).
 - Owner items still open: revoke the unused Ollama key `medbot-vm` and remove `OLLAMA_API_KEY` from the VM's `.env`; the Docker Hub token's expiry; the dataset's rights (A-01).
 
 Do not touch: as below.

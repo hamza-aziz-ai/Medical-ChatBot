@@ -470,3 +470,16 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** Only something at Cloudflare's edge can answer while the tunnel is closed or the VM is down. Option 2 changes the hosted compose and the updater's closed phase, needs a manual redeploy and re-enrolment, and still fails when the VM itself is down. Option 3 depends on the plan and was not verified for tunnel errors on the free plan. The Worker sees no question, because the API is routed past it.
 - **Trade-off:** One more piece of configuration outside the repository, in the owner's Cloudflare account; the free plan allows 100,000 Worker requests a day (the route fails open beyond that, showing Cloudflare's own page again). API calls made from an open page during an update still get Cloudflare's error, which the page already turns into its generic "couldn't get an answer" message. The page says "being updated" even when the VM is down for another reason.
 - **Revisit if:** the free plan's Worker limit is reached, or Cloudflare's custom error pages cover tunnel errors on the free plan.
+
+## D-036: A short README with diagrams; the details in docs/guides/
+
+- **Date:** 2026-10-29; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner asked for a detailed System Diagram and Solution Architecture diagram in the README, easy to understand at first glance, and for the README to be easier to read, with the details in other files it links to
+- **Context:** The README had grown to about 180 lines of dense prose (setup, Docker, CI/CD, import rules, logging, runtime contract, offline scripts) and no diagram, so a first-time reader could not see the shape of the system.
+- **Options:**
+  1. a short README (intro, the two diagrams as Mermaid, a quick start, a guide table, known limitations) and the details moved unchanged into `docs/guides/`, one file per topic
+  2. keep one long README and add a table of contents and the diagrams
+  3. diagrams as exported images (PNG or SVG) instead of Mermaid
+- **Chosen:** 1, with Mermaid. The guides are `SETUP.md` (install, configuration, tests, graph import, data provenance, logging), `DOCKER.md`, `BEHAVIOR.md`, `CI-CD.md` and `OFFLINE.md`. Their text was moved as it was; only links and "see ..." pointers changed.
+- **Why:** GitHub renders Mermaid inline, and the diagrams stay plain text that can be reviewed and changed in a diff like any other doc. A table of contents does not shorten the page a newcomer has to read. Images go stale silently and need a tool to edit.
+- **Trade-off:** Readers follow one more link for details, and the diagrams must be kept current by hand when the system changes. Mermaid layout is automatic, so a large change may need the diagram re-arranged.
+- **Revisit if:** the diagrams stop matching the system, or a guide grows past one topic.

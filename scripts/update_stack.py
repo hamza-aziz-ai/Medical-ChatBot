@@ -1,6 +1,6 @@
 """Update the local Docker Compose stack to the latest published release, and roll back on failure (D-021).
 
-Run every 15 minutes by a Windows scheduled task while the owner is signed in (README, Docker). Each run:
+Run every 15 minutes by a Windows scheduled task while the owner is signed in (docs/guides/DOCKER.md). Each run:
 finish or reverse an interrupted update; check the latest release of this repository; and, if it is newer
 than the recorded one, deploy it in a short maintenance window: pull, stop, back up the graph volume, start
 Neo4j, re-import, start api and web, check health, record. Any failure restores the previous release.

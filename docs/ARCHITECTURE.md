@@ -1,6 +1,6 @@
 # ARCHITECTURE
 
-One-page map. Deeper detail: the README, [FLOW.md](FLOW.md), [DATA.md](DATA.md) and the two architecture pages (Solution Architecture and Software & System Design).
+One-page map. Deeper detail: the README and its diagrams, the guides in [guides/](guides/), [FLOW.md](FLOW.md), [DATA.md](DATA.md) and the two architecture pages (Solution Architecture and Software & System Design).
 
 ## What it is
 
