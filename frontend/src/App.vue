@@ -67,6 +67,19 @@
         class="maintenance-card"
         role="status"
       >
+        <span
+          class="maintenance-mark"
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="34"
+            height="34"
+          ><path
+            d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"
+            fill="currentColor"
+          /></svg>
+        </span>
         <p class="eyebrow">
           Updating
         </p>
