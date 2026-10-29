@@ -4,6 +4,118 @@ This is a student prototype for local use. It is not medical advice and is not b
 
 Mr. Healthcare answers basic questions about 658 diseases and their symptoms (symptoms, causes, prevention, treatments, complications, descriptions) from a Neo4j knowledge graph, and says plainly when it cannot answer. A Vue 3 page talks to a Flask API. The API finds disease and symptom names with an Aho-Corasick automaton and answers only through fixed, parameterized Cypher queries. A language model (`gpt-oss:120b-cloud` through a local Ollama) may read each question to understand it better, but it only chooses among the names the rules found and never writes an answer; when it is unavailable, slow or unsure, the rules answer. Long answers are shown with their own headings and numbered points, and more conversational rewordings are served only after the owner approves each one against the original.
 
+## System Diagram
+
+What happens to one question. Solid arrows are the path every question takes; dotted arrows are optional or happen ahead of time.
+
+```mermaid
+flowchart LR
+  V(["`**Visitor**`"])
+
+  subgraph WEB["`**web container**: nginx`"]
+    direction TB
+    PAGE["`**Chat page** (Vue 3): question box, answer chips, Why this answer?`"]
+    PROXY["`**/api/ proxy**: 10 questions/s per visitor, logs nothing`"]
+  end
+
+  subgraph API["`**api container**: gunicorn + Flask`"]
+    direction TB
+    IN["`**1. Check input**: GET only, 500 characters at most`"]
+    FIND["`**2. Find names and question type**: Aho-Corasick over the dictionary, keyword intents`"]
+    ROUTE{"`**3. Model on and healthy?**`"}
+    LLM["`**Model picks** among the names found, never writes text`"]
+    RULES["`**Rules decide** alone`"]
+    CYPHER["`**4. Fixed Cypher template**, parameters only`"]
+    OUT["`**5. Answer** with headings and points, or **say it cannot answer**`"]
+    IN --> FIND --> ROUTE
+    ROUTE -->|"`yes`"| LLM --> CYPHER
+    ROUTE -->|"`no, slow or unsure`"| RULES --> CYPHER
+    CYPHER --> OUT
+  end
+
+  GRAPH[("`**Neo4j knowledge graph**: 658 diseases, symptoms, causes, treatments`")]
+  DICT["`**entities.json**: names, aliases, answerable intents`"]
+  OLLAMA["`**Ollama**: model gpt-oss:120b-cloud`"]
+
+  subgraph BUILD["`**Graph import**, ahead of time`"]
+    direction TB
+    CSV["`**medical.csv**`"] --> IMP["`**Importer**: validates, quarantines bad rows, replaces the graph`"]
+  end
+
+  V -->|"`question`"| PAGE
+  PAGE -->|"`GET /api/?search=`"| PROXY --> IN
+  FIND -.-> DICT
+  LLM <-.->|"`question + candidate names, 2 s limit`"| OLLAMA
+  CYPHER <-->|"`read-only, 5 s limit`"| GRAPH
+  OUT -->|"`JSON reply`"| PAGE
+  IMP -.-> GRAPH
+  IMP -.-> DICT
+```
+
+1. The visitor types a question; the page sends it to `/api/`, where nginx limits how fast one visitor can ask.
+2. The API checks the input, then finds the disease and symptom names and the kind of question (symptoms, causes, treatments and so on) from fixed rules.
+3. If the language model is switched on and healthy, it may only choose among the names the rules found; when it is off, slow or unsure, the rules decide (D-027).
+4. The choice becomes one fixed, parameterized, read-only Cypher query; the model never writes a query or an answer.
+5. The graph's facts come back as the answer. With no facts, or a question it does not support (such as "how long until I'm cured"), the bot says plainly that it cannot answer.
+
+The graph and the dictionary are built ahead of time: the importer validates `medical.csv`, replaces the graph and writes `entities.json`. Module detail is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), each step's functions in [docs/FLOW.md](docs/FLOW.md).
+
+## Solution Architecture
+
+How the code becomes the public site at https://medical.hamzaaziz.dev. Left: build and release on GitHub. Middle: the internet edge. Right: the server and the managed services it uses.
+
+```mermaid
+flowchart TB
+  subgraph GH["`**GitHub**`"]
+    direction TB
+    PR["`**Pull request**`"] --> CI["`**Checks**: tests, MLOps graph gate, Docker smoke test`"]
+    CI --> MERGE["`**automerge** into main`"]
+    MERGE --> REL["`**Release**: images with SBOM, GitHub Release`"]
+  end
+
+  GHCR[("`**GHCR** images`")]
+  HUB[("`**Docker Hub** copy`")]
+
+  V(["`**Visitor**`"])
+
+  subgraph CF["`**Cloudflare**`"]
+    direction TB
+    EDGE["`**Edge**: HTTPS, never caches /api/*`"]
+    WORKER["`**Maintenance Worker**: the site's own 503 page while the server is unreachable`"]
+  end
+
+  subgraph VM["`**Oracle Cloud VM**: Docker Compose`"]
+    direction TB
+    TUNNEL["`**cloudflared**: tunnel dials out, no open port`"]
+    WEBC["`**web**: nginx, page, 404 page`"]
+    APIC["`**api**: gunicorn + Flask`"]
+    OLC["`**ollama**: signed in, 6 calls a minute`"]
+    UPD["`**Updater** (systemd timer, every 15 min)`"]
+    TUNNEL --> WEBC --> APIC --> OLC
+  end
+
+  AURA[("`**Neo4j AuraDB Free**: the knowledge graph`")]
+  CLOUD["`**Ollama cloud** model`"]
+
+  REL --> GHCR
+  GHCR -.->|"`mirror by digest`"| HUB
+  V -->|"`HTTPS`"| EDGE
+  EDGE -->|"`tunnel`"| TUNNEL
+  EDGE -.->|"`page routes, server down`"| WORKER
+  APIC -->|"`neo4j+s, read-only`"| AURA
+  OLC --> CLOUD
+  UPD -.->|"`new release?`"| GHCR
+  UPD -.->|"`close tunnel, rebuild graph, check, reopen`"| AURA
+```
+
+1. **Build and release.** Every change arrives as a pull request. Path-filtered checks (unit tests, the MLOps graph gate, a full Docker Compose smoke test) must pass before `automerge.yml` merges it; `autorelease.yml` then publishes a versioned release with images on GHCR, copied to Docker Hub (D-019, D-030).
+2. **Visitor to server.** The visitor reaches Cloudflare over HTTPS. Cloudflare forwards through a tunnel that the VM opens outward, so the VM has no application port open to the internet (D-032).
+3. **On the VM.** nginx serves the page and passes `/api/` to the Flask API, which reads the graph on Neo4j AuraDB and, for understanding only, asks the language model through the stack's own Ollama (D-033).
+4. **Updates.** Every 15 minutes the updater checks for a newer release. If there is one, it closes the tunnel, rebuilds the graph with the new image, checks that the site answers, and reopens; on failure it rolls back to the previous release.
+5. **While closed or down.** A Cloudflare Worker shows the site's own "being updated" page instead of Cloudflare's error; questions (`/api/*`) never pass through it (D-035).
+
+The same images also run on one machine with `compose.yaml` and a local Neo4j container (see Docker). Setup of the hosted site: [hosting/oracle/README.md](hosting/oracle/README.md).
+
 ## Setup
 
 Tested with Python 3.14. The importer and API were tested live against the official Docker images Neo4j 5.26.32 and 4.4.48; other Neo4j versions are untested.
