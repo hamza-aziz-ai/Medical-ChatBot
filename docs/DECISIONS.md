@@ -473,7 +473,7 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 
 ## D-036: A short README with diagrams; the details in docs/guides/
 
-- **Date:** 2026-10-29; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner asked for a detailed System Diagram and Solution Architecture diagram in the README, easy to understand at first glance, and for the README to be easier to read, with the details in other files it links to
+- **Date:** 2026-10-29; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner asked for a detailed System Design diagram and Solution Architecture diagram in the README, easy to understand at first glance, and for the README to be easier to read, with the details in other files it links to
 - **Context:** The README had grown to about 180 lines of dense prose (setup, Docker, CI/CD, import rules, logging, runtime contract, offline scripts) and no diagram, so a first-time reader could not see the shape of the system.
 - **Options:**
   1. a short README (intro, the two diagrams as Mermaid, a quick start, a guide table, known limitations) and the details moved unchanged into `docs/guides/`, one file per topic
