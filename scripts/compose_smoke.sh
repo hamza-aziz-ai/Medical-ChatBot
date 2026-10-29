@@ -37,6 +37,8 @@ ask() {  # ask <question words...>; prints the body, then the status on the last
 
 for _ in $(seq 1 30); do curl -fs -o /dev/null "$BASE/" && break; sleep 1; done
 curl -fs "$BASE/" | grep -q '<div id="app">' || fail "static page"
+missing=$(curl -s -w '\n%{http_code}' "$BASE/no-such-page")
+[ "$(tail -n1 <<<"$missing")" = 404 ] && grep -q 'Page not found' <<<"$missing" || fail "404 page"
 
 reply=$(ask what are the symptoms of asthma "$SENTINEL")
 [ "$(tail -n1 <<<"$reply")" = 200 ] || fail "graph answer status"
