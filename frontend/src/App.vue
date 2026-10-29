@@ -59,14 +59,36 @@
       If this may be an emergency, call your local emergency number now. This chatbot cannot help in an emergency.
     </p>
 
+    <div
+      v-if="down"
+      class="maintenance"
+    >
+      <div
+        class="maintenance-card"
+        role="status"
+      >
+        <p class="eyebrow">
+          Updating
+        </p>
+        <h2>We'll be right back</h2>
+        <p>Mr. Healthcare is installing an update. It usually takes about a minute.</p>
+        <p class="hint">
+          Your conversation is kept. This page continues by itself.
+        </p>
+      </div>
+    </div>
+
     <main class="workspace">
       <ChatPanel
+        ref="chat"
         :messages="messages"
         :busy="botTyping"
+        :paused="down"
         :suggestions="suggestions"
         :topic="topic"
         @send="messageSendHandler"
         @reset="newConversation"
+        @composed="$nextTick(reloadWhenIdle)"
       />
       <MedicalChatbot />
     </main>
@@ -84,6 +106,9 @@
 import ChatPanel from "@/components/ChatPanel.vue";
 import MedicalChatbot from "@/components/MedicalChatbot.vue";
 import { fetchHttp, sendMessage } from "@/chatApi.mjs";
+import {
+  CHECK_DOWN_EVERY_MS, CHECK_EVERY_MS, clearSnapshot, loadedAssets, page, prepareReload, probe, takeSnapshot,
+} from "@/liveUpdate.mjs";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
@@ -102,8 +127,13 @@ export default {
     return {
       messages: [welcome()],
       botTyping: false,
-      // The confirmed subject for follow-ups ("what causes it?"). Held in page memory only, never stored.
+      // The confirmed subject for follow-ups ("what causes it?"). Held in page memory; stored only to carry it across
+      // an automatic reload into a new release (D-037).
       topic: null,
+      // True while the site answers with the maintenance page (D-037); sending is blocked, the conversation kept.
+      down: false,
+      // The asset key of a newer release, waiting for the page to be idle before reloading into it.
+      release: null,
       // Bumped by "New conversation" so a late reply from the old conversation is dropped.
       conversation: 0,
       // Each one is answered by the shipped graph (see eval/cases.jsonl).
@@ -115,16 +145,89 @@ export default {
       ],
     };
   },
+  watch: {
+    botTyping(typing) {
+      if (!typing) this.reloadWhenIdle();
+    },
+  },
+  created() {
+    const snapshot = takeSnapshot();
+    if (snapshot) {
+      this.messages = snapshot.messages;
+      this.topic = snapshot.topic;
+    }
+    this.restoredDraft = snapshot ? snapshot.draft : "";
+  },
+  mounted() {
+    if (this.restoredDraft) this.$refs.chat.draft = this.restoredDraft;
+    // Only a built page loads hashed assets; the dev server has none, so live updates stay off there.
+    this.assets = loadedAssets();
+    if (!this.assets) return;
+    this.onVisible = () => {
+      if (document.visibilityState === "visible") this.check();
+    };
+    document.addEventListener("visibilitychange", this.onVisible);
+    this.schedule();
+  },
+  unmounted() {
+    this.gone = true;
+    clearTimeout(this.timer);
+    if (this.controller) this.controller.abort();
+    if (this.onVisible) document.removeEventListener("visibilitychange", this.onVisible);
+  },
   methods: {
-    messageSendHandler(value) {
-      if (this.botTyping) return Promise.resolve();
-      return sendMessage(this, fetchHttp, API_BASE_URL, typeof value === "string" ? { text: value } : value);
+    async messageSendHandler(value) {
+      if (this.botTyping || this.down) return;
+      await sendMessage(this, fetchHttp, API_BASE_URL, typeof value === "string" ? { text: value } : value);
+      // A failed question may mean the site just closed for an update: look now rather than at the next check.
+      const last = this.messages[this.messages.length - 1];
+      if (last && last.type === "error") this.check();
     },
     newConversation() {
       this.conversation += 1;
       this.messages = [welcome()];
       this.topic = null;
       this.botTyping = false;
+      clearSnapshot();
+    },
+    schedule() {
+      clearTimeout(this.timer);
+      if (!this.gone) this.timer = setTimeout(() => this.check(), this.down ? CHECK_DOWN_EVERY_MS : CHECK_EVERY_MS);
+    },
+    // One check at a time, only while the page is visible; becoming visible again starts the next one.
+    async check() {
+      if (!this.assets || this.checking || this.gone) return;
+      if (document.visibilityState === "hidden") {
+        clearTimeout(this.timer);
+        return;
+      }
+      this.checking = true;
+      this.controller = new AbortController();
+      try {
+        const result = await probe((...args) => globalThis.fetch(...args), this.assets, this.controller);
+        if (result.state === "down") this.down = true;
+        else if (result.state === "same") this.down = false;
+        else if (result.state === "new") {
+          this.down = false;
+          this.release = result.key;
+          this.reloadWhenIdle();
+        }
+      } finally {
+        this.checking = false;
+        this.schedule();
+      }
+    },
+    // Never while a reply is pending or text is being composed (IME), so nothing typed or asked is lost.
+    reloadWhenIdle() {
+      const chat = this.$refs.chat;
+      if (!this.release || this.botTyping || !chat || chat.composing) return;
+      const asked = this.messages.some((message) => message.agent === "user");
+      const snapshot = asked || this.topic || chat.draft.trim()
+        ? { messages: this.messages, topic: this.topic, draft: chat.draft }
+        : null;
+      const key = this.release;
+      this.release = null;
+      if (prepareReload(key, snapshot)) page.reload();
     },
   },
 };

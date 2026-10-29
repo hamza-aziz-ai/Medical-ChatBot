@@ -2,10 +2,20 @@
 
 Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md). Newest entry on top. Update it at the end of every session.
 
-## Latest session: 2026-10-29 (model: Claude Opus 5.5, claude-opus-5-5)
+## Latest session: 2026-10-30 (model: Claude Opus 5.5, claude-opus-5-5; council with Codex)
 
 Done:
-- A GitHub link in the page's top corner (FEATURE-017): the GitHub mark beside the "Not medical advice" badge, light on the dark theme, opening the repository in a new tab.
+- An open page follows updates by itself (D-037, FEATURE-018): it shows a maintenance view while the site is closed for an update and reloads into a new release, keeping the conversation, topic and draft through a one-shot hand-off in the tab's sessionStorage. nginx sends `no-cache` for the page.
+- GitHub link in the top corner (FEATURE-017), live since v1.1.23.
+
+Next:
+- At the next release, watch an open page on the public site through the update (A-26).
+
+Do not touch: as below.
+
+## Session: 2026-10-29 (model: Claude Opus 5.5, claude-opus-5-5)
+
+Done:
 - The site's own 404 and maintenance pages (D-035, FEATURE-016): unknown paths get a real 404 with `frontend/public/404.html`; `hosting/cloudflare/maintenance.js` is a Cloudflare Worker that shows a "being updated" page (503, reloads every 30 s) while the tunnel is closed or the VM is down.
 - README made short (D-036): a System Design and a Solution Architecture diagram (Mermaid), a quick start and a guide table; the details moved unchanged into `docs/guides/` (SETUP, DOCKER, BEHAVIOR, CI-CD, OFFLINE).
 - Detailed diagrams: the full Solution Architecture in `docs/ARCHITECTURE.md` (CI/CD, artifacts, Cloudflare, the VM's containers, managed services, the optional local stack) and the Software & System Design in `docs/FLOW.md` (every branch of one question, function by function, and the offline import). Keep them current with the code, like the rest of both files.

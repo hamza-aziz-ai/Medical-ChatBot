@@ -231,7 +231,7 @@
         :key="chip.label"
         type="button"
         class="chip"
-        :disabled="busy"
+        :disabled="busy || paused"
         @click="ask(chip)"
       >
         {{ chip.label }}
@@ -261,6 +261,8 @@
           aria-describedby="question-help"
           placeholder="Ask about a disease or symptom…"
           @keydown.enter="onEnter"
+          @compositionstart="composing = true"
+          @compositionend="composing = false; $emit('composed')"
         />
         <button
           type="submit"
@@ -298,17 +300,20 @@ export default {
   props: {
     messages: { type: Array, required: true },
     busy: { type: Boolean, default: false },
+    // The site is closed for an update (D-037): nothing can be sent, but no reply is pending either.
+    paused: { type: Boolean, default: false },
     suggestions: { type: Array, default: () => [] },
     topic: { type: Object, default: null },
     maxLength: { type: Number, default: 500 },
   },
-  emits: ["send", "reset"],
+  emits: ["send", "reset", "composed"],
   data() {
-    return { draft: "", originals: {} };
+    // composing: an IME composition is open, so draft lags the textarea; App waits for it before reloading (D-037).
+    return { draft: "", originals: {}, composing: false };
   },
   computed: {
     canSend() {
-      return !this.busy && this.draft.trim().length > 0;
+      return !this.busy && !this.paused && this.draft.trim().length > 0;
     },
     lastBotMessage() {
       const last = this.messages[this.messages.length - 1];
@@ -351,7 +356,7 @@ export default {
       this.draft = "";
     },
     ask(chip) {
-      if (this.busy) return;
+      if (this.busy || this.paused) return;
       this.$emit("send", { text: chip.question, label: chip.label, selections: chip.selections, topic: chip.topic });
     },
     describeEntities(entities) {

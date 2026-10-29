@@ -209,6 +209,18 @@ medical-chatbot-update.timer (every 15 min) -> update_stack.py, hosted mode
   -> any failure: rebuild with the previous release's image -> checks -> reopen; if that fails, stay closed
 ```
 
+## An open page during an update (D-037)
+
+```
+open page, visible -> every 30 s, on becoming visible, and after a failed question: GET / (no-store, 5 s timeout)
+  -> 503 or another unreachable-origin code -> maintenance view over the page; sending blocked; check every 5 s
+  -> the app's page with the same asset paths -> carry on (maintenance view lifted)
+  -> the app's page with new asset paths -> wait until no reply is pending and no text is being composed
+       -> write the reload marker and, if there is a conversation, the hand-off to sessionStorage -> reload
+       -> the new release reads, checks and deletes the hand-off -> same conversation, topic and draft
+  -> anything else (offline, timeout, another page) -> nothing changes
+```
+
 ## A readiness probe (D-022)
 
 ```

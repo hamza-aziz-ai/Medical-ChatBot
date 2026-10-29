@@ -47,7 +47,7 @@ export async function sendMessage(state, http, baseUrl, value) {
   state.messages.push({ agent: "user", type: "text", text: value.label || value.text });
   state.botTyping = true;
 
-  // Repeatable parameters, so they are sent as pairs. The topic and choices are held in page memory only.
+  // Repeatable parameters, so they are sent as pairs. The topic and choices are held in page memory (carried across an update reload only, D-037).
   const params = [["search", value.text]];
   const topic = value.topic === undefined ? state.topic : value.topic;
   if (topic) params.push(["topic", topic.name], ["topic_type", topic.type]);
