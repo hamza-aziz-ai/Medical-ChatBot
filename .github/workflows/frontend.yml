@@ -4,6 +4,7 @@ on:
   pull_request:
     paths: &frontend-paths
       - "frontend/**"
+      - "hosting/cloudflare/**"
       - ".github/workflows/frontend.yml"
   push:
     branches: [main]
