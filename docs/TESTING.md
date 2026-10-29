@@ -16,7 +16,7 @@ What to run before a change counts as done, and what a pass looks like. Paste th
 | Workflows (also in CI: `workflows.yml`)                                 | `docker run --rm -v "$PWD:/repo:ro" -w /repo rhysd/actionlint:1.7.12`                                                                                                                                        | No output, exit 0                                                                                                                                                                                                                        |
 | Updater rollback drill (by hand, Docker and network)                    | `python scripts/rollback_drill.py`                                                                                                                                                                           | `PASS failure after the change` and `PASS process death after the change`, then the drill project removed; about 3 minutes                                                                                                               |
 
-CI runs the matching checks automatically by path (see the README, CI/CD and MLOps) and `automerge.yml` merges only when all of them pass.
+CI runs the matching checks automatically by path (see [guides/CI-CD.md](guides/CI-CD.md)) and `automerge.yml` merges only when all of them pass.
 
 ## Manual customer path
 
