@@ -6,10 +6,11 @@
 
 **Design.** See D-035.
 
-**Status.** Built. The 404 page ships with the next release. The maintenance page needs the owner's one-time Worker setup in Cloudflare.
+**Status.** Live since v1.1.22 (2026-10-29): the 404 page from the web image, the maintenance page from the Worker the owner installed in Cloudflare.
 
-**Open questions.** Whether a Worker's request to its own zone gets status 530 while the tunnel is closed (A-25), seen at the first update after the Worker is installed.
+**Open questions.** None.
 
 ## Log
 
 - 2026-10-29: Built. nginx with the new configuration: `/`, `/index.html` and assets 200; `/no-such-page`, `/404.html`, `/assets/` and a missing asset 404 with the page; the security headers unchanged. Worker tests: origin answers (200, 404, 503) pass through; 502, 504, 522, 530 and a failed fetch give the maintenance page with 503 and `no-store`.
+- 2026-10-29: Live. The owner installed the Worker (logs, traces and `workers.dev` off; `/api/*` routed to no Worker, checked with a marked test question that did not reach its events). During the v1.1.22 update the public site answered 503 with the maintenance page from 15:39:35 to 15:40:09 IST, then served the new 404 page (A-25 verified). Setting it up, one test question was logged before the `/api/*` route existed; the guide now orders the steps so that cannot happen.
