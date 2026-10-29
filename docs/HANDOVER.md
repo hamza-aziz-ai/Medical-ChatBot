@@ -13,8 +13,10 @@ Done:
 Broken or risky:
 - Starting the updater right after a release can do nothing: `gh release view` also finds a draft, and GitHub's `releases/latest` lagged about a minute after publishing. Wait until the release is no longer a draft and the VM's `curl .../releases/latest` shows the new tag.
 
+- A-26 verified by the owner: an open page reloaded into v1.1.25 by itself with its conversation, and a final 40 s tunnel stop worked as expected.
+
 Next:
-- Confirm that an open page reloaded into v1.1.25 by itself with its conversation (A-26).
+- Owner items still open: revoke the unused Ollama key `medbot-vm` and remove `OLLAMA_API_KEY` from the VM's `.env`; the Docker Hub token's expiry; the dataset's rights (A-01).
 
 Do not touch: as below.
 
