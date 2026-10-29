@@ -197,6 +197,32 @@ h3 {
   text-align: center;
 }
 
+/* The pulsing cross of the full maintenance page (frontend/public/error.css), so both look the same. */
+.maintenance-mark {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 18px;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  animation: maintenance-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes maintenance-pulse {
+  50% {
+    transform: scale(1.08);
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maintenance-mark {
+    animation: none;
+  }
+}
+
 .maintenance-card h2 {
   margin: 0 0 8px;
   font-size: 1.3rem;
@@ -214,7 +240,7 @@ h3 {
   text-transform: uppercase;
 }
 
-.maintenance-card .hint {
+.maintenance-hint {
   margin: 0;
   color: var(--muted);
   font-size: 0.85rem;

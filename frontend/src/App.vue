@@ -67,12 +67,25 @@
         class="maintenance-card"
         role="status"
       >
+        <span
+          class="maintenance-mark"
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="34"
+            height="34"
+          ><path
+            d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"
+            fill="currentColor"
+          /></svg>
+        </span>
         <p class="eyebrow">
           Updating
         </p>
         <h2>We'll be right back</h2>
         <p>Mr. Healthcare is installing an update. It usually takes about a minute.</p>
-        <p class="hint">
+        <p class="maintenance-hint">
           Your conversation is kept. This page continues by itself.
         </p>
       </div>
