@@ -120,7 +120,7 @@ curl -s https://medical.hamzaaziz.dev/api/health
 curl -sI 'https://medical.hamzaaziz.dev/api/?search=what+causes+asthma' | grep -i 'cache-control\|cf-cache-status'
 ```
 
-Expect a 200 page, `{"status": "ok"}`, `Cache-Control: no-store`, and `cf-cache-status: DYNAMIC` or `BYPASS`. If a public check fails, fix the Cloudflare side; it is never a reason to re-import the graph.
+Expect a 200 page with `Cache-Control: no-cache` (D-037), `{"status": "ok"}`, `Cache-Control: no-store` on the answer, and `cf-cache-status: DYNAMIC` or `BYPASS`. If a public check fails, fix the Cloudflare side; it is never a reason to re-import the graph.
 
 ## Running it
 

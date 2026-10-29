@@ -498,3 +498,16 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** Only the open page can notice a change it did not request, and polling its own `index.html` needs no build step or new file (option 3). A reload is the only way to run new code, and the owner wants it automatic and lossless, which rules out option 2. Option 4 is a caching life cycle far beyond one page. `window.name` survives into later navigations of the tab, including to other sites.
 - **Trade-off:** A new privacy exposure: from the write to the restore (longer if the reload lands on the maintenance page) the conversation sits in the tab's session storage and may reach disk through the browser's session restore; deleting it is not secure erasure (THREAT.md). Each visible tab costs up to 2,880 Worker requests a day against the free plan's 100,000. Background tabs that the browser suspends notice only when shown again. Locally there is no Worker, so a stopped stack is simply unreachable and no maintenance view shows.
 - **Revisit if:** Worker requests approach the free limit, the hand-off is judged too sensitive (then option 2), or a real update shows the page missing the window.
+
+## D-038: A CHANGELOG.md kept by hand, from the releases
+
+- **Date:** 2026-10-30; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner asked for `CHANGELOG.md` to be kept up to date with the other Markdown files
+- **Context:** The repository had no changelog. Every release has GitHub-generated notes listing the pull requests merged since the one before, but they live only on GitHub.
+- **Options:**
+  1. `CHANGELOG.md` built once from the release notes, then kept by hand: each pull request adds a line under `## Unreleased`, and the first pull request after a release moves those lines under that version
+  2. `release.yml` writes the changelog after each release
+  3. link to the GitHub releases page and keep no file
+- **Chosen:** 1. The history from v1.0.0 to the latest release was generated from the release notes; dates are in IST. The rule is in AGENTS.md.
+- **Why:** Option 2 needs a workflow to push to `main`, which the delivery rules forbid (only `automerge.yml` merges pull requests), or to open its own pull request after every release. Option 3 leaves nothing in the repository, which the owner asked for.
+- **Trade-off:** One more line per pull request, and an entry stays under Unreleased until the next pull request moves it; a missed line is caught by comparing with the release notes.
+- **Revisit if:** entries drift from the release notes, or releases become frequent enough for option 2 to pay off.

@@ -24,6 +24,7 @@ This project follows the "Defend What You Ship: AI Field Guide v2". The `docs/` 
 
 ## Delivery
 
+- Add one line for each pull request under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md). The first pull request after a release moves the released lines under a heading for that version, with links from its GitHub release notes (D-038).
 - Work on a branch, open a pull request into `main`, and let `.github/workflows/automerge.yml` merge it once every check passes. Do not merge by hand and do not request reviews.
 - Never push to `main` directly, force-push, rewrite published history, or push release tags by hand unless the owner asks. Release tags are created only by `release.yml` after every gate passes; `autorelease.yml` decides when (D-019).
 

@@ -7,9 +7,14 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 Done:
 - An open page follows updates by itself (D-037, FEATURE-018): it shows a maintenance view while the site is closed for an update and reloads into a new release, keeping the conversation, topic and draft through a one-shot hand-off in the tab's sessionStorage. nginx sends `no-cache` for the page.
 - GitHub link in the top corner (FEATURE-017), live since v1.1.23.
+- Deployed v1.1.24 and v1.1.25 by hand at the owner's request (`sudo systemctl start medical-chatbot-update.service` on the VM). With the tunnel stopped for 35 s the owner's open page showed the maintenance view and kept its conversation; v1.1.25 centred its last line and added the full page's pulsing cross.
+- `CHANGELOG.md` (D-038), generated from the 27 release notes; each pull request now adds a line under Unreleased (AGENTS.md). The docs and both artifacts describe D-037 and D-038.
+
+Broken or risky:
+- Starting the updater right after a release can do nothing: `gh release view` also finds a draft, and GitHub's `releases/latest` lagged about a minute after publishing. Wait until the release is no longer a draft and the VM's `curl .../releases/latest` shows the new tag.
 
 Next:
-- At the next release, watch an open page on the public site through the update (A-26).
+- Confirm that an open page reloaded into v1.1.25 by itself with its conversation (A-26).
 
 Do not touch: as below.
 

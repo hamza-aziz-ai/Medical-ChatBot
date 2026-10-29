@@ -112,7 +112,7 @@ flowchart TB
 2. **Visitor to server.** The visitor reaches Cloudflare over HTTPS. Cloudflare forwards through a tunnel that the VM opens outward, so the VM has no application port open to the internet (D-032).
 3. **On the VM.** nginx serves the page and passes `/api/` to the Flask API, which reads the graph on Neo4j AuraDB and, for understanding only, asks the language model through the stack's own Ollama (D-033).
 4. **Updates.** Every 15 minutes the updater checks for a newer release. If there is one, it closes the tunnel, rebuilds the graph with the new image, checks that the site answers, and reopens; on failure it rolls back to the previous release.
-5. **While closed or down.** A Cloudflare Worker shows the site's own "being updated" page instead of Cloudflare's error; questions (`/api/*`) never pass through it (D-035).
+5. **While closed or down.** A Cloudflare Worker shows the site's own "being updated" page instead of Cloudflare's error; questions (`/api/*`) never pass through it (D-035). A page already open shows its own maintenance view, then reloads into the new release and keeps the conversation (D-037).
 
 The same images also run on one machine with `compose.yaml` and a local Neo4j container (see [Docker](docs/guides/DOCKER.md)). Setup of the hosted site: [hosting/oracle/README.md](hosting/oracle/README.md).
 
@@ -135,11 +135,12 @@ Open http://127.0.0.1:8080. The language model is on by default and needs a sign
 |--------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
 | [Local setup](docs/guides/SETUP.md)                          | Python and Node setup, configuration variables, running the API and the page, tests, graph import rules, data provenance, logging |
 | [Docker](docs/guides/DOCKER.md)                              | The Compose stack, backups and rollback, automatic updates on a Windows machine, the smoke test                        |
-| [Runtime behavior](docs/guides/BEHAVIOR.md)                  | What the API accepts and returns, abstentions, follow-ups, the language-model switch, answer formatting and rewordings  |
+| [Runtime behavior](docs/guides/BEHAVIOR.md)                  | What the API accepts and returns, abstentions, follow-ups, the language-model switch, answer formatting and rewordings, the page during updates |
 | [CI/CD and MLOps](docs/guides/CI-CD.md)                      | The workflows, automatic merging, the MLOps gate, releases, Docker Hub and hosting                                     |
 | [Offline scripts and experiments](docs/guides/OFFLINE.md)    | The language-model evaluation and rewording scripts, the historical training notebooks                                 |
 | [Hosting](hosting/oracle/README.md)                          | Setting up the public site on Oracle Cloud behind Cloudflare                                                           |
 | [Architecture](docs/ARCHITECTURE.md), [Flow](docs/FLOW.md)   | Modules and what they own, trust boundaries, and the functions each request passes through                             |
+| [Changelog](CHANGELOG.md)                                    | Every release and the pull requests it contains, newest first                                                          |
 
 The `docs/` folder follows the "Defend What You Ship" field guide. Start with [docs/HANDOVER.md](docs/HANDOVER.md) (where things stand) and [docs/CONSTRAINTS.md](docs/CONSTRAINTS.md) (rules for changes). It also holds the decision log, rejected alternatives, architecture, request flow, threat and failure maps, data structures, test checklist, rollback plan, open assumptions, dependency and secrets log, and a one-page defense brief.
 
