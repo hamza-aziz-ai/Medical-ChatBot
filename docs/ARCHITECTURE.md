@@ -6,6 +6,101 @@ One-page map. Deeper detail: the README and its diagrams, the guides in [guides/
 
 A rule-based medical question-answering chatbot. It finds disease and symptom names in a question, works out what is being asked from keywords, and answers from a Neo4j knowledge graph built from `api/data/medical.csv`. If it cannot answer from the graph, it says so instead of guessing. There is no machine-learning model at runtime.
 
+## Solution architecture
+
+The whole solution: how a change is checked and released, where the released images and files live, and how they run on the public site and, optionally, on one machine. The README has a simpler version.
+
+```mermaid
+flowchart TB
+  classDef actor fill:#e3f2f1,stroke:#0b6e6e,stroke-width:2px,color:#0f1b2d
+  classDef pipe fill:#eef2ff,stroke:#4f46e5,color:#1e1b4b
+  classDef ctr fill:#ffffff,stroke:#0b6e6e,color:#0f1b2d
+  classDef store fill:#f4f6f9,stroke:#536175,color:#0f1b2d
+  classDef ext fill:#fff4e5,stroke:#c77700,color:#4a2a00
+
+  DEV(["`**Owner or coding agent**`"]):::actor
+  V(["`**Visitor's browser**`"]):::actor
+
+  subgraph GH["`**GitHub CI/CD**`"]
+    direction LR
+    PR["`**Pull request** from a branch`"]:::pipe
+    CHK["`**Path-filtered checks**: backend.yml pytest, frontend.yml lint + tests + build, mlops.yml data gates + live Neo4j 5 and 4.4 + import and evaluation, docker.yml images + Compose smoke, workflows.yml actionlint`"]:::pipe
+    AM["`**automerge.yml**: merges into main when every check on the latest commit passed`"]:::pipe
+    AR["`**autorelease.yml**: oldest unreleased merge that ships files, next SemVer (D-019, D-034)`"]:::pipe
+    RL["`**release.yml**: re-runs the gates on that commit, builds and pushes images with SBOM and provenance, smoke-tests the digests, then tags and publishes`"]:::pipe
+    MR["`**mirror.yml**: copies by digest, never rebuilds (D-030)`"]:::pipe
+    PR --> CHK --> AM --> AR --> RL --> MR
+  end
+
+  subgraph REG["`**Artifacts**`"]
+    GHCR[("`**GHCR**: api and web images, version tags never overwritten`")]:::store
+    GREL[("`**GitHub Release**: compose files, release.env digests, frontend build, entities.json, evaluation report`")]:::store
+    HUB[("`**Docker Hub**: byte-for-byte copy`")]:::store
+  end
+
+  DEV --> PR
+  RL --> GHCR
+  RL --> GREL
+  MR --> HUB
+
+  subgraph CF["`**Cloudflare**`"]
+    EDGE["`**Edge**: TLS ends, HSTS, sets CF-Connecting-IP, /api/* never cached`"]:::ext
+    WK["`**Maintenance Worker** on page routes: the site's own 503 page while the origin is unreachable; /api/* routed past it; logs off (D-035)`"]:::ext
+  end
+
+  V -->|"`HTTPS`"| EDGE
+  EDGE -.->|"`origin unreachable`"| WK
+
+  subgraph VM["`**Oracle Cloud VM**: public site`"]
+    CFD["`**cloudflared** 10.213.0.2: dials out, keeps no logs`"]:::ctr
+    WEB["`**web** 10.213.0.3: nginx serves the page and 404.html; trusts CF-Connecting-IP only from 10.213.0.2; 10 r/s per visitor, 16 API requests in flight; no logs`"]:::ctr
+    API["`**api**: gunicorn, 1 worker, Flask; 300 MB`"]:::ctr
+    OLL["`**ollama**: signed in, no published port, 6 calls a minute in total (D-033)`"]:::ctr
+    IMP["`**importer** (profile init): validates the CSV, replaces the graph`"]:::ctr
+    UPD["`**Updater**: systemd timer every 15 min, update_stack.py hosted mode`"]:::ctr
+    LOGV[("`api-logs volume`")]:::store
+    IDV[("`ollama-identity volume`")]:::store
+    CFD --> WEB
+    WEB -->|"`/api/`"| API
+    API -->|"`question + candidate names, 2 s`"| OLL
+    API --> LOGV
+    OLL --- IDV
+  end
+
+  EDGE ==>|"`outbound tunnel`"| CFD
+
+  subgraph SVC["`**Managed services**`"]
+    OCL["`**Ollama cloud**: gpt-oss:120b`"]:::ext
+    AURA[("`**Neo4j AuraDB Free**: the knowledge graph`")]:::ext
+  end
+
+  API -->|"`neo4j+s, read-only Cypher, 5 s`"| AURA
+  IMP -->|"`one write transaction`"| AURA
+  OLL -->|"`HTTPS`"| OCL
+  UPD -.->|"`1 newer release?`"| GREL
+  UPD -.->|"`2 pull by digest`"| GHCR
+  UPD -.->|"`3 close tunnel, rebuild graph, check, reopen; roll back on failure`"| IMP
+
+  subgraph LOCAL["`**Local machine**: optional`"]
+    LWEB["`**web**: nginx on 127.0.0.1:8080`"]:::ctr
+    LAPI["`**api**: gunicorn + Flask`"]:::ctr
+    LIMP["`**importer**`"]:::ctr
+    LN4[("`**neo4j 5.26** container, neo4j-data volume`")]:::store
+    LUPD["`**Windows scheduled task**: update_stack.py, backs up neo4j-data first (D-021)`"]:::ctr
+    HOLL["`**Ollama** on the host`"]:::ext
+    LWEB --> LAPI --> LN4
+    LIMP --> LN4
+    LAPI --> HOLL
+  end
+
+  LUPD -.->|"`pull release`"| GHCR
+```
+
+- **Colours:** pale teal for actors, blue for CI/CD workflows, white for containers and processes, grey for stored artifacts and volumes, orange for services run by others (Cloudflare, Neo4j AuraDB, Ollama's cloud).
+- **Lines:** solid lines carry requests and data, the thick line is the Cloudflare tunnel, dotted lines are the update and fallback paths, numbered in the order the updater runs them.
+- **Trust boundaries:** the internet ends at Cloudflare; the VM accepts only the tunnel that cloudflared opens outward; nginx believes `CF-Connecting-IP` only from cloudflared's fixed address; questions leave the VM only to the model, and only the graph's facts reach a visitor. Details in [THREAT.md](THREAT.md).
+- **Decisions:** delivery D-019, D-030, D-034; hosting D-032, D-033; the maintenance page D-035; the local updater D-021 ([DECISIONS.md](DECISIONS.md)).
+
 ## Modules and what they own
 
 | Module                                                          | Owns                                                                                                                                                                 |

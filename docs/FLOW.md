@@ -2,6 +2,114 @@
 
 How execution travels. Update this when a path changes, and mark the functions a change touches.
 
+## Software & System Design
+
+Every path one question can take through the code, function by function, and the offline import that builds what the answers read. The text sections below give the same paths with more detail.
+
+```mermaid
+flowchart TB
+  classDef ui fill:#e3f2f1,stroke:#0b6e6e,color:#0f1b2d
+  classDef mod fill:#ffffff,stroke:#0b6e6e,color:#0f1b2d
+  classDef dec fill:#eef2ff,stroke:#4f46e5,color:#1e1b4b
+  classDef store fill:#f4f6f9,stroke:#536175,color:#0f1b2d
+  classDef ext fill:#fff4e5,stroke:#c77700,color:#4a2a00
+  classDef ok fill:#e8f5e9,stroke:#2e7d32,color:#1b3d1f
+  classDef stop fill:#fdecea,stroke:#c62828,color:#4a1010
+
+  subgraph FE["`**Browser**: frontend/src`"]
+    direction LR
+    CP["`**ChatPanel.vue** submit(), ask(chip)`"]:::ui
+    APP["`**App.vue** messageSendHandler(): one request at a time, conversation id`"]:::ui
+    CA["`**chatApi.mjs** sendMessage(): GET ?search=&topic=&topic_type=&selection=, 10 s timeout`"]:::ui
+    CP --> APP --> CA
+  end
+
+  NG["`**docker/nginx.conf** location /api/: 10 r/s per client, strips /api, logs nothing`"]:::mod
+
+  subgraph API["`**api/**: Flask`"]
+    MAIN["`**main.py** home(): GET only, 1 to 500 characters, topic_from(), selections_from()`"]:::mod
+
+    subgraph RESP["`**ChatBotGraph.respond()**`"]
+      CM["`**QuestionClassifier.check_medical()** Aho-Corasick name spans, whole words, sourced aliases`"]:::mod
+      D1{"`alias with several meanings?`"}:::dec
+      D2{"`any name found?`"}:::dec
+      FU["`**is_follow_up()** it, they, and ...: reuse the valid topic`"]:::mod
+      CL["`**close_matches()** difflib, cutoff 0.8`"]:::mod
+      CW["`**classify_with()** keyword intents, names masked (D-018)`"]:::mod
+      D3{"`unsupported intent or department only?`"}:::dec
+      D4{"`name is both disease and symptom?`"}:::dec
+      D5{"`model on, budget and breaker allow?`"}:::dec
+      UR["`**understanding.route()** frozen prompt, candidate ids only, validate() (D-027)`"]:::mod
+      QP["`**question_parser.parser_main()** sql_transfer(): fixed template + name, limit 20`"]:::mod
+      SS["`**AnswerSearcher.search_structured()** execute_query, READ routing, 5 s timeout`"]:::mod
+      D6{"`any rows?`"}:::dec
+      FMT["`**text_format.sections()** headings and numbered points, every letter kept (D-028); **add_rewording()** approved text only (D-029)`"]:::mod
+      SUG["`**suggestions()** chips from the intents table, no query`"]:::mod
+    end
+  end
+
+  ENT[("`**dictionary/** entities.json, aliases.json, rewordings.json; loaded at start`")]:::store
+  OLL["`**Ollama** /api/chat, 2 s total`"]:::ext
+  NEO[("`**Neo4j** knowledge graph`")]:::store
+
+  ANS(["`**200 answer** {status, message, answers, topic, interpretation, options}`"]):::ok
+  CLR(["`**200 clarify**: choices that re-ask the question`"]):::ok
+  ABS(["`**200 abstain** with the reason: no_entity, unsupported, no_facts`"]):::stop
+  ERR(["`**400** bad input, **503** graph down or timeout, **500** sanitized`"]):::stop
+
+  subgraph IMPORT["`**Offline import**: build_medicalgraph.py`"]
+    direction LR
+    CSV[("`medical.csv`")]:::store
+    LD["`load_dataset(): columns, quarantine, conflicts, hash`"]:::mod
+    GD["`graph_data(): nodes, edges, no department cycles`"]:::mod
+    SE["`stage_entities()`"]:::mod
+    EC{"`existing_conflicts()?`"}:::dec
+    WG["`create_constraints(), write_graph(): one transaction, 120 s`"]:::mod
+    PE["`publish_entities(): atomic replace`"]:::mod
+    CSV --> LD --> GD --> SE --> EC
+    EC -->|"`none`"| WG --> PE
+  end
+
+  CA -->|"`HTTP GET`"| NG --> MAIN
+  MAIN -->|"`invalid`"| ERR
+  MAIN --> CM --> D1
+  D1 -->|"`yes`"| CLR
+  D1 -->|"`no`"| D2
+  D2 -->|"`no`"| FU
+  FU -->|"`not a follow-up`"| CL
+  CL -->|"`close names`"| CLR
+  CL -->|"`none`"| ABS
+  FU -->|"`topic reused`"| CW
+  D2 -->|"`yes`"| CW --> D3
+  D3 -->|"`yes`"| ABS
+  D3 -->|"`no`"| D4
+  D4 -->|"`yes, not chosen`"| CLR
+  D4 -->|"`no`"| D5
+  D5 -->|"`yes`"| UR
+  UR -->|"`valid pairs`"| SS
+  UR -->|"`valid clarification`"| CLR
+  UR -->|"`valid refusal`"| ABS
+  UR -->|"`failure, timeout, invalid`"| QP
+  D5 -->|"`no`"| QP --> SS --> D6
+  D6 -->|"`no`"| ABS
+  D6 -->|"`yes`"| FMT --> SUG --> ANS
+  SS -->|"`unavailable or timeout`"| ERR
+
+  CM -.-> ENT
+  SUG -.-> ENT
+  UR <-.-> OLL
+  SS <--> NEO
+  WG --> NEO
+  PE --> ENT
+  REPLY["`**main.py** jsonify(): JSON reply, Cache-Control: no-store`"]:::mod
+  ANS & CLR & ABS & ERR --> REPLY -->|"`HTTP response`"| APP
+```
+
+- **Colours:** pale teal for the browser code, white for functions, blue diamonds for decisions, grey for data, orange for the language model, green and red rounded boxes for the replies.
+- **Order of checks:** an ambiguous alias, then no name (follow-up or close matches), then an unsupported intent, then a name that is both disease and symptom, then the model, then the rules. The first check that decides ends the request.
+- **The model never answers:** a valid model reply only picks (intent, candidate) pairs, which run the same fixed queries as the rules; a refusal or clarification is final; anything else falls back to the rules (D-027).
+- **Errors:** the graph unavailable or a query timeout gives 503, anything else a sanitized 500; only the exception type is logged.
+
 ## A question (runtime)
 
 ```

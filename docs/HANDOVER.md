@@ -6,7 +6,8 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 
 Done:
 - The site's own 404 and maintenance pages (D-035, FEATURE-016): unknown paths get a real 404 with `frontend/public/404.html`; `hosting/cloudflare/maintenance.js` is a Cloudflare Worker that shows a "being updated" page (503, reloads every 30 s) while the tunnel is closed or the VM is down.
-- README made short (D-036): a System Diagram and a Solution Architecture diagram (Mermaid), a quick start and a guide table; the details moved unchanged into `docs/guides/` (SETUP, DOCKER, BEHAVIOR, CI-CD, OFFLINE).
+- README made short (D-036): a System Design and a Solution Architecture diagram (Mermaid), a quick start and a guide table; the details moved unchanged into `docs/guides/` (SETUP, DOCKER, BEHAVIOR, CI-CD, OFFLINE).
+- Detailed diagrams: the full Solution Architecture in `docs/ARCHITECTURE.md` (CI/CD, artifacts, Cloudflare, the VM's containers, managed services, the optional local stack) and the Software & System Design in `docs/FLOW.md` (every branch of one question, function by function, and the offline import). Keep them current with the code, like the rest of both files.
 - Answered the HalalLens session about the VM (it does not fit HalalLens; a separate A1.Flex VM recommended) and the Ollama setup; the portfolio card now says the model "never writes an answer at question time".
 
 Next:
