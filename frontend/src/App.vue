@@ -72,7 +72,7 @@
         </p>
         <h2>We'll be right back</h2>
         <p>Mr. Healthcare is installing an update. It usually takes about a minute.</p>
-        <p class="hint">
+        <p class="maintenance-hint">
           Your conversation is kept. This page continues by itself.
         </p>
       </div>
