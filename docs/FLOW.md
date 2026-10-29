@@ -97,7 +97,7 @@ browser --HTTPS--> Cloudflare edge (TLS ends; sets CF-Connecting-IP; /api/* bypa
 ```
 medical-chatbot-update.timer (every 15 min) -> update_stack.py, hosted mode
   -> newer release with an unchanged compose.hosted.yaml -> site healthy? else wait
-  -> pull -> stop cloudflared (public access closed) -> stop web, api -> importer rebuilds the Aura graph
+  -> pull -> stop cloudflared (public access closed; visitors see the maintenance page, D-035) -> stop web, api -> importer rebuilds the Aura graph
   -> up api, web (loopback) -> page, a question, /api/health ok -> up cloudflared -> record
   -> any failure: rebuild with the previous release's image -> checks -> reopen; if that fails, stay closed
 ```
