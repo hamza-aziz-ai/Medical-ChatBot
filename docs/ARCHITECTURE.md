@@ -97,13 +97,13 @@ flowchart LR
 - **Lines:** solid lines carry requests and data, the thick line is the Cloudflare tunnel, dotted lines are the update and fallback paths.
 - **Reading order:** left to right, a change goes from the owner through GitHub's checks and release to the artifacts; the updaters on the VM and on a local machine pull those artifacts. A visitor enters through Cloudflare; the VM reaches out only to the managed services.
 - **Trust boundaries:** the internet ends at Cloudflare; the VM accepts only the tunnel that cloudflared opens outward; nginx believes `CF-Connecting-IP` only from cloudflared's fixed address; questions leave the VM only to the model, and only the graph's facts reach a visitor. Details in [THREAT.md](THREAT.md).
-- **Decisions:** delivery D-019, D-030, D-034; hosting D-032, D-033; the maintenance page D-035; the local updater D-021 ([DECISIONS.md](DECISIONS.md)).
+- **Decisions:** delivery D-019, D-030, D-034; hosting D-032, D-033; the maintenance page D-035; an open page during updates D-037; the local updater D-021 ([DECISIONS.md](DECISIONS.md)).
 
 ## Modules and what they own
 
 | Module                                                          | Owns                                                                                                                                                                 |
 |-----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `frontend/` (Vue 3, Vite)                                       | The page: chat panel and About panel. Talks to the API through `src/chatApi.mjs`.                                                                                    |
+| `frontend/` (Vue 3, Vite)                                       | The page: chat panel and About panel. Talks to the API through `src/chatApi.mjs`; follows updates through `src/liveUpdate.mjs` (D-037).                                                                                    |
 | `api/main.py`                                                   | The HTTP boundary: CORS, input limits, JSON errors, request logging without questions. No authentication (D-013).                                                    |
 | `api/chatbot_graph_logic.py`                                    | One question in, one answer or abstention out.                                                                                                                       |
 | `api/question_classifier.py`                                    | Entity matching (Aho-Corasick over `api/dictionary/entities.json`) and keyword intents.                                                                              |

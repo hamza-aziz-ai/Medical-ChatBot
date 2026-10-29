@@ -37,7 +37,7 @@ To undo a wrong Docker Hub description, revert the change to `docs/dockerhub/`; 
 
 On the VM, `hosted` is the Compose command from step 3 of [hosting/oracle/README.md](../hosting/oracle/README.md). `hosted stop cloudflared` closes public access at once. If a recovery failed, the updater kept public access closed and left `deploy/journal.json` with `recovery_failed`. Choose the release to run, then follow step 3 with that tag: download its hosted assets, run its importer, start `api web`, and check `/api/health` and a question on 127.0.0.1. Then run `hosted up -d cloudflared`, delete `deploy/journal.json` and enrol again with `python3 scripts/update_stack.py --enroll <tag> --hosted`. A wrong graph is fixed the same way: stop `cloudflared`, `web` and `api`, and run the importer of the release you trust.
 
-To remove the maintenance page (D-035), delete the Worker's two routes in the Cloudflare dashboard; the site is unchanged without them. The 404 page is part of the web image, so it rolls back with the release.
+To remove the maintenance page (D-035), delete the Worker's two routes in the Cloudflare dashboard; the site is unchanged without them. The 404 page is part of the web image, so it rolls back with the release. So do an open page's update checks and maintenance view (D-037), and the page's `no-cache` header in `docker/nginx.conf`; an older release simply stops checking.
 
 ## A release tag refused with HTTP 403 (BUG-004)
 
