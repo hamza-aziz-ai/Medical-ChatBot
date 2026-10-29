@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import worker, { PAGE } from "../../hosting/cloudflare/maintenance.js";
+import worker, { PAGE, STYLE } from "../../hosting/cloudflare/maintenance.js";
 
 async function visit(origin, method = "GET") {
   globalThis.fetch = origin;
@@ -33,4 +34,10 @@ test("shows the maintenance page, uncached, when the origin is unreachable", asy
 
 test("the maintenance page names no vendor or model", () => {
   assert.doesNotMatch(PAGE, /cloudflare|oracle|ollama|gpt|neo4j|docker/i);
+});
+
+test("the maintenance page uses the 404 page's styles, unchanged", () => {
+  const css = readFileSync(new URL("../public/error.css", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  assert.equal(STYLE, css.slice(css.indexOf("*/\n") + 3));
+  assert.ok(PAGE.includes(STYLE));
 });
