@@ -176,6 +176,50 @@ h3 {
   outline-offset: 2px;
 }
 
+/* Maintenance (D-037): over the page, which stays mounted underneath so the conversation is kept. */
+.maintenance {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(12 19 29 / 72%);
+}
+
+.maintenance-card {
+  max-width: 420px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.maintenance-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+}
+
+.maintenance-card p {
+  margin: 0 0 8px;
+}
+
+.maintenance-card .eyebrow {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.maintenance-card .hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 /* Layout */
 .workspace {
   flex: 1;

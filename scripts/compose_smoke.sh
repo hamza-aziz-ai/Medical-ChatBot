@@ -49,7 +49,7 @@ grep -Eq '"status": *"abstain"' <<<"$(ask how long does asthma last "$SENTINEL")
 # 60 parallel requests exceed nginx's 10/s rate with a burst of 20, so some must get 429.
 codes=$(seq 1 60 | xargs -P 30 -I{} curl -s -o /dev/null -w '%{http_code}\n' "$BASE/api/?search=what+causes+asthma")
 grep -q '^429$' <<<"$codes" || fail "rate limiting did not engage"
-# D-029: answers, health and nginx's own 429 are no-store; the static page keeps only its security headers.
+# D-029: answers, health and nginx's own 429 are no-store.
 header() { curl -s -D - -o /dev/null "$1" | tr -d '\r' | awk -v h="$2" 'tolower($0) ~ "^" tolower(h) ":" && !n++'; }
 limited=$(seq 1 60 | xargs -P 30 -I{} curl -s -D - -o /dev/null "$BASE/api/?search=what+causes+asthma" | tr -d '\r' | awk '/^HTTP/{s=$2} tolower($0) ~ /^cache-control: no-store/ && s==429 {found=1} END{if (found) print "ok"}')
 [ "$limited" = ok ] || fail "a 429 from nginx is not no-store"
@@ -57,8 +57,14 @@ sleep 3
 [ "$(header "$BASE/api/?search=what+causes+asthma" Cache-Control)" = "Cache-Control: no-store" ] || fail "answer not no-store"
 [ "$(header "$BASE/api/health" Cache-Control)" = "Cache-Control: no-store" ] || fail "health not no-store"
 header "$BASE/api/health" X-Content-Type-Options | grep -qi nosniff || fail "security headers lost on /api/"
-[ -z "$(header "$BASE/" Cache-Control)" ] || fail "the static page's caching changed"
-header "$BASE/" Content-Security-Policy | grep -q "default-src 'self'" || fail "static page lost its CSP"
+# D-037: the page itself is revalidated on every load, at both of its addresses; hashed assets keep their caching.
+for page in / /index.html; do
+  [ "$(header "$BASE$page" Cache-Control)" = "Cache-Control: no-cache" ] || fail "$page is not no-cache"
+  header "$BASE$page" Content-Security-Policy | grep -q "default-src 'self'" || fail "$page lost its CSP"
+  header "$BASE$page" X-Content-Type-Options | grep -qi nosniff || fail "$page lost its security headers"
+done
+asset=$(curl -fs "$BASE/" | grep -o '/assets/[^"]*\.js' | head -n1)
+[ -n "$asset" ] && [ -z "$(header "$BASE$asset" Cache-Control)" ] || fail "the hashed assets' caching changed"
 sleep 3
 
 compose stop api >/dev/null

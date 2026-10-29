@@ -41,6 +41,7 @@
         <li>Disease and symptom names are found in your question as whole words.</li>
         <li>A language model reads what you are asking, choosing only among the names found; if it is unavailable or unsure, keywords decide.</li>
         <li>Questions are processed on this site's servers and may pass through external hosting, network and AI services; answers come only from the knowledge graph.</li>
+        <li>If the site is updated while this page is open, the page reloads itself and keeps your conversation in this browser tab's storage only until it has reloaded.</li>
         <li>The matching facts are looked up in the graph and returned as plain sentences.</li>
         <li>If the graph has no answer, or you ask about treatment duration, cure probability or who is susceptible, Mr. Healthcare says it cannot answer.</li>
       </ul>

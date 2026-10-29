@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test:helpers": "node --test tests/chatApi.test.mjs tests/maintenance.test.mjs",
+    "test:helpers": "node --test tests/chatApi.test.mjs tests/maintenance.test.mjs tests/liveUpdate.test.mjs",
     "test:components": "vitest run",
     "test": "yarn test:helpers && yarn test:components"
   },
