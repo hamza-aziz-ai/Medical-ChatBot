@@ -2,7 +2,19 @@
 
 Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md). Newest entry on top. Update it at the end of every session.
 
-## Latest session: 2026-10-27 (model: Claude Opus 5.5, claude-opus-5-5; council with Codex/ChatGPT)
+## Latest session: 2026-10-29 (model: Claude Opus 5.5, claude-opus-5-5)
+
+Done:
+- The site's own 404 and maintenance pages (D-035, FEATURE-016): unknown paths get a real 404 with `frontend/public/404.html`; `hosting/cloudflare/maintenance.js` is a Cloudflare Worker that shows a "being updated" page (503, reloads every 30 s) while the tunnel is closed or the VM is down.
+- Answered the HalalLens session about the VM (it does not fit HalalLens; a separate A1.Flex VM recommended) and the Ollama setup; the portfolio card now says the model "never writes an answer at question time".
+
+Next:
+- Owner: install the Worker once (hosting/oracle/README.md, step 5.4) and watch the next update show the page (A-25).
+- Owner items still open: revoke the unused Ollama key `medbot-vm` and remove `OLLAMA_API_KEY` from the VM's `.env`; the Docker Hub token's expiry; the dataset's rights (A-01).
+
+Do not touch: as below.
+
+## Session: 2026-10-27 (model: Claude Opus 5.5, claude-opus-5-5; council with Codex/ChatGPT)
 
 Done:
 - BUG-004 fixed (D-034): a release waits for main's workflow files, releasing the first matching commit with the pending merges it contains.

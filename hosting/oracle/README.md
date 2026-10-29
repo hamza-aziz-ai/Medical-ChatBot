@@ -104,6 +104,7 @@ Set the edge policies first:
 1. **SSL/TLS, Edge Certificates:** turn on Always Use HTTPS, and enable HSTS (6 months; leave "include subdomains" and preload off unless every subdomain of `hamzaaziz.dev` is HTTPS-only).
 2. **Caching, Cache Rules:** create a rule for hostname `medical.hamzaaziz.dev` and URI path starting with `/api/` that bypasses the cache. The API already sends `Cache-Control: no-store`; the rule keeps any other zone setting from overriding it.
 3. **Optional, Security, WAF, Rate limiting rules:** the free plan allows one rule, for example blocking a visitor for 10 seconds after 100 requests to `/api/` within 10 seconds.
+4. **Maintenance page (D-035).** In Workers & Pages, create a Worker named `medical-chatbot-maintenance` from the Hello World template, replace its code with [hosting/cloudflare/maintenance.js](../cloudflare/maintenance.js) and deploy it. In its settings, turn Observability (Workers Logs) off. Under the zone's Workers Routes, add the route `medical.hamzaaziz.dev/*` for that Worker with the failure mode "Fail open", and the route `medical.hamzaaziz.dev/api/*` with the Worker "None", so questions never pass through it. While an update has the tunnel closed, or the VM is down, visitors then see the site's own "being updated" page (503, reloading every 30 s) instead of Cloudflare's error page. To remove it, delete the two routes.
 
 Then open:
 
