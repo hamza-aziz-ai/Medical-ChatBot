@@ -8,12 +8,13 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <title>Mr. Healthcare</title>
+    <title>Mr. Healthcare - The Medical ChatBot</title>
+    <link rel="canonical" href="https://medical.hamzaaziz.dev/" />
     <meta name="description" content="Ask basic questions about diseases and their symptoms. Every answer comes from a medical knowledge graph. Not medical advice." />
     <!-- Link previews in chat apps and social sites; they need absolute URLs, so these name the public site (D-032). -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Mr. Healthcare" />
-    <meta property="og:title" content="Mr. Healthcare" />
+    <meta property="og:title" content="Mr. Healthcare - The Medical ChatBot" />
     <meta property="og:description" content="Ask basic questions about diseases and their symptoms. Every answer comes from a medical knowledge graph. Not medical advice." />
     <meta property="og:url" content="https://medical.hamzaaziz.dev/" />
     <meta property="og:image" content="https://medical.hamzaaziz.dev/og-image.png" />
@@ -21,6 +22,28 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="A teal speech bubble with a cross of connected nodes" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Mr. Healthcare - The Medical ChatBot" />
+    <!-- Search engines (D-041): one entity for the app, its authors by name and the portfolio's Person by url (no
+         sameAs: the portfolio is the author, not the app). A data block, never run, so the CSP is unchanged. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Mr. Healthcare - The Medical ChatBot",
+        "alternateName": "Mr. Healthcare",
+        "url": "https://medical.hamzaaziz.dev/",
+        "description": "Ask basic questions about diseases and their symptoms. Every answer comes from a medical knowledge graph; questions it cannot answer get an explicit answer that it does not know. Not medical advice.",
+        "applicationCategory": "HealthApplication",
+        "operatingSystem": "Any",
+        "isAccessibleForFree": true,
+        "inLanguage": "en",
+        "image": "https://medical.hamzaaziz.dev/og-image.png",
+        "author": [
+          { "@type": "Person", "name": "Hamza Aziz", "url": "https://hamzaaziz.dev/" },
+          { "@type": "Person", "name": "Mahak Agrawal" }
+        ]
+      }
+    </script>
   </head>
   <body>
     <noscript>Mr. Healthcare needs JavaScript to run.</noscript>

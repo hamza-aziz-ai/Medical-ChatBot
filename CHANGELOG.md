@@ -4,6 +4,7 @@ Every release of Mr. Healthcare, newest first, with the pull requests it contain
 
 ## Unreleased
 
+- Search engine basics: full name in the titles, canonical link, robots.txt, sitemap and structured data (D-041)
 - The hosted updater moves its own checkout to each release it deploys (D-040)
 - The updater removes old release images after each update, keeping the current and previous ones (D-039)
 - Record the open page's live updates verified on the public site (A-26)

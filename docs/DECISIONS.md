@@ -539,3 +539,17 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** The updater's code then comes from exactly the commit whose images were tested, evaluated and deployed, at the same moment. Option 2 runs every commit on `main` within 15 minutes, even ones whose release failed its gates. Option 3 means a new release asset, its checks and a bootstrap, much more than the change needs. Option 4 is what the owner asked to fix.
 - **Trade-off:** Whoever can publish a release now also chooses code that runs on the VM as `ubuntu`, outside any container (THREAT.md); releases come only from `release.yml` after every gate, from a commit merged through checks. A change to the updater reaches the VM only with the next release that ships images, not when it merges. The checkout is left on a detached commit, so a hand `git pull` there needs `git checkout main` first. An updater broken in a way that still compiles stops later updates until fixed by hand (ROLLBACK.md).
 - **Revisit if:** releases can come from anywhere but `release.yml`, or the updater needs to change between releases.
+
+## D-041: Search engine basics for the public site, one name everywhere
+
+- **Date:** 2026-10-30; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner asked for SEO of "Mr. Healthcare - The Medical ChatBot", worked out with the portfolio and resume sessions
+- **Context:** The page had a description and link-preview tags but a short title, no canonical URL, no `robots.txt` or sitemap, and no structured data; the portfolio card and the resume used other names or none.
+- **Options:**
+  1. static basics: the full name in the titles, a canonical link, `robots.txt`, a one-page `sitemap.xml`, and a `WebApplication` JSON-LD block naming the authors, the first with the portfolio's url
+  2. option 1 plus `sameAs` links to the portfolio, the resume and the repository
+  3. pre-render the chat or add content pages for search traffic
+  4. a `keywords` meta tag
+- **Chosen:** 1. The portfolio card takes the same name and links to the site (its session, with the owner's approval there).
+- **Why:** It is all static and served by the existing `location /`; the JSON-LD is a data block that is never run, so the page's `default-src 'self'` policy is unchanged. Option 2 is wrong markup: `sameAs` says "the same thing", and the portfolio is the author, not the app (the portfolio session's point); the author's url already ties the two Person records together. Option 3 would put medical text on the page outside the graph's answers and the D-027 rules. Option 4 is ignored by search engines.
+- **Trade-off:** The tags name the public site, so a local or Docker Hub stack serves a sitemap and canonical link pointing there, as the link-preview tags already do (D-032). No rich result is expected: Google shows them for software only with ratings and offers, which this has not.
+- **Revisit if:** the site moves domain or gains more than one page.

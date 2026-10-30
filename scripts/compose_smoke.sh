@@ -63,6 +63,10 @@ for page in / /index.html; do
   header "$BASE$page" Content-Security-Policy | grep -q "default-src 'self'" || fail "$page lost its CSP"
   header "$BASE$page" X-Content-Type-Options | grep -qi nosniff || fail "$page lost its security headers"
 done
+# D-041: search engines find the crawl rules, the sitemap and the page's structured data.
+curl -fs "$BASE/robots.txt" | grep -q '^Sitemap: https://medical.hamzaaziz.dev/sitemap.xml$' || fail "robots.txt"
+curl -fs "$BASE/sitemap.xml" | grep -q '<loc>https://medical.hamzaaziz.dev/</loc>' || fail "sitemap.xml"
+curl -fs "$BASE/" | grep -q '"@type": "WebApplication"' || fail "structured data"
 asset=$(curl -fs "$BASE/" | grep -o '/assets/[^"]*\.js' | head -n1)
 [ -n "$asset" ] && [ -z "$(header "$BASE$asset" Cache-Control)" ] || fail "the hashed assets' caching changed"
 sleep 3
