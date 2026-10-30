@@ -65,6 +65,8 @@ Verified by a drill on 2026-10-26 (`python scripts/rollback_drill.py`, a throwaw
 4. Start the previous release: set `API_IMAGE` and `WEB_IMAGE` from its `release.env` and run `docker compose -f deploy/releases/<tag>/compose.yaml --project-directory . up -d`.
 5. Check the page and one question, delete `deploy/journal.json`, and enable the task again.
 
+On the VM the updater runs from the commit of the last release it deployed (D-040; the checkout is detached). If a release's updater is broken, disable the timer, check out an earlier release's commit (`git -C ~/Medical-ChatBot checkout --detach <tag>`), and enable the timer again; to pull by hand, run `git checkout main` first.
+
 Backups and release folders still referenced by the recorded release or a journal are never pruned. After each successful update the images of releases whose folder was pruned are removed too (D-039): the current and previous releases keep theirs, and an older release's images must be pulled again (`docker pull <image>@<digest>` from its `release.env`) before step 4.
 
 ## Graph data

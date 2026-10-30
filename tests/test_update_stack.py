@@ -26,7 +26,7 @@ def release_files(tag, n, compose=COMPOSE, evaluation=True, health=False, hosted
         "compose.yaml": compose,
         "compose.hosted.yaml": hosted_compose,
         "release.env": f"API_IMAGE={api}\nWEB_IMAGE={web}\n".encode(),
-        "manifest.json": json.dumps({"tag": tag, "images": {"api": api, "web": web}, "evaluation_passed": evaluation,
+        "manifest.json": json.dumps({"tag": tag, "commit": str(n) * 40, "images": {"api": api, "web": web}, "evaluation_passed": evaluation,
                                      **({"capabilities": {"health": True}} if health else {})}).encode(),
     }
 
@@ -41,6 +41,8 @@ class Fake:
         self.health_route = {}  # api image -> /api/health status; images without an entry have no route (404)
         self.running = {}  # service -> image reference
         self.images = set()  # image references on the machine
+        self.head = "0" * 40  # the updater checkout's commit (D-040)
+        self.fetched = None
         self.tunnel = False  # hosted (D-032): whether cloudflared, the only public way in, is running
         self.fail_once = set()  # steps that fail the next time only
         self.broken = set()  # api images whose page and answers fail the health check
@@ -92,6 +94,12 @@ class Fake:
             self.tunnel = True
         if step == "pull":
             self.images |= {env["API_IMAGE"], env["WEB_IMAGE"]}
+        if step == "git rev-parse":
+            return done(self.head if args[-1] == "HEAD" else self.fetched)
+        if step == "git fetch":
+            self.fetched = json.loads(self.files[args[-1].rsplit("/", 1)[1]]["manifest.json"])["commit"]
+        if step == "git checkout":
+            self.head = args[-1]
         if args[:2] == ["docker", "images"]:
             return done("\n".join(f"{ref.split('@')[0]} id:{ref}" for ref in sorted(self.images)))
         if args[:2] == ["docker", "rmi"]:
@@ -149,6 +157,10 @@ class Fake:
                 return "up_all"
             if tail[:1] == ["port"]:
                 return "port"
+        if args[0] == "git":
+            return f"git {args[3]}"
+        if args[1:3] == ["-I", "-c"]:
+            return "compile_check"
         if "czf" in args:
             return "backup"
         if "tzf" in args:
@@ -184,8 +196,8 @@ def enrolled(fake, tag="v1.1.0", n=1, hosted=False):
 
 
 def steps(fake):
-    return [c for c in fake.calls if not c.startswith(("docker ps", "docker inspect", "docker image", "docker info"))
-            and c != "port"]
+    return [c for c in fake.calls if not c.startswith(("docker ps", "docker inspect", "docker image", "docker info", "git"))
+            and c not in ("port", "compile_check")]
 
 
 # Doing nothing when nothing should happen.
@@ -427,6 +439,34 @@ def test_a_hosted_update_closes_public_access_rebuilds_the_graph_and_reopens_aft
     state = json.loads(us.STATE.read_text())
     assert state["tag"] == "v1.1.1" and state["mode"] == "hosted" and state["compose"].endswith("compose.hosted.yaml")
     assert fake.tunnel and fake.running["api"] == image("api", 2) and not us.JOURNAL.exists()
+    # D-040: the updater's checkout follows the deployed release's commit.
+    assert fake.head == "2" * 40 and "compile_check" in fake.calls
+
+
+def test_only_the_hosted_updater_moves_its_checkout(fake):
+    enrolled(fake)
+    fake.add_release("v1.1.1", 2)
+    assert us.update() == 0
+    assert fake.head == "0" * 40 and not any(c.startswith("git") for c in fake.calls)
+
+
+@pytest.mark.parametrize("failing", ["git fetch", "compile_check"])
+def test_a_checkout_that_cannot_follow_stays_and_the_update_still_counts(fake, failing):
+    enrolled(fake, hosted=True)
+    fake.add_release("v1.1.1", 2)
+    fake.fail.add(failing)
+    assert us.update() == 0
+    assert fake.head == "0" * 40 and json.loads(us.STATE.read_text())["tag"] == "v1.1.1"
+
+
+def test_a_checkout_with_local_changes_is_not_moved(fake, monkeypatch):
+    enrolled(fake, hosted=True)
+    fake.add_release("v1.1.1", 2)
+    real = fake.run
+    monkeypatch.setattr(us, "run", lambda args, env=None: subprocess.CompletedProcess(args, 0, " M scripts/update_stack.py", "")
+                        if args[3:4] == ["status"] else real(args, env))
+    assert us.update() == 0
+    assert fake.head == "0" * 40 and "git fetch" not in fake.calls
 
 
 def test_a_hosted_site_that_is_not_healthy_is_not_updated(fake):
