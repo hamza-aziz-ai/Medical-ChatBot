@@ -4,6 +4,7 @@ Every release of Mr. Healthcare, newest first, with the pull requests it contain
 
 ## Unreleased
 
+- The hosted updater moves its own checkout to each release it deploys (D-040)
 - The updater removes old release images after each update, keeping the current and previous ones (D-039)
 - Record the open page's live updates verified on the public site (A-26)
 - Add CHANGELOG.md and bring the docs and both artifacts up to date with D-037

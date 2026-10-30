@@ -525,3 +525,17 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** It runs at the only moment images pile up, in the step that already cleans the same releases, and needs no new process or schedule. Option 2 is age-based and would remove the previous release's images when no release came out for a week, breaking recovery, and touches every unused image on the machine, not only this project's. Option 3 is one more unit to install and enrol. Option 4 was what the owner asked to fix.
 - **Trade-off:** A manual rollback to an older release than the previous one must pull its images again (they are public on GHCR). Only images from `ghcr.io/hamza-aziz-ai/medical-chatbot-api` and `-web` are touched, so a local build (`:local`) and other projects' images stay.
 - **Revisit if:** a rollback needs more than the previous release offline, or the images move to another registry.
+
+## D-040: The hosted updater moves its own checkout to each release it deploys
+
+- **Date:** 2026-10-30; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner asked for updater changes to reach the VM with nobody having to act
+- **Context:** The VM's timer runs `scripts/update_stack.py` from a clone of the repository that nothing ever updates: it was still at PR #68 when D-039 merged, so a fix to the updater never reached the VM until someone ran `git pull` there by hand.
+- **Options:**
+  1. after a successful hosted update, check out the commit the release's `manifest.json` records, so the updater's code follows the deployed release
+  2. `git pull` on `main` at every timer run
+  3. ship the updater in a release asset or image and run it from there
+  4. keep pulling by hand when the updater changes
+- **Chosen:** 1. The checkout moves only after the update is committed, only in hosted mode (the local mode runs from the owner's working copy, which must not move), only from a checkout with no local changes to tracked files, and only when the fetched tag names the manifest's commit. The new `update_stack.py` and `app_logging.py` must compile, or the checkout goes back. Any failure logs a warning and leaves the checkout where it was; the update itself still counts. The running process keeps the code it loaded; the next run uses the new code.
+- **Why:** The updater's code then comes from exactly the commit whose images were tested, evaluated and deployed, at the same moment. Option 2 runs every commit on `main` within 15 minutes, even ones whose release failed its gates. Option 3 means a new release asset, its checks and a bootstrap, much more than the change needs. Option 4 is what the owner asked to fix.
+- **Trade-off:** Whoever can publish a release now also chooses code that runs on the VM as `ubuntu`, outside any container (THREAT.md); releases come only from `release.yml` after every gate, from a commit merged through checks. A change to the updater reaches the VM only with the next release that ships images, not when it merges. The checkout is left on a detached commit, so a hand `git pull` there needs `git checkout main` first. An updater broken in a way that still compiles stops later updates until fixed by hand (ROLLBACK.md).
+- **Revisit if:** releases can come from anywhere but `release.yml`, or the updater needs to change between releases.

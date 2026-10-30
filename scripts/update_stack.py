@@ -261,7 +261,44 @@ def deploy(target, previous):
     JOURNAL.unlink()
     logger.info("Updated to %s", target["tag"])
     prune()
+    if hosted(target):
+        follow_release(target)
     return True
+
+
+# Checks run by the new updater code before it replaces the old: both files must compile.
+COMPILES = "import sys\nfor f in sys.argv[1:]:\n    compile(open(f, encoding='utf-8').read(), f, 'exec')"
+
+
+def follow_release(target):
+    """Hosted (D-040): move this checkout, and so the updater itself, to the commit of the release just deployed, so
+    an updater change reaches the VM with the next release instead of never. This run keeps the code it loaded; the
+    next run uses the new one. Never fails the update: on any doubt the checkout stays where it was."""
+    tag = target["tag"]
+    manifest = read_json(Path(target["compose"]).parent / "manifest.json") or {}
+    commit = str(manifest.get("commit", ""))
+    git = ["git", "-C", str(ROOT)]
+    before = output([*git, "rev-parse", "HEAD"])
+    if not re.fullmatch(r"[0-9a-f]{40}", commit) or not before:
+        logger.warning("Not moving the updater to %s: no release commit or no checkout", tag)
+        return
+    if before == commit:
+        return
+    # Tracked files changed by hand stay: checking out over them would lose them or fail half-way.
+    if output([*git, "status", "--porcelain", "--untracked-files=no"]) != "":
+        logger.warning("Not moving the updater to %s: the checkout has local changes", tag)
+        return
+    # The tag must name the commit the release's manifest records, so the code matches the deployed images.
+    if not (ok([*git, "fetch", "-q", "origin", f"refs/tags/{tag}"])
+            and output([*git, "rev-parse", "FETCH_HEAD^{commit}"]) == commit
+            and ok([*git, "checkout", "-q", "--detach", commit])):
+        logger.warning("Could not move the updater to %s; it stays as it was", tag)
+        return
+    if not ok([sys.executable, "-I", "-c", COMPILES, str(ROOT / "scripts" / "update_stack.py"), str(ROOT / "api" / "app_logging.py")]):
+        ok([*git, "checkout", "-q", "--detach", before])
+        logger.warning("The updater at %s does not compile; it stays as it was", tag)
+        return
+    logger.info("The updater now runs %s's code from the next run on", tag)
 
 
 def maintenance(journal, target):
