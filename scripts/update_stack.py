@@ -374,6 +374,25 @@ def prune():
                     item.rmdir()
                 else:
                     item.unlink()
+    prune_images()
+
+
+def prune_images():
+    """Remove this project's images that no kept release folder names, so each update's pull does not pile up on
+    the disk (D-039). The current and previous releases keep theirs, so recovery's `--pull never` still works; an
+    image a container uses is refused by Docker and stays."""
+    keep = set()
+    for env_file in (DEPLOY / "releases").glob("v*/release.env"):
+        images = parse_env(env_file.read_text(encoding="utf-8"))
+        for name in ("API_IMAGE", "WEB_IMAGE"):
+            found = output(["docker", "image", "inspect", "--format", "{{.Id}}", images.get(name, "")])
+            if found:
+                keep.add(found)
+    listed = output(["docker", "images", "--no-trunc", "--format", "{{.Repository}} {{.ID}}"]) or ""
+    ours = {line.split()[1] for line in listed.splitlines()
+            if line.split()[0] in ("ghcr.io/hamza-aziz-ai/medical-chatbot-api", "ghcr.io/hamza-aziz-ai/medical-chatbot-web")}
+    for image_id in sorted(ours - keep):
+        run(["docker", "rmi", image_id])
 
 
 def update():
