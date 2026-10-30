@@ -4,11 +4,15 @@ Every release of Mr. Healthcare, newest first, with the pull requests it contain
 
 ## Unreleased
 
-- Search engine basics: full name in the titles, canonical link, robots.txt, sitemap and structured data (D-041)
-- The hosted updater moves its own checkout to each release it deploys (D-040)
-- The updater removes old release images after each update, keeping the current and previous ones (D-039)
-- Record the open page's live updates verified on the public site (A-26)
-- Add CHANGELOG.md and bring the docs and both artifacts up to date with D-037
+- Record v1.1.26's update and the search work on the portfolio and resume (A-27, A-28)
+
+## v1.1.26 (2026-10-30)
+
+- Search engine basics: full name in the titles, canonical link, robots.txt, sitemap and structured data, D-041 ([#88](https://github.com/hamza-aziz-ai/Medical-ChatBot/pull/88))
+- The hosted updater moves its own checkout to each release it deploys, D-040 ([#87](https://github.com/hamza-aziz-ai/Medical-ChatBot/pull/87))
+- The updater removes old release images after each update, keeping the current and previous ones, D-039 ([#86](https://github.com/hamza-aziz-ai/Medical-ChatBot/pull/86))
+- Record the open page's live updates verified on the public site, A-26 ([#85](https://github.com/hamza-aziz-ai/Medical-ChatBot/pull/85))
+- Add CHANGELOG.md and bring the docs and both artifacts up to date with D-037, D-038 ([#84](https://github.com/hamza-aziz-ai/Medical-ChatBot/pull/84))
 
 ## v1.1.25 (2026-10-30)
 

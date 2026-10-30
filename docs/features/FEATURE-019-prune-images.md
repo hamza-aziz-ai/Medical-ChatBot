@@ -6,10 +6,11 @@
 
 **Design.** D-039. The images named in the kept release folders (`deploy/releases/v*/release.env`, the newest `KEEP` plus the recorded release) are kept by image ID; every other image from `ghcr.io/hamza-aziz-ai/medical-chatbot-api` or `-web` is removed with `docker rmi`, without `-f`, so an image a container still uses is refused and stays.
 
-**Status.** Built 2026-10-30; the VM's 22 older images go at the next successful update.
+**Status.** Live since v1.1.26 (2026-10-30).
 
 **Open questions.** None.
 
 ## Log
 
 - 2026-10-30: Built. 423 Python tests pass, 14 skipped; the fake Docker now tracks pulled images, and the pruning test checks that only the two kept releases' images stay. On the VM, `docker image inspect --format {{.Id}}` of a release's digests matches the IDs `docker images --no-trunc` lists. The rollback drill was not rerun: it exercises only failure paths, which never prune.
+- 2026-10-30: Verified on the VM: the v1.1.26 update left 4 Medical-ChatBot images of 24 (A-27).
