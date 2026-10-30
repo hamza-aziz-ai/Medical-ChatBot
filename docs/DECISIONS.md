@@ -511,3 +511,17 @@ One entry per meaningful decision: context, options, choice, why, trade-off, whe
 - **Why:** Option 2 needs a workflow to push to `main`, which the delivery rules forbid (only `automerge.yml` merges pull requests), or to open its own pull request after every release. Option 3 leaves nothing in the repository, which the owner asked for.
 - **Trade-off:** One more line per pull request, and an entry stays under Unreleased until the next pull request moves it; a missed line is caught by comparing with the release notes.
 - **Revisit if:** entries drift from the release notes, or releases become frequent enough for option 2 to pay off.
+
+## D-039: The updater removes old release images by itself
+
+- **Date:** 2026-10-30; **Model:** Claude Opus 5.5 (claude-opus-5-5); the owner asked for old images to be cleaned up automatically, with nobody having to act
+- **Context:** Each update pulls the release's two images by digest, and nothing ever removed them: the VM held 24 Medical-ChatBot images after 13 releases (about 317 MB of their own, as releases share most layers; 31 GB free). The updater already prunes release folders and backups to the newest `KEEP` (2) plus the recorded release.
+- **Options:**
+  1. after every successful update, `prune()` also removes this project's images that no kept release folder names
+  2. `docker image prune -af --filter until=168h` after each update
+  3. a separate systemd timer or cron job running `docker image prune`
+  4. leave it: the disk lasts about 2,000 releases
+- **Chosen:** 1. Images follow the release folders: an image is kept exactly while its release folder is, so the current release and the previous one, which recovery starts with `--pull never`, always keep theirs. Docker refuses to remove an image a container uses, so a failed removal is ignored and the image stays.
+- **Why:** It runs at the only moment images pile up, in the step that already cleans the same releases, and needs no new process or schedule. Option 2 is age-based and would remove the previous release's images when no release came out for a week, breaking recovery, and touches every unused image on the machine, not only this project's. Option 3 is one more unit to install and enrol. Option 4 was what the owner asked to fix.
+- **Trade-off:** A manual rollback to an older release than the previous one must pull its images again (they are public on GHCR). Only images from `ghcr.io/hamza-aziz-ai/medical-chatbot-api` and `-web` are touched, so a local build (`:local`) and other projects' images stay.
+- **Revisit if:** a rollback needs more than the previous release offline, or the images move to another registry.

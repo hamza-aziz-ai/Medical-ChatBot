@@ -5,6 +5,7 @@ Read this first, then [CONSTRAINTS.md](CONSTRAINTS.md) and [ARCHITECTURE.md](ARC
 ## Latest session: 2026-10-30 (model: Claude Opus 5.5, claude-opus-5-5; council with Codex)
 
 Done:
+- The updater removes old release images after each successful update (D-039, FEATURE-019), keeping the current and previous releases' images for recovery. The VM held 24 images (about 317 MB of their own, 31 GB free); the next update removes 22 of them. Also removed 24 stale Medical-ChatBot images and the stopped v1.1.13 local stack from the development machine at the owner's request (volumes kept).
 - An open page follows updates by itself (D-037, FEATURE-018): it shows a maintenance view while the site is closed for an update and reloads into a new release, keeping the conversation, topic and draft through a one-shot hand-off in the tab's sessionStorage. nginx sends `no-cache` for the page.
 - GitHub link in the top corner (FEATURE-017), live since v1.1.23.
 - Deployed v1.1.24 and v1.1.25 by hand at the owner's request (`sudo systemctl start medical-chatbot-update.service` on the VM). With the tunnel stopped for 35 s the owner's open page showed the maintenance view and kept its conversation; v1.1.25 centred its last line and added the full page's pulsing cross.

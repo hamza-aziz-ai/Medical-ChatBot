@@ -40,6 +40,7 @@ class Fake:
         self.healthy = True
         self.health_route = {}  # api image -> /api/health status; images without an entry have no route (404)
         self.running = {}  # service -> image reference
+        self.images = set()  # image references on the machine
         self.tunnel = False  # hosted (D-032): whether cloudflared, the only public way in, is running
         self.fail_once = set()  # steps that fail the next time only
         self.broken = set()  # api images whose page and answers fail the health check
@@ -89,6 +90,15 @@ class Fake:
             # Public access must never open on a stack that is not serving the checked release.
             assert self.running and self.running.get("api") not in self.broken
             self.tunnel = True
+        if step == "pull":
+            self.images |= {env["API_IMAGE"], env["WEB_IMAGE"]}
+        if args[:2] == ["docker", "images"]:
+            return done("\n".join(f"{ref.split('@')[0]} id:{ref}" for ref in sorted(self.images)))
+        if args[:2] == ["docker", "rmi"]:
+            ref = args[2][3:]
+            if ref in self.running.values():
+                return subprocess.CompletedProcess(args, 1, "", NOISE)
+            self.images.discard(ref)
         if args[:2] == ["docker", "ps"]:
             service = next(a.rsplit("=", 1)[1] for a in args if a.startswith("label=com.docker.compose.service="))
             return done(f"c-{service}" if service in self.running else "")
@@ -166,6 +176,7 @@ def enrolled(fake, tag="v1.1.0", n=1, hosted=False):
     fake.add_release(tag, n)
     deployment = us.download(fake.releases[tag], hosted)
     fake.running = {"api": deployment["api_image"], "web": deployment["web_image"]}
+    fake.images = set(fake.running.values())
     fake.tunnel = hosted
     us.write_json(us.STATE, deployment)
     fake.calls.clear()
@@ -347,6 +358,8 @@ def test_old_releases_and_backups_are_pruned_but_the_current_one_is_kept(fake):
         assert us.update() == 0
     assert sorted(p.name for p in (us.DEPLOY / "releases").iterdir()) == ["v1.1.2", "v1.1.3"]
     assert len(list((us.DEPLOY / "backups").glob("*.tgz"))) <= us.KEEP
+    # Only the kept releases' images stay (D-039): the current one and the previous one, which recovery needs.
+    assert fake.images == {image(name, n) for name in ("api", "web") for n in (3, 4)}
 
 
 def test_logs_hold_no_docker_output_or_probe(fake, caplog):
